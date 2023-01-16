@@ -6,8 +6,8 @@ GeneralUpdate Twin project, a tool for updating service pack builds.
 
 ## Open source address
 
-https://github.com/GeneralLibrary/GeneralUpdate.Tools
-https://gitee.com/GeneralTeam/GeneralUpdate.Tools
+- https://github.com/GeneralLibrary/GeneralUpdate.Tools
+- https://gitee.com/GeneralTeam/GeneralUpdate.Tools
 
 
 
