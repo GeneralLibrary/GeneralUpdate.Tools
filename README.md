@@ -13,8 +13,10 @@ GeneralUpdate Twin project, a tool for updating service pack builds.
 
 ## The parent project
 
-https://gitee.com/GeneralTeam/GeneralUpdate
+- https://gitee.com/GeneralTeam/GeneralUpdate
 
 
+
+## Run
 
 ![run](imgs\run.jpg)
