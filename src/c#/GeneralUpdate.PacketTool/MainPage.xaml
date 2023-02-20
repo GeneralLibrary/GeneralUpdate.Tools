@@ -72,6 +72,7 @@
                 <Entry WidthRequest="400" HeightRequest="30" Margin="9,0,3,0" Text="{Binding CurrentVersion}" />
             </StackLayout>
             <StackLayout HorizontalOptions="Center" Grid.Row="11"  HeightRequest="35" Orientation="Horizontal">
+                <Button HorizontalOptions="Center"  Text="Build json" WidthRequest="110" HeightRequest="35" Command="{Binding BuildJsonCommand}" />
                 <Button HorizontalOptions="Center"  Text="Build" WidthRequest="110" HeightRequest="35" Command="{Binding BuildCommand}" />
                 <CheckBox Margin="10,0,0,0" IsChecked="{Binding IsPublish}" />
                 <Label VerticalOptions="Center"  Text="publish" />

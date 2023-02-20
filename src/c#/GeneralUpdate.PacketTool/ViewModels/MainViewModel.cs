@@ -5,8 +5,11 @@ using GeneralUpdate.Core.Utils;
 using GeneralUpdate.Differential;
 using GeneralUpdate.Infrastructure.DataServices.Pick;
 using GeneralUpdate.Infrastructure.MVVM;
+using GeneralUpdate.PacketTool.Models;
 using GeneralUpdate.PacketTool.Services;
 using GeneralUpdate.Zip.Factory;
+using Newtonsoft.Json;
+using System.Net.Http.Json;
 using System.Text;
 
 namespace GeneralUpdate.PacketTool.ViewModels
@@ -21,8 +24,10 @@ namespace GeneralUpdate.PacketTool.ViewModels
         private bool isPublish;
         private AsyncRelayCommand buildCommand;
         private AsyncRelayCommand<string> selectFolderCommand;
+        private AsyncRelayCommand buildJsonCommand;
         private readonly IFolderPickerService _folderPickerService;
         private MainService _mainService;
+        private const string _jsonTemplateFileName = "version.json";
 
         #endregion
 
@@ -60,6 +65,11 @@ namespace GeneralUpdate.PacketTool.ViewModels
             get => buildCommand ?? (buildCommand = new AsyncRelayCommand(BuildPacketCallback));
         }
 
+        public AsyncRelayCommand BuildJsonCommand 
+        {
+            get => buildJsonCommand ?? (buildJsonCommand = new AsyncRelayCommand(BuildJsonCallback)); 
+        }
+
         public List<string> AppTypes
         {
             get 
@@ -94,15 +104,17 @@ namespace GeneralUpdate.PacketTool.ViewModels
             {
                 if (_currentEncoding == null) 
                 {
-                    _encodings = new List<string>();
-                    _encodings.Add("Default");
-                    _encodings.Add("UTF8");
-                    _encodings.Add("UTF7");
-                    _encodings.Add("Unicode");
-                    _encodings.Add("UTF32");
-                    _encodings.Add("BigEndianUnicode");
-                    _encodings.Add("Latin1");
-                    _encodings.Add("ASCII");
+                    _encodings = new List<string>
+                    {
+                        "Default",
+                        "UTF8",
+                        "UTF7",
+                        "Unicode",
+                        "UTF32",
+                        "BigEndianUnicode",
+                        "Latin1",
+                        "ASCII"
+                    };
                 }
                 return _encodings;
             }
@@ -127,7 +139,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
 
         public string CurrentVersion { get => _currentVersion; set => SetProperty(ref _currentVersion, value); }
         public string CurrentClientAppKey { get => _currentClientAppKey; set => SetProperty(ref _currentClientAppKey, value); }
-
+       
         #endregion
 
         #region Private Methods
@@ -215,6 +227,31 @@ namespace GeneralUpdate.PacketTool.ViewModels
             {
                 await Shell.Current.DisplayAlert("Build options", $"Operation failed : {TargetPath} , Error : {ex.Message}  !", "cancel");
             }
+        }
+
+        /// <summary>
+        /// Build version template file (json).
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private async Task BuildJsonCallback()
+        {
+            var pickerResult = await _folderPickerService.PickFolderTaskAsync();
+            if (pickerResult == null)
+            {
+                await Shell.Current.DisplayAlert("Pick options", "No results were selected !", "ok");
+                return;
+            }
+            string path = Path.Combine(pickerResult, _jsonTemplateFileName);
+            if (File.Exists(path)) await Shell.Current.DisplayAlert("Build options", "File already exists !", "check");
+            var jsonModel = new VersionTmplateModel();
+            await BuildVersionTemplate(path, jsonModel);
+        }
+
+        private async Task BuildVersionTemplate<T>(string path, T content) where T : class
+        {
+            string json = JsonConvert.SerializeObject(content);
+            await File.WriteAllTextAsync(path, json, System.Text.Encoding.UTF8);
         }
 
         private bool ValidationParameters() => (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath) || string.IsNullOrEmpty(PatchPath) || 
