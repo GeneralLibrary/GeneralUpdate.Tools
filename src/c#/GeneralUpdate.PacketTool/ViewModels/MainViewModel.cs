@@ -244,14 +244,18 @@ namespace GeneralUpdate.PacketTool.ViewModels
             }
             string path = Path.Combine(pickerResult, _jsonTemplateFileName);
             if (File.Exists(path)) await Shell.Current.DisplayAlert("Build options", "File already exists !", "check");
-            var jsonModel = new VersionTmplateModel();
-            await BuildVersionTemplate(path, jsonModel);
+            var jsonObj = new List<VersionTmplateModel>();
+            jsonObj.Add(new VersionTmplateModel() { });
+            jsonObj.Add(new VersionTmplateModel() { });
+            jsonObj.Add(new VersionTmplateModel() { });
+            await BuildVersionTemplate(path, jsonObj);
         }
 
         private async Task BuildVersionTemplate<T>(string path, T content) where T : class
         {
             string json = JsonConvert.SerializeObject(content);
             await File.WriteAllTextAsync(path, json, System.Text.Encoding.UTF8);
+            if (File.Exists(path)) await Shell.Current.DisplayAlert("Build options", "Generated successfully !", "ok");
         }
 
         private bool ValidationParameters() => (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath) || string.IsNullOrEmpty(PatchPath) || 
