@@ -9,7 +9,6 @@ using GeneralUpdate.PacketTool.Models;
 using GeneralUpdate.PacketTool.Services;
 using GeneralUpdate.Zip.Factory;
 using Newtonsoft.Json;
-using System.Net.Http.Json;
 using System.Text;
 
 namespace GeneralUpdate.PacketTool.ViewModels
@@ -76,9 +75,11 @@ namespace GeneralUpdate.PacketTool.ViewModels
             {
                 if (_appTypes == null)
                 {
-                    _appTypes = new List<string>();
-                    _appTypes.Add("Client");
-                    _appTypes.Add("Upgrade");
+                    _appTypes = new List<string>
+                    {
+                        "Client",
+                        "Upgrade"
+                    };
                 }
                 return _appTypes;
             }
@@ -90,8 +91,10 @@ namespace GeneralUpdate.PacketTool.ViewModels
             {
                 if (_formats == null)
                 {
-                    _formats = new List<string>();
-                    _formats.Add(".zip");
+                    _formats = new List<string>
+                    {
+                        ".zip"
+                    };
                     //_formats.Add(".7z");
                 }
                 return _formats;
@@ -244,13 +247,22 @@ namespace GeneralUpdate.PacketTool.ViewModels
             }
             string path = Path.Combine(pickerResult, _jsonTemplateFileName);
             if (File.Exists(path)) await Shell.Current.DisplayAlert("Build options", "File already exists !", "check");
-            var jsonObj = new List<VersionTmplateModel>();
-            jsonObj.Add(new VersionTmplateModel() { });
-            jsonObj.Add(new VersionTmplateModel() { });
-            jsonObj.Add(new VersionTmplateModel() { });
+            var jsonObj = new List<VersionTmplateModel>
+            {
+                new VersionTmplateModel(),
+                new VersionTmplateModel(),
+                new VersionTmplateModel()
+            };
             await BuildVersionTemplate(path, jsonObj);
         }
 
+        /// <summary>
+        /// Generate a version information file template.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="path">Generate file path.</param>
+        /// <param name="content">Generate file content.</param>
+        /// <returns></returns>
         private async Task BuildVersionTemplate<T>(string path, T content) where T : class
         {
             string json = JsonConvert.SerializeObject(content);
