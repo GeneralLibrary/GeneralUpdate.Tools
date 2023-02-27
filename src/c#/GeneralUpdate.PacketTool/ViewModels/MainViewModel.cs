@@ -95,7 +95,6 @@ namespace GeneralUpdate.PacketTool.ViewModels
                     {
                         ".zip"
                     };
-                    //_formats.Add(".7z");
                 }
                 return _formats;
             }

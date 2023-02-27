@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace GeneralUpdate.Infrastructure.DataServices.Http
 {
-    public class HttpService
+    public sealed class HttpService
     {
         private static HttpService _instance;
         private static object _lock = new object();
@@ -24,6 +24,15 @@ namespace GeneralUpdate.Infrastructure.DataServices.Http
             } 
         }
 
+        /// <summary>
+        /// Upload file.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="url"></param>
+        /// <param name="parameters"></param>
+        /// <param name="filePath"></param>
+        /// <param name="reponseCallback"></param>
+        /// <returns></returns>
         public async Task PostFileRequest<T>(string url, Dictionary<string, string> parameters, string filePath , Action<T> reponseCallback) where T : class
         {
             try
