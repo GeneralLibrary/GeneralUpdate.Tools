@@ -140,6 +140,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
         }
 
         public string CurrentVersion { get => _currentVersion; set => SetProperty(ref _currentVersion, value); }
+
         public string CurrentClientAppKey { get => _currentClientAppKey; set => SetProperty(ref _currentClientAppKey, value); }
        
         #endregion

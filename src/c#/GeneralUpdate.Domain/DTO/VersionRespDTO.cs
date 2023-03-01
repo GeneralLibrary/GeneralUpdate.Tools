@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace GeneralUpdate.Core.Domain.DTO
+﻿namespace GeneralUpdate.Core.Domain.DTO
 {
     public class VersionRespDTO : BaseResponseDTO<VersionBodyDTO>
     { }

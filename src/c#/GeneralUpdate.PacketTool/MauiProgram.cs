@@ -45,7 +45,7 @@ namespace GeneralUpdate.PacketTool
 #if WINDOWS
 		mauiAppBuilder.Services.AddTransient<IFolderPickerService, Platforms.Windows.FolderPicker>();
 #elif MACCATALYST
-		mauiAppBuilder.Services.AddTransient<IFolderPickerService, Platforms.MacCatalyst.FolderPicker>();
+            mauiAppBuilder.Services.AddTransient<IFolderPickerService, Platforms.MacCatalyst.FolderPicker>();
 #endif
             return mauiAppBuilder;
         }
