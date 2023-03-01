@@ -18,7 +18,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
         #region Private Members
 
         private string sourcePath, targetPath, patchPath, infoMessage, url, packetName;
-        private List<string> _formats, _encodings,_appTypes;
+        private List<string> _formats, _encodings, _appTypes;
         private string _currentFormat, _currentEncoding, _currnetAppType, _currentVersion, _currentClientAppKey;
         private bool isPublish;
         private AsyncRelayCommand buildCommand;
@@ -28,11 +28,11 @@ namespace GeneralUpdate.PacketTool.ViewModels
         private MainService _mainService;
         private const string _jsonTemplateFileName = "version.json";
 
-        #endregion
+        #endregion Private Members
 
         #region Constructors
 
-        public MainViewModel(IFolderPickerService folderPickerService) 
+        public MainViewModel(IFolderPickerService folderPickerService)
         {
             _folderPickerService = folderPickerService;
             _mainService = new MainService();
@@ -42,7 +42,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
             CurrnetAppType = AppTypes.First();
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Public Properties
 
@@ -64,14 +64,14 @@ namespace GeneralUpdate.PacketTool.ViewModels
             get => buildCommand ?? (buildCommand = new AsyncRelayCommand(BuildPacketCallback));
         }
 
-        public AsyncRelayCommand BuildJsonCommand 
+        public AsyncRelayCommand BuildJsonCommand
         {
-            get => buildJsonCommand ?? (buildJsonCommand = new AsyncRelayCommand(BuildJsonCallback)); 
+            get => buildJsonCommand ?? (buildJsonCommand = new AsyncRelayCommand(BuildJsonCallback));
         }
 
         public List<string> AppTypes
         {
-            get 
+            get
             {
                 if (_appTypes == null)
                 {
@@ -100,11 +100,11 @@ namespace GeneralUpdate.PacketTool.ViewModels
             }
         }
 
-        public List<string> Encodings 
+        public List<string> Encodings
         {
-            get 
+            get
             {
-                if (_currentEncoding == null) 
+                if (_currentEncoding == null)
                 {
                     _encodings = new List<string>
                     {
@@ -122,28 +122,29 @@ namespace GeneralUpdate.PacketTool.ViewModels
             }
         }
 
-        public string CurrentFormat { 
+        public string CurrentFormat
+        {
             get => _currentFormat;
-            set => SetProperty(ref _currentFormat, value); 
+            set => SetProperty(ref _currentFormat, value);
         }
 
         public string CurrentEncoding
         {
-            get => _currentEncoding; 
+            get => _currentEncoding;
             set => SetProperty(ref _currentEncoding, value);
         }
 
-        public string CurrnetAppType 
-        { 
-            get => _currnetAppType; 
-            set => SetProperty(ref _currnetAppType, value); 
+        public string CurrnetAppType
+        {
+            get => _currnetAppType;
+            set => SetProperty(ref _currnetAppType, value);
         }
 
         public string CurrentVersion { get => _currentVersion; set => SetProperty(ref _currentVersion, value); }
 
         public string CurrentClientAppKey { get => _currentClientAppKey; set => SetProperty(ref _currentClientAppKey, value); }
-       
-        #endregion
+
+        #endregion Public Properties
 
         #region Private Methods
 
@@ -164,9 +165,11 @@ namespace GeneralUpdate.PacketTool.ViewModels
                 case "Source":
                     SourcePath = pickerResult;
                     break;
+
                 case "Target":
                     TargetPath = pickerResult;
                     break;
+
                 case "Patch":
                     PatchPath = pickerResult;
                     break;
@@ -192,20 +195,20 @@ namespace GeneralUpdate.PacketTool.ViewModels
 
             try
             {
-                await DifferentialCore.Instance.Clean(SourcePath, TargetPath, PatchPath, (sender, args) =>{},
-                    String2OperationType(CurrentFormat),String2Encoding(CurrentEncoding), PacketName);
+                await DifferentialCore.Instance.Clean(SourcePath, TargetPath, PatchPath, (sender, args) => { },
+                    String2OperationType(CurrentFormat), String2Encoding(CurrentEncoding), PacketName);
                 if (IsPublish)
                 {
-                    var packetPath = Path.Combine(TargetPath,$"{PacketName}{CurrentFormat}");
-                    if (!File.Exists(packetPath)) 
+                    var packetPath = Path.Combine(TargetPath, $"{PacketName}{CurrentFormat}");
+                    if (!File.Exists(packetPath))
                     {
                         await Shell.Current.DisplayAlert("Build options", $"The package was not found in the following path {packetPath} !", "cancel");
                         return;
                     }
                     var md5 = FileUtil.GetFileMD5(packetPath);
-                    await _mainService.PostUpgradPakcet<UploadReapDTO>(Url,packetPath, String2AppType(CurrnetAppType), CurrentVersion,CurrentClientAppKey, md5, async (resp) =>
+                    await _mainService.PostUpgradPakcet<UploadReapDTO>(Url, packetPath, String2AppType(CurrnetAppType), CurrentVersion, CurrentClientAppKey, md5, async (resp) =>
                     {
-                        if (resp == null) 
+                        if (resp == null)
                         {
                             await Shell.Current.DisplayAlert("Build options", "Upload failed !", "cancel");
                             return;
@@ -270,7 +273,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
             if (File.Exists(path)) await Shell.Current.DisplayAlert("Build options", "Generated successfully !", "ok");
         }
 
-        private bool ValidationParameters() => (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath) || string.IsNullOrEmpty(PatchPath) || 
+        private bool ValidationParameters() => (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath) || string.IsNullOrEmpty(PatchPath) ||
             string.IsNullOrEmpty(PacketName) || string.IsNullOrEmpty(CurrentFormat) || string.IsNullOrEmpty(CurrentEncoding));
 
         private bool ValidationFolder() => (!Directory.Exists(SourcePath) || !Directory.Exists(TargetPath) || !Directory.Exists(PatchPath));
@@ -283,24 +286,31 @@ namespace GeneralUpdate.PacketTool.ViewModels
                 case "Default":
                     result = Encoding.Default;
                     break;
+
                 case "UTF8":
                     result = Encoding.UTF8;
                     break;
+
                 case "UTF7":
                     result = Encoding.UTF7;
                     break;
+
                 case "Unicode":
                     result = Encoding.Unicode;
                     break;
+
                 case "UTF32":
                     result = Encoding.UTF32;
                     break;
+
                 case "BigEndianUnicode":
                     result = Encoding.BigEndianUnicode;
                     break;
+
                 case "Latin1":
                     result = Encoding.Latin1;
                     break;
+
                 case "ASCII":
                     result = Encoding.ASCII;
                     break;
@@ -316,6 +326,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
                 case "ZIP":
                     result = Zip.Factory.OperationType.GZip;
                     break;
+
                 case "7Z":
                     result = Zip.Factory.OperationType.G7z;
                     break;
@@ -331,6 +342,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
                 case "Client":
                     result = 1;
                     break;
+
                 case "UTF8":
                     result = 2;
                     break;
@@ -338,6 +350,6 @@ namespace GeneralUpdate.PacketTool.ViewModels
             return result;
         }
 
-        #endregion
+        #endregion Private Methods
     }
 }

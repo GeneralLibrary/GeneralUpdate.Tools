@@ -9,9 +9,9 @@ namespace GeneralUpdate.Infrastructure.DataServices.Http
         private static object _lock = new object();
         private JsonSerializerOptions _serializerOptions;
 
-        public static HttpService Instance 
+        public static HttpService Instance
         {
-            get 
+            get
             {
                 if (_instance == null)
                 {
@@ -20,8 +20,8 @@ namespace GeneralUpdate.Infrastructure.DataServices.Http
                         if (_instance == null) _instance = new HttpService();
                     }
                 }
-                return _instance; 
-            } 
+                return _instance;
+            }
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace GeneralUpdate.Infrastructure.DataServices.Http
         /// <param name="filePath"></param>
         /// <param name="reponseCallback"></param>
         /// <returns></returns>
-        public async Task PostFileRequest<T>(string url, Dictionary<string, string> parameters, string filePath , Action<T> reponseCallback) where T : class
+        public async Task PostFileRequest<T>(string url, Dictionary<string, string> parameters, string filePath, Action<T> reponseCallback) where T : class
         {
             try
             {
@@ -44,7 +44,7 @@ namespace GeneralUpdate.Infrastructure.DataServices.Http
                     using (var client = new HttpClient())
                     {
                         var message = new HttpRequestMessage(HttpMethod.Post, url);
-                        message.Content = MultipartFormDataContentProvider.CreateContent(bytes,Path.GetFileName(filePath), parameters);
+                        message.Content = MultipartFormDataContentProvider.CreateContent(bytes, Path.GetFileName(filePath), parameters);
                         var responseMessage = await client.SendAsync(message);
                         if (responseMessage.IsSuccessStatusCode)
                         {
