@@ -1,5 +1,8 @@
 ﻿namespace GeneralUpdate.PacketTool.Models
 {
+    /// <summary>
+    /// Update the package version template information.
+    /// </summary>
     public class VersionTmplateModel
     {
         /// <summary>
