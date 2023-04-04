@@ -206,7 +206,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
                         return;
                     }
                     var md5 = FileUtil.GetFileMD5(packetPath);
-                    await _mainService.PostUpgradPakcet<UploadReapDTO>(Url, packetPath, String2AppType(CurrnetAppType), CurrentVersion, CurrentClientAppKey, md5, async (resp) =>
+                    await _mainService.PostUpgradePacket<UploadReapDTO>(Url, packetPath, String2AppType(CurrnetAppType), CurrentVersion, CurrentClientAppKey, md5, async (resp) =>
                     {
                         if (resp == null)
                         {
