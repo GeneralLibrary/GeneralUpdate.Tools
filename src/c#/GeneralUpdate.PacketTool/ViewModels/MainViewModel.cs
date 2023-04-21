@@ -39,7 +39,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
             IsPublish = false;
             CurrentEncoding = Encodings.First();
             CurrentFormat = Formats.First();
-            CurrnetAppType = AppTypes.First();
+            CurrentAppType = AppTypes.First();
         }
 
         #endregion Constructors
@@ -134,7 +134,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
             set => SetProperty(ref _currentEncoding, value);
         }
 
-        public string CurrnetAppType
+        public string CurrentAppType
         {
             get => _currnetAppType;
             set => SetProperty(ref _currnetAppType, value);
@@ -206,7 +206,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
                         return;
                     }
                     var md5 = FileUtil.GetFileMD5(packetPath);
-                    await _mainService.PostUpgradePacket<UploadReapDTO>(Url, packetPath, String2AppType(CurrnetAppType), CurrentVersion, CurrentClientAppKey, md5, async (resp) =>
+                    await _mainService.PostUpgradePacket<UploadReapDTO>(Url, packetPath, String2AppType(CurrentAppType), CurrentVersion, CurrentClientAppKey, md5, async (resp) =>
                     {
                         if (resp == null)
                         {
@@ -250,11 +250,11 @@ namespace GeneralUpdate.PacketTool.ViewModels
             }
             string path = Path.Combine(pickerResult, _jsonTemplateFileName);
             if (File.Exists(path)) await Shell.Current.DisplayAlert("Build options", "File already exists !", "check");
-            var jsonObj = new List<VersionTmplateModel>
+            var jsonObj = new List<VersionTemplateModel>
             {
-                new VersionTmplateModel(),
-                new VersionTmplateModel(),
-                new VersionTmplateModel()
+                new VersionTemplateModel(),
+                new VersionTemplateModel(),
+                new VersionTemplateModel()
             };
             await BuildVersionTemplate(path, jsonObj);
         }

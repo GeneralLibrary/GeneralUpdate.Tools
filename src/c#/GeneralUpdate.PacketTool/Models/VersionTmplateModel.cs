@@ -3,7 +3,7 @@
     /// <summary>
     /// Update the package version template information.
     /// </summary>
-    public class VersionTmplateModel
+    public class VersionTemplateModel
     {
         /// <summary>
         /// Update package release time.
