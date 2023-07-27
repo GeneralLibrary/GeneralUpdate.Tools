@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.AspNetCore.DTO;
 using GeneralUpdate.Core.Domain.Enum;
 using GeneralUpdate.Core.Utils;
@@ -343,7 +343,7 @@ namespace GeneralUpdate.PacketTool.ViewModels
                     result = 1;
                     break;
 
-                case "UTF8":
+                case "Upgrade":
                     result = 2;
                     break;
             }
