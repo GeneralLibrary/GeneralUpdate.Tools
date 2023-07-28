@@ -25,12 +25,4 @@ GeneralUpdate Twin project, a tool for updating service pack builds.
 
 
 
-## Run
-
-![](imgs\run.jpg)
-
-
-
-
-
 Thank you developers for your support.
