@@ -18,13 +18,14 @@ Generalupdate.tool is a subsidiary project of GeneralUpdate, based on. NET 8 WPF
 ## Open source address
 
 - https://github.com/GeneralLibrary/GeneralUpdate.Tools
-- https://gitee.com/GeneralTeam/GeneralUpdate.Tools
+- https://gitee.com/GeneralLibrary/GeneralUpdate.Tools
 
 
 
 ## The parent project
 
-- https://gitee.com/GeneralTeam/GeneralUpdate
+- https://gitee.com/GeneralLibrary/GeneralUpdate.Tools
+- https://github.com/GeneralLibrary/GeneralUpdate
 
 
 
