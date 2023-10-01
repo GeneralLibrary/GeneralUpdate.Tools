@@ -1,0 +1,17 @@
+﻿<UserControl x:Class="GeneralUpdate.Packet.Views.HelperView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:GeneralUpdate.Packet.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <TextBlock Text="* All functional buttons will have tooltips that hover over them with the mouse." TextWrapping="WrapWithOverflow" FontSize="24" />
+        <TextBlock Grid.Row="1" Text="*If you have any usage problems, please submit the issue on github and the author will reply as soon as possible" TextWrapping="WrapWithOverflow" FontSize="24" />
+    </Grid>
+</UserControl>

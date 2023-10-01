@@ -1,8 +1,11 @@
 # GeneralUpdate.Tools
 
-GeneralUpdate Twin project, a tool for updating service pack builds.
+![](https://img.shields.io/github/license/JusterZhu/GeneralUpdate?color=blue)
 
 
+![](imgs/GeneralUpdate_h.png)
+
+Generalupdate.tool is a subsidiary project of GeneralUpdate, based on. NET 8 WPF writing. Helps you generate differential patch packs and OSS version profiles.
 
 | function                         | Supported or not | note                                                         |
 | -------------------------------- | ---------------- | ------------------------------------------------------------ |
@@ -25,4 +28,6 @@ GeneralUpdate Twin project, a tool for updating service pack builds.
 
 
 
-Thank you developers for your support.
+## Run
+
+![](imgs/run.png)
