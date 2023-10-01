@@ -184,6 +184,7 @@ FakesAssemblies/
 
 # SVN Repo
 .svn/
+.vs
 *.vsidx
 *.v2
 *.lock
