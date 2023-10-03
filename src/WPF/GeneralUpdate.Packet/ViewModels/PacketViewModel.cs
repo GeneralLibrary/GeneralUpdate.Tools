@@ -20,7 +20,7 @@ namespace GeneralUpdate.Packet.ViewModels
 
         private string sourcePath, targetPath, patchPath, infoMessage, url, packetName;
         private List<string> _formats, _encodings, _appTypes;
-        private string _currentFormat, _currentEncoding, _currnetAppType, _currentVersion, _currentClientAppKey;
+        private string _currentFormat, _currentEncoding, _currentAppType, _currentVersion, _currentClientAppKey;
         private bool isPublish;
         private AsyncRelayCommand buildCommand;
         private AsyncRelayCommand<string> selectFolderCommand;
@@ -127,8 +127,8 @@ namespace GeneralUpdate.Packet.ViewModels
 
         public string CurrentAppType
         {
-            get => _currnetAppType;
-            set => SetProperty(ref _currnetAppType, value);
+            get => _currentAppType;
+            set => SetProperty(ref _currentAppType, value);
         }
 
         public string CurrentVersion { get => _currentVersion; set => SetProperty(ref _currentVersion, value); }
