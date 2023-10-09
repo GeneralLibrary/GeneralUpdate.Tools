@@ -1,6 +1,7 @@
 ﻿using GeneralUpdate.Packet.Modules;
 using GeneralUpdate.Packet.MVVM;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace GeneralUpdate.Packet.ViewModels
 {

@@ -3,7 +3,6 @@ using GeneralUpdate.AspNetCore.DTO;
 using GeneralUpdate.Core.Utils;
 using GeneralUpdate.Differential;
 using GeneralUpdate.Packet.Domain.Enum;
-using GeneralUpdate.Packet.Modules;
 using GeneralUpdate.Packet.MVVM;
 using GeneralUpdate.Packet.Servieces;
 using GeneralUpdate.Zip.Factory;
