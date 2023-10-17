@@ -1,4 +1,5 @@
-﻿using GeneralUpdate.Packet.Modules;
+﻿using GeneralUpdate.Bowl;
+using GeneralUpdate.Packet.Modules;
 using GeneralUpdate.Packet.MVVM;
 using System.Collections.ObjectModel;
 using System.Windows;
