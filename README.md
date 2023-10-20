@@ -5,7 +5,7 @@
 
 ![](imgs/GeneralUpdate_h.png)
 
-Generalupdate.tool is a subsidiary project of GeneralUpdate, based on. NET 8 WPF writing. Helps you generate differential patch packs and OSS version profiles.
+Generalupdate.tool is a subsidiary project of GeneralUpdate, based on. NET 8 WPF writing. Helps you generate differential patch packs and OSS version profiles. Everyone is welcome to submit issues and PR.
 
 | function                         | Supported or not | note                                                         |
 | -------------------------------- | ---------------- | ------------------------------------------------------------ |
