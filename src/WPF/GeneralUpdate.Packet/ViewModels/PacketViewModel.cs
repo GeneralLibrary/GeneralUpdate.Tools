@@ -35,6 +35,7 @@ namespace GeneralUpdate.Packet.ViewModels
             CurrentEncoding = Encodings.First();
             CurrentFormat = Formats.First();
             CurrentAppType = AppTypes.First();
+            _packetService = new PacketService();
         }
 
         #endregion Constructors
