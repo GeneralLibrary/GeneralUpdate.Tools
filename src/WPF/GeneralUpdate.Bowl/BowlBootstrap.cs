@@ -2,22 +2,18 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Plugins.Core;
-//using RepoUtils;
+using System.Diagnostics;
 
 namespace GeneralUpdate.Bowl
 {
     public class BowlBootstrap
     {
-        public void test() 
+        public async void Test() 
         {
-            Console.WriteLine("======== Functions ========");
-
-            // Load native plugin
-            var text = new TextPlugin();
-
-            // Use function without kernel
-            var result = text.Uppercase("Ai4c research institute!");
-            Console.WriteLine(result);
+            var kernel = Kernel.Builder.Build();
+            var time = kernel.ImportFunctions(new TimePlugin());
+            var result = await kernel.RunAsync(time["Today"]);
+            Debug.WriteLine(result);
         }
     }
 }

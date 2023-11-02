@@ -7,7 +7,12 @@
         mc:Ignorable="d"
         Title="GeneralUpdate.Packet" Height="600" Width="900">
     <Grid>
-        <TabControl ItemsSource="{Binding Modules}" SelectedItem="{Binding CurrentModule}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Image Source=".\Resource\GeneralUpdate_h.png"></Image>
+        <TabControl Grid.Row="1" ItemsSource="{Binding Modules}" SelectedItem="{Binding CurrentModule}" TabStripPlacement="Left">
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Name}" />

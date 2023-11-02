@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resource\GeneralUpdate_h.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
     <PackageReference Include="GeneralUpdate.Differential" Version="1.4.3" />
     <PackageReference Include="GeneralUpdate.Zip" Version="2.3.2" />
@@ -17,6 +21,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GeneralUpdate.Bowl\GeneralUpdate.Bowl.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resource\GeneralUpdate_h.png" />
   </ItemGroup>
 
 </Project>
