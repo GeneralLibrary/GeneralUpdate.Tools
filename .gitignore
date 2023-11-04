@@ -17,6 +17,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+.idea/
 
 # Roslyn cache directories
 *.ide/
@@ -184,7 +185,7 @@ FakesAssemblies/
 
 # SVN Repo
 .svn/
-.vs
+*.vs
 *.vsidx
 *.v2
 *.lock
