@@ -9,9 +9,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0.100-rc.2.23502.2'
+        dotnet-version: '8.0.x'
+        dotnet-quality: 'preview'
     - name: Restore dependencies
       run: dotnet restore ./src/WPF/GeneralUpdate.Tool.sln
     - name: build
