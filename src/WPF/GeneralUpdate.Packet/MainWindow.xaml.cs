@@ -1,5 +1,4 @@
-﻿using GeneralUpdate.Bowl;
-using GeneralUpdate.Packet.ViewModels;
+﻿using GeneralUpdate.Packet.ViewModels;
 using System.Windows;
 
 namespace GeneralUpdate.Packet
