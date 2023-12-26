@@ -17,6 +17,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
     <PackageReference Include="GeneralUpdate.Differential" Version="1.4.3" />
     <PackageReference Include="GeneralUpdate.Zip" Version="2.3.2" />
+    <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
