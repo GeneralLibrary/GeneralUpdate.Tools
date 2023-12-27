@@ -315,6 +315,14 @@ namespace GeneralUpdate.Packet.ViewModels
             }));
         }
 
+
+        /// <summary>
+        /// Check whether the directory contains driver files.
+        /// </summary>
+        /// <param name="subPath"></param>
+        /// <returns></returns>
+        public bool IsDriver(string subPath) => Directory.EnumerateFiles(subPath, "*.inf").Any();
+
         #endregion Private Methods
     }
 }
