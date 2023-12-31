@@ -5,10 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:GeneralUpdate.Packet.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="490" d:DesignWidth="800">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -74,7 +75,12 @@
             <TextBlock VerticalAlignment="Center"  Text="Currnet version :" />
             <TextBox Width="400" Height="30" Margin="9,0,3,0" Text="{Binding CurrentVersion}" VerticalContentAlignment="Center" />
         </StackPanel>
-        <StackPanel HorizontalAlignment="Center" Grid.Row="11"   Orientation="Horizontal">
+        <StackPanel Grid.Row="11" Orientation="Horizontal" Height="40" HorizontalAlignment="Center">
+            <TextBlock VerticalAlignment="Center"  Text="Driver dir :" />
+            <TextBox Width="400" Height="30" Margin="9,0,3,0" Text="{Binding PatchPath}" VerticalContentAlignment="Center" />
+            <Button Width="110" Height="30" Content="Pick driver" Command="{Binding SelectFolderCommand}"  CommandParameter="Driver" />
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Center" Grid.Row="12"   Orientation="Horizontal">
             <Button Margin="5" HorizontalAlignment="Center"  Content="Build" Width="110" Height="30" Command="{Binding BuildCommand}" ToolTipService.ToolTip="The binary differential patch package is generated based on the difference between the two versions." />
             <CheckBox Margin="10,0,0,0" IsChecked="{Binding IsPublish}" Content="publish" VerticalAlignment="Center" />
         </StackPanel>

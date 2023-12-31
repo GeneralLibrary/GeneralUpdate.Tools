@@ -17,7 +17,7 @@ namespace GeneralUpdate.Packet.ViewModels
     {
         #region Private Members
 
-        private string sourcePath, targetPath, patchPath, infoMessage, url, packetName;
+        private string sourcePath, targetPath, patchPath, infoMessage, url, packetName, driverDir;
         private List<string> _formats, _encodings, _appTypes;
         private string _currentFormat, _currentEncoding, _currentAppType, _currentVersion, _currentClientAppKey;
         private bool isPublish;
@@ -49,6 +49,7 @@ namespace GeneralUpdate.Packet.ViewModels
         public bool IsPublish { get => isPublish; set => SetProperty(ref isPublish, value); }
         public string Url { get => url; set => SetProperty(ref url, value); }
         public string PacketName { get => packetName; set => SetProperty(ref packetName, value); }
+        public string DriverDir { get => packetName; set => SetProperty(ref driverDir, value); }
 
         public AsyncRelayCommand<string> SelectFolderCommand
         {
@@ -148,7 +149,7 @@ namespace GeneralUpdate.Packet.ViewModels
             var openFileDialog = new OpenFileDialog();
             openFileDialog.InitialDirectory = @"D:\";
             openFileDialog.Filter = "All files (*.*)|*.*";
-            if (!openFileDialog.ShowDialog().Value)
+            if (openFileDialog.ShowDialog() == false)
             {
                 await ShowMessage("Pick options", "No results were selected !");
                 return;
@@ -167,6 +168,10 @@ namespace GeneralUpdate.Packet.ViewModels
 
                 case "Patch":
                     PatchPath = selectedFilePath;
+                    break;
+
+                case "Driver":
+                    DriverDir = selectedFilePath;
                     break;
             }
         }
@@ -190,6 +195,7 @@ namespace GeneralUpdate.Packet.ViewModels
 
             try
             {
+                CopyDirectory(DriverDir, TargetPath);
                 await DifferentialCore.Instance.Clean(SourcePath, TargetPath, PatchPath, (sender, args) => { },
                     String2OperationType(CurrentFormat), String2Encoding(CurrentEncoding), PacketName);
                 if (IsPublish)
@@ -315,13 +321,34 @@ namespace GeneralUpdate.Packet.ViewModels
             }));
         }
 
-
         /// <summary>
-        /// Check whether the directory contains driver files.
+        /// Copy all folders containing drivers in the root directory.
         /// </summary>
-        /// <param name="subPath"></param>
-        /// <returns></returns>
-        public bool IsDriver(string subPath) => Directory.EnumerateFiles(subPath, "*.inf").Any();
+        /// <param name="sourceDir"></param>
+        /// <param name="targetDir"></param>
+        private void CopyDirectory(string sourceDir, string targetDir) 
+        {
+            if (string.IsNullOrWhiteSpace(sourceDir) || string.IsNullOrEmpty(targetDir))
+                return;
+
+            if (!Directory.Exists(targetDir))
+                Directory.CreateDirectory(targetDir);
+
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                if (Path.GetExtension(file) == ".inf")
+                {
+                    var targetPath = Path.Combine(targetDir, Path.GetFileName(file));
+                    File.Copy(file, targetPath, true);
+                }
+            }
+
+            foreach (var directory in Directory.GetDirectories(sourceDir))
+            {
+                var targetPath = Path.Combine(targetDir, Path.GetFileName(directory));
+                CopyDirectory(directory, targetPath);
+            }
+        }
 
         #endregion Private Methods
     }
