@@ -18,7 +18,7 @@ namespace GeneralUpdate.Packet.Utils
                     content.Add(stringContent, parameter.Key);
                 }
 
-                if (string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+                if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
                 {
                     var fileStream = File.OpenRead(filePath);
                     var fileInfo = new FileInfo(filePath);
