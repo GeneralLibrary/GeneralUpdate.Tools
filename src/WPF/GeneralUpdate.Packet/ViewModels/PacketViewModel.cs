@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.AspNetCore.DTO;
 using GeneralUpdate.Core.Utils;
 using GeneralUpdate.Differential;
@@ -10,6 +10,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Text;
 using System.Windows;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace GeneralUpdate.Packet.ViewModels
 {
@@ -49,7 +50,7 @@ namespace GeneralUpdate.Packet.ViewModels
         public bool IsPublish { get => isPublish; set => SetProperty(ref isPublish, value); }
         public string Url { get => url; set => SetProperty(ref url, value); }
         public string PacketName { get => packetName; set => SetProperty(ref packetName, value); }
-        public string DriverDir { get => packetName; set => SetProperty(ref driverDir, value); }
+        public string DriverDir { get => driverDir; set => SetProperty(ref driverDir, value); }
 
         public AsyncRelayCommand<string> SelectFolderCommand
         {
@@ -146,33 +147,35 @@ namespace GeneralUpdate.Packet.ViewModels
         /// <param name="value"></param>
         private async Task SelectFolderAction(string value)
         {
-            var openFileDialog = new OpenFileDialog();
-            openFileDialog.InitialDirectory = @"D:\";
-            openFileDialog.Filter = "All files (*.*)|*.*";
-            if (openFileDialog.ShowDialog() == false)
+            using (var dialog = new CommonOpenFileDialog())
             {
-                await ShowMessage("Pick options", "No results were selected !");
-                return;
-            }
+                dialog.InitialDirectory = @"D:\";
+                dialog.IsFolderPicker = true;
+                CommonFileDialogResult result = dialog.ShowDialog();
+                if (result != CommonFileDialogResult.Ok)
+                {
+                    await ShowMessage("Pick options", "No results were selected !");
+                    return;
+                }
+                string selectedFilePath = dialog.FileName;
+                switch (value)
+                {
+                    case "Source":
+                        SourcePath = selectedFilePath;
+                        break;
 
-            string selectedFilePath = openFileDialog.FileName;
-            switch (value)
-            {
-                case "Source":
-                    SourcePath = selectedFilePath;
-                    break;
+                    case "Target":
+                        TargetPath = selectedFilePath;
+                        break;
 
-                case "Target":
-                    TargetPath = selectedFilePath;
-                    break;
+                    case "Patch":
+                        PatchPath = selectedFilePath;
+                        break;
 
-                case "Patch":
-                    PatchPath = selectedFilePath;
-                    break;
-
-                case "Driver":
-                    DriverDir = selectedFilePath;
-                    break;
+                    case "Driver":
+                        DriverDir = selectedFilePath;
+                        break;
+                }
             }
         }
 
