@@ -6,7 +6,6 @@ using GeneralUpdate.Packet.Domain.Enum;
 using GeneralUpdate.Packet.MVVM;
 using GeneralUpdate.Packet.Servieces;
 using GeneralUpdate.Zip.Factory;
-using Microsoft.Win32;
 using System.IO;
 using System.Text;
 using System.Windows;
