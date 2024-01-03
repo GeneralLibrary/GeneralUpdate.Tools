@@ -21,10 +21,7 @@ namespace GeneralUpdate.Packet.ViewModels
             set => SetProperty(ref _currentModule , value); 
         }
 
-        internal MainViewModel() 
-        {
-            InitModule();
-        }
+        internal MainViewModel() => InitModule();
 
         private void InitModule() 
         {
