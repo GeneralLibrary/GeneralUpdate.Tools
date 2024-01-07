@@ -10,6 +10,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using GeneralUpdate.Zip;
 
 namespace GeneralUpdate.Packet.ViewModels
 {
@@ -197,9 +198,15 @@ namespace GeneralUpdate.Packet.ViewModels
 
             try
             {
+                // Copy all folders containing drivers in the root directory.
                 CopyDirectory(DriverDir, TargetPath);
+
+                // Build patch package
                 await DifferentialCore.Instance.Clean(SourcePath, TargetPath, PatchPath, (sender, args) => { },
                     String2OperationType(CurrentFormat), String2Encoding(CurrentEncoding), PacketName);
+
+                await CreateZip();
+
                 if (IsPublish)
                 {
                     var packetPath = Path.Combine(TargetPath, $"{PacketName}{CurrentFormat}");
@@ -350,6 +357,16 @@ namespace GeneralUpdate.Packet.ViewModels
                 var targetPath = Path.Combine(targetDir, Path.GetFileName(directory));
                 CopyDirectory(directory, targetPath);
             }
+        }
+
+        private async Task CreateZip()
+        {
+            new GeneralZipFactory()
+            .CreateOperate(OperationType.GZip, packetName, sourcePath, targetPath)
+            .CreateZip();
+
+            var path = Path.Combine(targetPath, packetName);
+            await ShowMessage("Compression operation", File.Exists(path) ? $"{path} Created successfully." : $"{path} Creation failure!");
         }
 
         #endregion Private Methods
