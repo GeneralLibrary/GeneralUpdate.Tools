@@ -10,8 +10,12 @@
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
             <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
-        <TextBlock Text="* All functional buttons will have tooltips that hover over them with the mouse." TextWrapping="WrapWithOverflow" FontSize="24" />
-        <TextBlock Grid.Row="1" Text="*If you have any usage problems, please submit the issue on github and the author will reply as soon as possible" TextWrapping="WrapWithOverflow" FontSize="24" />
+        <Label Name="LblUrl" FontSize="24">
+            <Hyperlink NavigateUri="https://gitee.com/GeneralLibrary/GeneralUpdate/tree/master/doc"  RequestNavigate="LblUrl_RequestNavigate">Help document link address,Click here to jump to the web page.</Hyperlink>
+        </Label>
+        <TextBlock Grid.Row="1" Text="* All functional buttons will have tooltips that hover over them with the mouse." TextWrapping="WrapWithOverflow" FontSize="24" />
+        <TextBlock Grid.Row="2" Text="*If you have any usage problems, please submit the issue on github and the author will reply as soon as possible" TextWrapping="WrapWithOverflow" FontSize="24" />
     </Grid>
 </UserControl>
