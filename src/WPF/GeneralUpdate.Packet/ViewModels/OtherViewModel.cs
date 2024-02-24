@@ -39,7 +39,7 @@ namespace GeneralUpdate.Packet.ViewModels
             var openFileDialog = new OpenFileDialog();
             openFileDialog.InitialDirectory = @"D:\";
             openFileDialog.Filter = "All files (*.*)|*.*";
-            if (!openFileDialog.ShowDialog().Value)
+            if (openFileDialog.ShowDialog() == false)
             {
                 await ShowMessage("Pick options", "No results were selected !");
                 return;
@@ -70,7 +70,7 @@ namespace GeneralUpdate.Packet.ViewModels
             var openFileDialog = new OpenFileDialog();
             openFileDialog.InitialDirectory = @"D:\";
             openFileDialog.Filter = "All files (*.*)|*.*";
-            if (!openFileDialog.ShowDialog().Value)
+            if (openFileDialog.ShowDialog() == false)
             {
                 await ShowMessage("Pick options", "No results were selected !");
                 return;
