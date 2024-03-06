@@ -4,7 +4,7 @@ using GeneralUpdate.Core.Utils;
 using GeneralUpdate.Differential;
 using GeneralUpdate.Packet.Domain.Enum;
 using GeneralUpdate.Packet.MVVM;
-using GeneralUpdate.Packet.Servieces;
+using GeneralUpdate.Packet.Servieces; 
 using GeneralUpdate.Zip.Factory;
 using System.IO;
 using System.Text;
