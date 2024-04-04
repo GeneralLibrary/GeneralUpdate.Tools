@@ -365,7 +365,7 @@ namespace GeneralUpdate.Packet.ViewModels
             .CreateOperate(OperationType.GZip, packetName, sourcePath, targetPath)
             .CreateZip();
 
-            var path = Path.Combine(targetPath, packetName);
+            var path = Path.Combine(targetPath, $"{PacketName}{CurrentFormat}");
             await ShowMessage("Compression operation", File.Exists(path) ? $"{path} Created successfully." : $"{path} Creation failure!");
         }
 
