@@ -225,7 +225,7 @@
                 Height="35"
                 Margin="9,0,3,0"
                 VerticalContentAlignment="Center"
-                Text="{Binding PatchPath}" />
+                Text="{Binding DriverDir}" />
             <Button
                 Width="110"
                 Height="35"
