@@ -13,6 +13,6 @@ jobs:
       with:
         dotnet-version: '8.0.x'
     - name: Restore dependencies
-      run: dotnet restore ./src/WPF/GeneralUpdate.Tool.sln
+      run: dotnet restore ./src/GeneralUpdate.Tool.sln
     - name: build
-      run: dotnet build ./src/WPF/GeneralUpdate.Tool.sln -c Release
+      run: dotnet build ./src/GeneralUpdate.Tool.sln -c Release
