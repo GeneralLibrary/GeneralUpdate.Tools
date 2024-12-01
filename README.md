@@ -26,9 +26,3 @@ Generalupdate.tool is a subsidiary project of GeneralUpdate, based on. NET 8 WPF
 
 - https://gitee.com/GeneralLibrary/GeneralUpdate.Tools
 - https://github.com/GeneralLibrary/GeneralUpdate
-
-
-
-## Run
-
-![](imgs/run.png)
