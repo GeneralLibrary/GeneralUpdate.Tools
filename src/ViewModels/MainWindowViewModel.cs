@@ -147,7 +147,8 @@ public class MainWindowViewModel : ObservableObject
             var parentDirectory = directoryInfo.Parent!.FullName;
             var operationType = ConfigModel.Format.Value;
             var encoding = ConfigModel.Encoding.Value;
-            CompressProvider.Compress(operationType, ConfigModel.PatchDirectory, parentDirectory, false, encoding);
+           
+            CompressProvider.Compress(operationType, ConfigModel.PatchDirectory, Path.Combine(parentDirectory,ConfigModel.Name+ ConfigModel.Format.Value), false, encoding);
             if (Directory.Exists(ConfigModel.PatchDirectory))
                 DeleteDirectoryRecursively(ConfigModel.PatchDirectory);
             
