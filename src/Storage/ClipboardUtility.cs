@@ -17,5 +17,8 @@ public class ClipboardUtility
         await _clipboard?.SetDataObjectAsync(dataObject);
     }
 
-    public static void CreateClipboard(Visual visual) => _clipboard = TopLevel.GetTopLevel(visual)?.Clipboard;
+    public static void CreateClipboard(Visual visual)
+    {
+        _clipboard = TopLevel.GetTopLevel(visual)?.Clipboard;
+    }
 }

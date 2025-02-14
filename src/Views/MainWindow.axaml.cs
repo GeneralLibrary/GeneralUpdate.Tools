@@ -8,5 +8,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ClipboardUtility.CreateClipboard(this);
+        Storage.Instance.SetStorageProvider(this);
     }
 }

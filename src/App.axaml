@@ -13,6 +13,6 @@
     </Application.Resources>
     <Application.Styles>
         <FluentTheme />
-        <semi:SemiTheme Locale="zh-CN" />
+        <semi:SemiTheme />
     </Application.Styles>
 </Application>

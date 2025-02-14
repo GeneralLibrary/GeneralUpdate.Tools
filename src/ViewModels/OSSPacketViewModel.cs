@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Common.HashAlgorithms;
 using GeneralUpdate.Tool.Avalonia.Models;
 using Newtonsoft.Json;
 using Nlnet.Avalonia.Controls;
@@ -18,6 +20,7 @@ public class OSSPacketViewModel : ObservableObject
     
     private AsyncRelayCommand? _copyCommand;
     private AsyncRelayCommand? _buildCommand;
+    private AsyncRelayCommand? _hashCommand;
     private RelayCommand? _appendCommand;
     private RelayCommand? _clearCommand;
     private RelayCommand? _loadedCommand;
@@ -39,7 +42,9 @@ public class OSSPacketViewModel : ObservableObject
     public RelayCommand AppendCommand { get => _appendCommand ??= new RelayCommand(AppendAction); }
 
     public AsyncRelayCommand CopyCommand { get => _copyCommand ??= new AsyncRelayCommand(CopyAction); }
-
+    
+    public AsyncRelayCommand HashCommand { get => _hashCommand ??= new AsyncRelayCommand(HashAction); }
+    
     public RelayCommand ClearCommand { get => _clearCommand ??= new RelayCommand(ClearAction); }
     
     public RelayCommand LoadedCommand
@@ -119,7 +124,20 @@ public class OSSPacketViewModel : ObservableObject
             await MessageBox.ShowAsync("Copy fail", "Fail", Buttons.OK);
         }
     }
+    
+    private async Task HashAction()
+    {
+        var files = await Storage.Instance.OpenFileDialog();
+        if (files is null || files.Count == 0) return;
 
+        var file = files.First();
+        if (file is not null)
+        {
+            Sha256HashAlgorithm hashAlgorithm = new();
+            CurrnetConfig.Hash = hashAlgorithm.ComputeHash(file.Path.AbsolutePath);
+        }
+    }
+    
     private void ClearAction()
     {
         CurrnetConfig.JsonContent = "{}";
@@ -134,8 +152,8 @@ public class OSSPacketViewModel : ObservableObject
         CurrnetConfig = new OSSConfigModel
         {
             JsonContent = "{}", 
-            PacketName = "Packet1", 
-            Hash = Guid.NewGuid().ToString(), 
+            PacketName = "Packet", 
+            Hash = String.Empty, 
             Date = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day),
             Time = new TimeSpan(dateTime.Hour, dateTime.Minute, dateTime.Second),
             Version = "1.0.0.0",

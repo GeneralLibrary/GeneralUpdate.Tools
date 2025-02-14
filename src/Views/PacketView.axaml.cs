@@ -10,7 +10,6 @@ public partial class PacketView : UserControl
     public PacketView()
     {
         InitializeComponent();
-        Storage.Instance.SetStorageProvider(this);
         DataContext = new PacketViewModel();
     }
 }

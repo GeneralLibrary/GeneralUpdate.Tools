@@ -8,7 +8,6 @@ public partial class OSSPacketView : UserControl
     public OSSPacketView()
     {
         InitializeComponent();
-        ClipboardUtility.CreateClipboard(this);
         DataContext = new OSSPacketViewModel();
     }
 }
