@@ -9,17 +9,15 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.Common.Compress;
-using GeneralUpdate.Common.HashAlgorithms;
 using GeneralUpdate.Differential;
 using GeneralUpdate.Tool.Avalonia.Models;
 using Nlnet.Avalonia.Controls;
 
 namespace GeneralUpdate.Tool.Avalonia.ViewModels;
 
-public class MainWindowViewModel : ObservableObject
+public class PacketViewModel : ObservableObject
 {
     private PacketConfigModel? _configModel;
-    private Sha256HashAlgorithm _hashAlgorithms = new Sha256HashAlgorithm();
     
     private RelayCommand? _clearCommand;
     private RelayCommand? _loadedCommand;

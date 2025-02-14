@@ -1,0 +1,144 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
+             xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
+             xmlns:vm="clr-namespace:GeneralUpdate.Tool.Avalonia.ViewModels"
+             x:Class="GeneralUpdate.Tool.Avalonia.Views.PacketView" x:DataType="vm:PacketViewModel">
+    <i:Interaction.Behaviors>
+        <ia:EventTriggerBehavior EventName="Loaded">
+            <ia:InvokeCommandAction Command="{Binding LoadedCommand}"/>
+        </ia:EventTriggerBehavior>
+    </i:Interaction.Behaviors>
+ <Grid RowDefinitions="9*,1*">
+        <ScrollViewer>
+            <Grid ColumnDefinitions="1*,4*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                <!--  SourcePath  -->
+                <TextBlock
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="AppDirectory" />
+                <TextBox
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.AppDirectory}" />
+                <Button
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="App" Content="Pick"
+                    Theme="{DynamicResource SolidButton}" >
+                </Button>
+                <!--  Target path  -->
+                <TextBlock
+                    Grid.Row="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="ReleaseDirectory" />
+                <TextBox
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.ReleaseDirectory}" />
+                <Button
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="Release" Content="Pick"
+                    Theme="{DynamicResource SolidButton}">
+                </Button>
+                <!--  Patch path  -->
+                <TextBlock
+                    Grid.Row="2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="PatchDirectory" />
+                <TextBox
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.PatchDirectory}" />
+                <Button
+                    Grid.Row="2"
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="Patch" Content="Pick"
+                    Theme="{DynamicResource SolidButton}">
+                </Button>
+                <!--  Packet name  -->
+                <TextBlock
+                    Grid.Row="3"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="PacketName" />
+                <TextBox
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.Name, Mode=TwoWay}" />
+                <!--  Packet name  -->
+                <TextBlock
+                    Grid.Row="4"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Format" />
+                <ComboBox
+                    Grid.Row="4"
+                    Grid.Column="1"
+                    MinWidth="150"
+                    Margin="5"
+                    ItemsSource="{Binding Formats}"
+                    SelectedItem="{Binding ConfigModel.Format}" />
+                <!--  encoding  -->
+                <TextBlock
+                    Grid.Row="5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Encoding" />
+                <ComboBox
+                    Grid.Row="5"
+                    Grid.Column="1"
+                    MinWidth="150"
+                    Margin="5"
+                    ItemsSource="{Binding Encodings}"
+                    SelectedIndex="0"
+                    SelectedItem="{Binding ConfigModel.Encoding}" />
+                <Button
+                    Grid.Row="6"
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    IsVisible="False"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="Driver" Content="Pick"
+                    Theme="{DynamicResource SolidButton}">
+                </Button>
+            </Grid>
+        </ScrollViewer>
+        <StackPanel
+            Grid.Row="1"
+            Margin="0,0,15,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button
+                Classes="Primary"
+                Command="{Binding BuildCommand}"
+                Theme="{DynamicResource SolidButton}" Content="Build">
+            </Button>
+            <Button
+                Classes="Primary"
+                Command="{Binding ClearCommand}"
+                Theme="{DynamicResource SolidButton}" Content="Clear">
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>
