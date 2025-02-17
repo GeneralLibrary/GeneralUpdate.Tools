@@ -134,7 +134,7 @@ public class OSSPacketViewModel : ObservableObject
         if (file is not null)
         {
             Sha256HashAlgorithm hashAlgorithm = new();
-            CurrnetConfig.Hash = hashAlgorithm.ComputeHash(file.Path.AbsolutePath);
+            CurrnetConfig.Hash = hashAlgorithm.ComputeHash(file.Path.LocalPath);
         }
     }
     
