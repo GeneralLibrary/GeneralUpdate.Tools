@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
     <ItemGroup>
@@ -23,7 +23,6 @@
         <PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.2.0.1" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
         <PackageReference Include="GeneralUpdate.Core" Version="9.1.5" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="Nlnet.Avalonia.MessageBox" Version="1.0.2" />
         <PackageReference Include="Semi.Avalonia" Version="11.2.1.4" />
     </ItemGroup>

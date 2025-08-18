@@ -1,4 +1,13 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+using GeneralUpdate.Common.Compress;
+using GeneralUpdate.Differential;
+using GeneralUpdate.Tool.Avalonia.Models;
+
+using Nlnet.Avalonia.Controls;
+
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -6,24 +15,14 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using GeneralUpdate.Common.Compress;
-using GeneralUpdate.Differential;
-using GeneralUpdate.Tool.Avalonia.Models;
-using Nlnet.Avalonia.Controls;
 
 namespace GeneralUpdate.Tool.Avalonia.ViewModels;
 
-public class PacketViewModel : ObservableObject
+public partial class PacketViewModel : ObservableObject
 {
-    private PacketConfigModel? _configModel;
-    
-    private RelayCommand? _clearCommand;
-    private RelayCommand? _loadedCommand;
-    private AsyncRelayCommand? _buildCommand;
-    private AsyncRelayCommand<string>? _selectFolderCommand;
-    
+    [ObservableProperty]
+    private PacketConfigVM? _configModel;
+
     public ObservableCollection<AppTypeModel> AppTypes { get; set; } = new();
 
     public ObservableCollection<FormatModel> Formats { get; set; } =
@@ -43,51 +42,36 @@ public class PacketViewModel : ObservableObject
         new EncodingModel { DisplayName = "ASCII", Value = Encoding.ASCII, Type = 8 }
     ];
 
-    public ObservableCollection<PlatformModel> Platforms { get; set; } = 
+    public ObservableCollection<PlatformModel> Platforms { get; set; } =
     [
         new PlatformModel { DisplayName = "Windows", Value = 1 },
         new PlatformModel { DisplayName = "Linux", Value = 2 }
     ];
-    
-    public PacketConfigModel ConfigModel
-    { 
-        get => _configModel ??= new PacketConfigModel() ;
-        set
-        {
-            _configModel = value;
-            SetProperty(ref _configModel, value);
-        }
-    }
-    
-    public RelayCommand LoadedCommand
-    {
-        get { return _loadedCommand ??= new (LoadedAction); }
-    }
-    
-    public AsyncRelayCommand<string> SelectFolderCommand
-    {
-        get => _selectFolderCommand ??= new (SelectFolderAction);
-    }
 
-    public AsyncRelayCommand BuildCommand
-    {
-        get => _buildCommand ??= new (BuildPacketAction);
-    }
-    
-    public RelayCommand ClearCommand
-    {
-        get => _clearCommand ??= new (ClearAction);
-    }
-    
+    [RelayCommand]
     private void LoadedAction()
     {
         AppTypes.Clear();
-        AppTypes.Add(new AppTypeModel{ DisplayName = "ClientApp", Value = 1 });
-        AppTypes.Add(new AppTypeModel{ DisplayName = "UpgradeApp", Value = 2 });
-        ResetAction();
+        AppTypes.Add(new AppTypeModel { DisplayName = "ClientApp", Value = 1 });
+        AppTypes.Add(new AppTypeModel { DisplayName = "UpgradeApp", Value = 2 });
+
+        try
+        {
+            var model = IOHelper.Instance.ReadContentFromLocal<PacketConfigM>(Path.Combine(AppContext.BaseDirectory, "PacketConfig.json"));
+
+            ConfigModel = model.ToVM();
+            ConfigModel!.Format = Formats[model.FormatIndex];
+            ConfigModel!.Encoding = Encodings[model.EncodingIndex];
+            ConfigModel!.Platform = Platforms[model.PlatformIndex];
+        }
+        catch (Exception ex)
+        {
+            MessageBox.ShowAsync($"Load fail => {ex}", "Fail", Buttons.OK);
+        }
     }
-    
-    private void ResetAction() 
+
+    [RelayCommand]
+    private void ResetAction()
     {
         ConfigModel.Name = GenerateFileName("1.0.0.0");
         ConfigModel.ReleaseDirectory = GetPlatformSpecificPath();
@@ -96,11 +80,10 @@ public class PacketViewModel : ObservableObject
         ConfigModel.Encoding = Encodings.First();
         ConfigModel.Format = Formats.First();
     }
-    
-       /// <summary>
-    /// Choose a path
-    /// </summary>
+
+    /// <summary>Choose a path</summary>
     /// <param name="value"></param>
+    [RelayCommand]
     private async Task SelectFolderAction(string value)
     {
         try
@@ -130,9 +113,7 @@ public class PacketViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    ///  Build patch package
-    /// </summary>
+    [RelayCommand]
     private async Task BuildPacketAction()
     {
         try
@@ -145,15 +126,15 @@ public class PacketViewModel : ObservableObject
             var parentDirectory = directoryInfo.Parent!.FullName;
             var operationType = ConfigModel.Format.Value;
             var encoding = ConfigModel.Encoding.Value;
-            
+
             CompressProvider.Compress(operationType
                 , ConfigModel.PatchDirectory
-                , Path.Combine(parentDirectory,ConfigModel.Name+ ConfigModel.Format.Value)
+                , Path.Combine(parentDirectory, ConfigModel.Name + ConfigModel.Format.Value)
                 , false, encoding);
-            
+
             if (Directory.Exists(ConfigModel.PatchDirectory))
                 DeleteDirectoryRecursively(ConfigModel.PatchDirectory);
-            
+
             var packetInfo = new FileInfo(Path.Combine(parentDirectory, $"{ConfigModel.Name}{ConfigModel.Format.Value}"));
             if (packetInfo.Exists)
             {
@@ -164,6 +145,13 @@ public class PacketViewModel : ObservableObject
             {
                 await MessageBox.ShowAsync("Build fail", "Fail", Buttons.OK);
             }
+
+            var model = ConfigModel.ToModel();
+            model.PlatformIndex = Platforms.IndexOf(ConfigModel.Platform);
+            model.FormatIndex = Formats.IndexOf(ConfigModel.Format);
+            model.EncodingIndex = Encodings.IndexOf(ConfigModel.Encoding);
+
+            IOHelper.Instance.WriteContentTolocal(model, Path.Combine(AppContext.BaseDirectory, "PacketConfig.json"));
         }
         catch (Exception e)
         {
@@ -171,9 +159,7 @@ public class PacketViewModel : ObservableObject
             await MessageBox.ShowAsync(e.Message, "Fail", Buttons.OK);
         }
     }
-    
-    private void ClearAction() => ResetAction();
-    
+
     private string GetPlatformSpecificPath()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -181,22 +167,22 @@ public class PacketViewModel : ObservableObject
             // Windows-specific path, defaulting to C: drive
             return @"C:\";
         }
-        
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             // Linux-specific path, defaulting to /home/user
             return "/home";
         }
-        
+
         throw new PlatformNotSupportedException("Unsupported OS");
     }
-    
+
     private string GenerateFileName(string version)
     {
         string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
         return $"packet_{timestamp}_{version}";
     }
-    
+
     private void DeleteDirectoryRecursively(string targetDir)
     {
         foreach (var file in Directory.GetFiles(targetDir))
