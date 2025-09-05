@@ -2,8 +2,6 @@
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
-             xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:toolTip="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
              xmlns:vm="clr-namespace:GeneralUpdate.Tool.Avalonia.ViewModels"
@@ -11,11 +9,11 @@
              d:DesignWidth="800"
              x:DataType="vm:OSSPacketViewModel"
              mc:Ignorable="d">
-    <i:Interaction.Behaviors>
-        <ia:EventTriggerBehavior EventName="Loaded">
-            <ia:InvokeCommandAction Command="{Binding LoadedCommand}" />
-        </ia:EventTriggerBehavior>
-    </i:Interaction.Behaviors>
+    <Interaction.Behaviors>
+        <EventTriggerBehavior EventName="Loaded">
+            <InvokeCommandAction Command="{Binding InitializeCommand}" />
+        </EventTriggerBehavior>
+    </Interaction.Behaviors>
     <Grid RowDefinitions="8*,1*">
         <Grid ColumnDefinitions="2*,4*,4*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
             <!--  发布时间  -->
@@ -49,19 +47,16 @@
         </Grid>
         <StackPanel Grid.Row="1" Margin="0,0,15,0" HorizontalAlignment="Right" VerticalAlignment="Center"
                     Orientation="Horizontal" Spacing="10">
-            <Button toolTip:ToolTip.Tip="Hash" Classes="Primary" Command="{Binding HashCommand}" Content="Hash" />
-            <Button toolTip:ToolTip.Tip="Append" Classes="Primary" Command="{Binding AppendCommand}">
-                <PathIcon Width="15" Height="15" Data="M602.251 885.76H165.203a28.738 28.738 0 0 1-20.186-8.605 28.644 28.644 0 0 1-8.189-20.377V167.331c0-16.063 12.695-28.991 28.375-28.991H756.8c15.702 0 28.321 12.928 28.321 28.991v378.33c0 20.547 16.361 37.204 36.46 37.204 20.164 0 36.438-16.657 36.438-37.204v-378.33c0-57.155-45.341-103.462-101.282-103.462H165.203c-55.943 0-101.284 46.307-101.284 103.462v689.447c0 57.133 45.341 103.451 101.284 103.451H602.25c20.184 0 36.545-16.657 36.545-37.202a36.852 36.852 0 0 0-10.539-26.219 36.844 36.844 0 0 0-26.005-11.048zM261.122 340.247c29.086 0 52.66-23.573 52.66-52.66 0-29.087-23.573-52.66-52.66-52.66-29.087 0-52.66 23.573-52.66 52.66 0 29.086 23.574 52.66 52.66 52.66z m199.89 0c29.076 0 52.66-23.573 52.66-52.66 0-29.087-23.584-52.66-52.66-52.66-29.087 0-52.671 23.573-52.671 52.66 0 29.086 23.585 52.66 52.671 52.66z m199.88 0c29.087 0 52.671-23.573 52.671-52.66 0-29.087-23.584-52.66-52.671-52.66s-52.649 23.573-52.649 52.66c-0.001 29.086 23.562 52.66 52.649 52.66zM245.653 477.693h411.731c20.569 0 37.248 16.668 37.248 37.224 0 20.569-16.679 37.248-37.248 37.248H245.653c-13.3 0-25.59-7.097-32.241-18.613a37.257 37.257 0 0 1 0-37.246 37.234 37.234 0 0 1 32.241-18.613z m0 201.313h249.715c20.567 0 37.235 16.659 37.235 37.226s-16.668 37.245-37.235 37.245H245.653c-20.567 0-37.235-16.679-37.235-37.245s16.669-37.226 37.235-37.226z m679.378 89.174h-72.537v-78.126c0-20.608-13.661-37.35-33.166-37.35-19.42 0-33.103 16.742-33.103 37.35v78.061h-72.6c-20.014 0.596-35.757 17.316-35.185 37.352 0 20.61 15.702 33.975 35.185 33.975h72.622v74.704c0 20.693 13.661 37.352 33.081 37.352 19.505 0 33.166-16.659 33.166-37.352v-74.704h72.537c19.483 0 35.248-13.365 35.248-33.975 0-20.693-15.68-37.352-35.248-37.352" />
-            </Button>
+
             <Button toolTip:ToolTip.Tip="Clear" Classes="Primary" Command="{Binding ClearActionCommand}">
                 <PathIcon Width="15" Height="15" Data="M923.6 513.2c0-43.6-35.4-79-79-79H589.1V184.9c0-46.7-35.8-84.7-79.8-84.7s-79.8 38-79.8 84.7v249.3H178c-43.6 0-79 35.4-79 79 0 37.6 26.5 69.2 61.7 77.1V867c0 47 41.6 85.2 92.7 85.2h509.8c51.1 0 92.7-38.2 92.7-85.2V591.4c38.2-5.5 67.7-38.5 67.7-78.2zM477.5 184.9c0-20.2 14.2-36.7 31.8-36.7s31.8 16.4 31.8 36.7v249.3h-63.5V184.9z m285.7 719.3h-28.8v-202c0-11-9-20-20-20s-20 9-20 20v202H599v-202c0-11-9-20-20-20s-20 9-20 20v202h-95.4v-202c0-11-9-20-20-20s-20 9-20 20v202h-95.4v-202c0-11-9-20-20-20s-20 9-20 20v202h-34.8c-24.6 0-44.7-16.7-44.7-37.2V592.2h599.2V867c0 20.5-20.1 37.2-44.7 37.2z m81.4-360H178c-17.1 0-31-13.9-31-31s13.9-31 31-31h666.6c17.1 0 31 13.9 31 31s-13.9 31-31 31z" />
             </Button>
-            <Button toolTip:ToolTip.Tip="Copy" Classes="Primary" Command="{Binding CopyCommand}">
+            <Button toolTip:ToolTip.Tip="Copy" Classes="Primary" Command="{Binding CopyActionCommand}">
                 <PathIcon Width="15" Height="15" Data="M394.666667 106.666667h448a74.666667 74.666667 0 0 1 74.666666 74.666666v448a74.666667 74.666667 0 0 1-74.666666 74.666667H394.666667a74.666667 74.666667 0 0 1-74.666667-74.666667V181.333333a74.666667 74.666667 0 0 1 74.666667-74.666666z m0 64a10.666667 10.666667 0 0 0-10.666667 10.666666v448a10.666667 10.666667 0 0 0 10.666667 10.666667h448a10.666667 10.666667 0 0 0 10.666666-10.666667V181.333333a10.666667 10.666667 0 0 0-10.666666-10.666666H394.666667z m245.333333 597.333333a32 32 0 0 1 64 0v74.666667a74.666667 74.666667 0 0 1-74.666667 74.666666H181.333333a74.666667 74.666667 0 0 1-74.666666-74.666666V394.666667a74.666667 74.666667 0 0 1 74.666666-74.666667h74.666667a32 32 0 0 1 0 64h-74.666667a10.666667 10.666667 0 0 0-10.666666 10.666667v448a10.666667 10.666667 0 0 0 10.666666 10.666666h448a10.666667 10.666667 0 0 0 10.666667-10.666666v-74.666667z" />
             </Button>
-            <Button toolTip:ToolTip.Tip="Build" Classes="Primary" Command="{Binding OSSBuildActionCommand}">
-                <PathIcon Width="15" Height="15" Data="M675 287.2h142.8c12.6 0 21-8.5 25.2-17.1 4.2-8.5 0-21.3-4.2-29.8L696 108.2c-8.4-8.5-21-8.5-29.4-4.3-12.6 4.3-16.8 12.8-16.8 25.6v132.2c-4.2 17 8.4 25.5 25.2 25.5z M855.7 347H641.3c-33.8 0-58.5-25.9-58.5-55.7V90.8c0-12.4-12.9-25.3-29.3-25.3H229.8c-50.7 0-88.4 38.3-88.4 81.1v729c0 46.7 42.2 85 88.4 85h566.9c50.7 0 88.4-38.3 88.4-85V372.3c-0.1-16.9-12.5-25.3-29.4-25.3z m-139 332.7c-7.9 8.4-16.3 12.4-29.3 12.4H565.8v115.4c0 8.4-4.5 21.4-12.4 25.3-8.4 8.4-16.9 12.9-29.8 12.9-12.4 0-20.8-4.5-29.3-12.9-8.4-8.4-12.4-16.9-12.4-25.3V692H368.2c-12.4 0-20.8-3.9-29.3-12.4-8.4-9-12.4-17.5-12.4-25.9 0-21.4 16.3-38.3 41.7-38.3h122.2V500.6c0-21.4 16.3-38.8 41.7-38.8 21.4 0 42.2 17.5 42.2 38.8v114.8h121.6c20.8 0 42.2 16.9 42.2 38.3-8.5 8.5-13 16.9-21.4 26z" />
-            </Button>
+            <Button toolTip:ToolTip.Tip="Build" Classes="Primary" Command="{Binding OSSBuildActionCommand}" Content="Build" />
+
+            <Button toolTip:ToolTip.Tip="Hash" Classes="Primary" Command="{Binding UploadCommand}" Content="Upload" />
         </StackPanel>
     </Grid>
 </UserControl>

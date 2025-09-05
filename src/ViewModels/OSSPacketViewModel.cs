@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using GeneralUpdate.Common.Compress;
 using GeneralUpdate.Common.HashAlgorithms;
-using GeneralUpdate.Tool.Avalonia.Models;
+using GeneralUpdate.Common.Shared.Object;
 
 using Nlnet.Avalonia.Controls;
 
@@ -10,6 +11,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
@@ -22,50 +24,92 @@ public partial class OSSPacketViewModel : ObservableObject
     #region Private Members
 
     [ObservableProperty]
-    private OSSConfigModel? _currnetConfig;
-
-    private AsyncRelayCommand? _copyCommand;
-   
-    private AsyncRelayCommand? _hashCommand;
-    private RelayCommand? _appendCommand;
-
-    private RelayCommand? _loadedCommand;
+    private OSSConfigVM? _currnetConfig;
 
     #endregion Private Members
 
-    #region Public Properties
+    public ObservableCollection<OSSConfigVM> Configs { get; set; } = new();
 
-    public ObservableCollection<OSSConfigModel> Configs { get; set; } = new();
+    private JsonSerializerOptions jsonSerializerSettings;
 
-  
-
-    public RelayCommand AppendCommand { get => _appendCommand ??= new RelayCommand(AppendAction); }
-
-    public AsyncRelayCommand CopyCommand { get => _copyCommand ??= new AsyncRelayCommand(CopyAction); }
-
-    public AsyncRelayCommand HashCommand { get => _hashCommand ??= new AsyncRelayCommand(HashAction); }
-
-    public RelayCommand LoadedCommand
+    public OSSPacketViewModel()
     {
-        get { return _loadedCommand ??= new(LoadedAction); }
+        jsonSerializerSettings = new JsonSerializerOptions()
+        {
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs),
+            WriteIndented = true,
+            // TypeInfoResolver = SourceGenerationContext.Default
+        };
     }
 
-    #endregion Public Properties
-
     #region Private Methods
+
+  
+    private void GenerteJsonContent()
+    {
+        try
+        {
+            Configs.Clear();
+            Configs.Add(new OSSConfigVM
+            {
+                Date = CurrnetConfig.Date,
+                Time = CurrnetConfig.Time,
+                Hash = CurrnetConfig.Hash,
+                PacketName = CurrnetConfig.PacketName,
+                Url = CurrnetConfig.Url,
+                Version = CurrnetConfig.Version
+            });
+
+            CurrnetConfig.JsonContent = JsonSerializer.Serialize(Configs, jsonSerializerSettings);
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show("Append fail", "Fail", Buttons.OK);
+        }
+    }
+
+    [RelayCommand]
+    private async Task CopyAction()
+    {
+        try
+        {
+            await ClipboardUtility.SetText(CurrnetConfig.JsonContent);
+            await MessageBox.ShowAsync("Copy success", "Success", Buttons.OK);
+        }
+        catch (Exception e)
+        {
+            await MessageBox.ShowAsync("Copy fail", "Fail", Buttons.OK);
+        }
+    }
+
     [RelayCommand]
     private async Task OSSBuildAction()
     {
         try
         {
-            var file = await Storage.Instance.SaveFilePickerAsync();
-            if (file != null)
+            var files = await Storage.Instance.SelectFolderDialog();
+            if (files is null || files.Count == 0) return;
+
+            var file = files.First();
+            if (file is not null)
             {
-                var json = JsonSerializer.Serialize(Configs);
-                await File.WriteAllTextAsync(file.Path.AbsolutePath, json, System.Text.Encoding.UTF8);
+                var folderName = file.Name;
+                var parentFolder = Directory.GetParent(file.Path.AbsolutePath)!.Parent;
+                var newZipPath = Path.Combine(parentFolder!.FullName, CurrnetConfig.PacketName + ".zip");
+
+                CompressProvider.Compress(Format.ZIP, file.Path.AbsolutePath, newZipPath, false, Encoding.Default);
+
+                Sha256HashAlgorithm hashAlgorithm = new();
+                CurrnetConfig.Hash = hashAlgorithm.ComputeHash(newZipPath);
+                CurrnetConfig.Url += "//" + CurrnetConfig.PacketName + ".zip";
+                GenerteJsonContent();
+                var versionFilePath = Path.Combine(parentFolder.FullName, "version.json");
+
+                var json = JsonSerializer.Serialize(Configs, jsonSerializerSettings);
+                await File.WriteAllTextAsync(versionFilePath, json, System.Text.Encoding.UTF8);
                 var caption = string.Empty;
                 var message = string.Empty;
-                if (File.Exists(file.Path.AbsolutePath))
+                if (File.Exists(versionFilePath))
                 {
                     caption = "Success";
                     message = "Build success";
@@ -85,57 +129,11 @@ public partial class OSSPacketViewModel : ObservableObject
         }
     }
 
-    private void AppendAction()
+    /// <summary>修改为选择文件夹，压缩并计算哈希值</summary>
+    /// <returns></returns>
+    [RelayCommand]
+    private async Task Upload()
     {
-        try
-        {
-            Configs.Add(new OSSConfigModel
-            {
-                Date = CurrnetConfig.Date,
-                Time = CurrnetConfig.Time,
-                Hash = CurrnetConfig.Hash,
-                PacketName = CurrnetConfig.PacketName,
-                Url = CurrnetConfig.Url,
-                Version = CurrnetConfig.Version
-            });
-            var jsonSerializerSettings = new JsonSerializerOptions()
-            {
-                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs),
-                WriteIndented = true,
-                // TypeInfoResolver = SourceGenerationContext.Default
-            };
-            CurrnetConfig.JsonContent = JsonSerializer.Serialize(Configs, jsonSerializerSettings);
-        }
-        catch (Exception e)
-        {
-            MessageBox.Show("Append fail", "Fail", Buttons.OK);
-        }
-    }
-
-    private async Task CopyAction()
-    {
-        try
-        {
-            await ClipboardUtility.SetText(CurrnetConfig.JsonContent);
-            await MessageBox.ShowAsync("Copy success", "Success", Buttons.OK);
-        }
-        catch (Exception e)
-        {
-            await MessageBox.ShowAsync("Copy fail", "Fail", Buttons.OK);
-        }
-    }
-
-    private async Task HashAction()
-    {
-        var files = await Storage.Instance.OpenFileDialog();
-        if (files is null || files.Count == 0) return;
-
-        var file = files.First();
-        if (file is not null)
-        {
-            Sha256HashAlgorithm hashAlgorithm = new();
-            CurrnetConfig.Hash = hashAlgorithm.ComputeHash(file.Path.LocalPath);
-        }
     }
 
     [RelayCommand]
@@ -145,20 +143,19 @@ public partial class OSSPacketViewModel : ObservableObject
         Configs.Clear();
     }
 
-    private void LoadedAction() => Initialize();
-
+    [RelayCommand]
     private void Initialize()
     {
         DateTime dateTime = DateTime.Now;
-        CurrnetConfig = new OSSConfigModel
+        CurrnetConfig = new OSSConfigVM
         {
             JsonContent = "{}",
-            PacketName = "Packet",
+            PacketName = "NewPacket",
             Hash = String.Empty,
             Date = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day),
             Time = new TimeSpan(dateTime.Hour, dateTime.Minute, dateTime.Second),
             Version = "1.0.0.0",
-            Url = "http://127.0.0.1"
+            Url = "http://10.119.30.34:5000"
         };
     }
 

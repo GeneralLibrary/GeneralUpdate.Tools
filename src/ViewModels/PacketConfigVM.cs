@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
+using GeneralUpdate.Tool.Avalonia.Models;
+
 using System.Text.Json.Serialization;
 
-namespace GeneralUpdate.Tool.Avalonia.Models;
+namespace GeneralUpdate.Tool.Avalonia.ViewModels;
 
 public partial class PacketConfigVM : ObservableObject
 {

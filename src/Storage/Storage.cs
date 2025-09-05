@@ -60,9 +60,10 @@ public class Storage
     /// 选择文件保存
     /// </summary>
     /// <returns></returns>
-    public async Task<IStorageFile?> SaveFilePickerAsync() => await _storageProvider!.SaveFilePickerAsync(new FilePickerSaveOptions()
+    public async Task<IStorageFile?> SaveFilePickerAsync(string suggestedFileName="") => await _storageProvider!.SaveFilePickerAsync(new FilePickerSaveOptions()
     {
         Title = "Save option",
+        SuggestedFileName = suggestedFileName,
     });
 
     /// <summary>
