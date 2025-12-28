@@ -90,7 +90,8 @@
                 Margin="5"
                 Classes="Shadow"
                 Theme="{StaticResource CardBorder}">
-                <TextBox Classes="TextArea" Text="{Binding CurrnetConfig.JsonContent}" />
+                <TextBox HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch" Classes="TextArea" Text="{Binding CurrnetConfig.JsonContent}" />
             </Border>
         </Grid>
         <StackPanel
