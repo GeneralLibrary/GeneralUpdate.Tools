@@ -1,18 +1,16 @@
 name: Release Win/Linux Packages
 
-# 触发条件：主分支推送 / 手动触发
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
 
 jobs:
-  # 第一步：构建 Win/Linux 包并打包
   build-packages:
     runs-on: windows-latest
     strategy:
       matrix:
-        runtime: [win-x64, linux-x64] # 仅构建这两个平台
+        runtime: [win-x64, linux-x64]
 
     steps:
       - name: 检出代码
@@ -22,12 +20,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-          cache: false # 避免锁文件干扰
+          cache: false
 
       - name: 还原依赖
         run: dotnet restore ./src/GeneralUpdate.Tool.Avalonia.sln
 
-      - name: 发布应用（单文件+自包含）
+      - name: 发布应用
         run: dotnet publish ./src/GeneralUpdate.Tool.Avalonia.sln `
           -c Release `
           -r ${{ matrix.runtime }} `
@@ -36,41 +34,45 @@ jobs:
           /p:PublishSingleFile=true `
           /p:DebugType=None
 
-      - name: 打包压缩包（日期命名）
+      - name: 打包压缩包
         run: |
           $date = Get-Date -Format "yyyyMMdd"
           $zipName = "GeneralUpdate.Tool.Avalonia_${{ matrix.runtime }}_$date.zip"
           Compress-Archive -Path ./publish/${{ matrix.runtime }}/* -DestinationPath $zipName -Force
           echo "zip_file=$zipName" >> $env:GITHUB_ENV
 
-      - name: 上传压缩包到产物
+      - name: 上传压缩包
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.runtime }}-package
           path: ${{ env.zip_file }}
 
-  # 第二步：创建 Tag + 发布到 Releases（依赖构建完成）
   create-release:
     needs: build-packages
     runs-on: ubuntu-latest
     permissions:
-      contents: write # 授予创建Tag/Release的权限
+      contents: write
 
     steps:
-      - name: 下载所有构建好的压缩包
+      # 关键修复：先检出代码，获取.git目录
+      - name: 检出代码（用于Git Tag操作）
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 拉取完整历史，包含Tag信息
+
+      - name: 下载所有压缩包
         uses: actions/download-artifact@v4
         with:
-          path: ./packages # 所有包会下载到 packages/ 目录
+          path: ./packages
 
-      - name: 生成日期 Tag（如 v20260103）
+      - name: 生成日期Tag并推送
         id: gen-tag
         run: |
           TAG_NAME="v$(date +%Y%m%d)"
-          # 配置Git用户（用于推Tag）
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git fetch --tags
-          # 避免重复创建Tag
+          git fetch --tags origin # 显式拉取远程Tag
+          
           if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             git tag "$TAG_NAME"
             git push origin "$TAG_NAME"
@@ -80,13 +82,13 @@ jobs:
           fi
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
 
-      - name: 发布到 GitHub Releases（关联Tag）
+      - name: 发布到Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.gen-tag.outputs.tag_name }} # 关联上面生成的Tag
-          name: Release ${{ steps.gen-tag.outputs.tag_name }} # Release名称
-          files: ./packages/**/*.zip # 上传所有下载的压缩包（Win+Linux）
-          draft: false # 直接发布，不存草稿
-          prerelease: false # 标记为正式版
+          tag_name: ${{ steps.gen-tag.outputs.tag_name }}
+          name: Release ${{ steps.gen-tag.outputs.tag_name }}
+          files: ./packages/**/*.zip
+          draft: false
+          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub自动提供的令牌
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
