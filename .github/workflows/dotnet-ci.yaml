@@ -1,10 +1,9 @@
 name: .NET CI/CD - Multi-Platform Release
 
-# 触发条件：主分支推送、PR、手动触发（支持自定义Tag后缀）
 on:
   push:
     branches: [ main, master ]
-    paths-ignore:  # 忽略文档/配置变更，避免无效构建
+    paths-ignore:
       - '**.md'
       - '**.gitignore'
       - '.github/**/*.yml'
@@ -23,24 +22,21 @@ on:
         default: 'false'
         type: boolean
 
-# 全局环境变量
 env:
-  SOLUTION_PATH: ./src/GeneralUpdate.Tool.Avalonia.sln  # 解决方案路径
-  PUBLISH_DIR: ./publish                                # 发布根目录
-  PROJECT_NAME: GeneralUpdate.Tool.Avalonia             # 项目名称
+  SOLUTION_PATH: ./src/GeneralUpdate.Tool.Avalonia.sln
+  PUBLISH_DIR: ./publish
+  PROJECT_NAME: GeneralUpdate.Tool.Avalonia
+  DOTNET_SDK_VERSION: '8.0.x'  # 显式指定SDK版本，避免自动升级到预览版
 
 jobs:
-  # 多平台构建作业（Windows/Linux 分别用对应系统运行器，避免交叉编译问题）
   build:
     name: Build ${{ matrix.os }} - ${{ matrix.target-os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false  # 一个平台失败不影响另一个
+      fail-fast: false
       matrix:
-        # 运行器 + 目标平台 匹配
         os: [windows-latest, ubuntu-latest]
         target-os: [win-x64, linux-x64]
-        # 确保运行器和目标平台一一对应
         exclude:
           - os: windows-latest
             target-os: linux-x64
@@ -48,52 +44,63 @@ jobs:
             target-os: win-x64
 
     steps:
-      # 1. 检出代码（拉取完整历史，用于Tag操作）
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 拉取所有历史记录
-          lfs: false     # 非LFS项目禁用，加速检出
+          fetch-depth: 0
+          lfs: false
 
-      # 2. 设置 .NET SDK（带缓存，自动处理锁文件）
-      - name: Setup .NET SDK 8.0
+      # 强制指定SDK版本，避免使用预览版（如10.0）
+      - name: Setup .NET SDK ${{ env.DOTNET_SDK_VERSION }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
           cache: true
-          cache-dependency-path: |  # 指定缓存依赖路径，适配锁文件
+          cache-dependency-path: |
             ${{ env.SOLUTION_PATH }}
             **/packages.lock.json
 
-      # 3. 生成/还原依赖锁文件（解决lock文件缺失问题）
-      - name: Restore dependencies (generate lock file if missing)
+      # 修复核心：拆分锁文件生成和依赖还原（避免参数冲突）
+      - name: Generate packages.lock.json (if missing)
         run: |
-          # 生成锁文件（若不存在）+ 还原依赖
-          dotnet restore ${{ env.SOLUTION_PATH }} --generate-lock-file --locked-mode
-          # 验证依赖还原成功
+          # 仅当锁文件不存在时生成（避免覆盖已有锁文件）
+          if [ ! -f "./src/packages.lock.json" ]; then
+            echo "🔍 未找到锁文件，开始生成..."
+            dotnet restore ${{ env.SOLUTION_PATH }} --generate-lock-file
+            if [ $? -ne 0 ]; then
+              echo "❌ 锁文件生成失败"
+              exit 1
+            fi
+            echo "✅ 锁文件生成成功"
+          else
+            echo "ℹ️ 锁文件已存在，跳过生成"
+          fi
+        shell: bash
+
+      - name: Restore dependencies (locked mode)
+        run: |
+          # 使用已存在的锁文件还原依赖（锁定模式）
+          dotnet restore ${{ env.SOLUTION_PATH }} --locked-mode
           if [ $? -ne 0 ]; then
-            echo "❌ 依赖还原失败，请检查项目依赖配置"
+            echo "❌ 依赖还原失败，请检查锁文件或依赖配置"
             exit 1
           fi
-        shell: bash  # 统一用bash，跨平台兼容
+          echo "✅ 依赖还原成功"
+        shell: bash
 
-      # 4. 构建Release版本（非发布，仅编译验证）
       - name: Build Release version
         run: |
           dotnet build ${{ env.SOLUTION_PATH }} \
             -c Release \
             -r ${{ matrix.target-os }} \
             --no-restore \
-            /p:WarningLevel=1  # 降低警告级别，避免非致命警告中断构建
+            /p:WarningLevel=1
         shell: bash
 
-      # 5. 发布应用（生成最终可执行文件）
       - name: Publish application
         run: |
-          # 创建发布目录
           mkdir -p ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}
           
-          # 发布命令（适配Avalonia跨平台）
           dotnet publish ${{ env.SOLUTION_PATH }} \
             -c Release \
             -r ${{ matrix.target-os }} \
@@ -109,95 +116,79 @@ jobs:
             /p:FileVersion=1.0.${{ github.run_number }} \
             /p:UseAppHost=true
           
-          # 验证发布目录是否有文件
           if [ $(ls -A ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }} | wc -l) -eq 0 ]; then
             echo "❌ 发布目录为空，发布失败"
             exit 1
           fi
         shell: bash
 
-      # 6. 处理Linux权限（仅Linux平台）
       - name: Set execute permission (Linux only)
         if: matrix.target-os == 'linux-x64'
         run: |
           chmod +x ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/${{ env.PROJECT_NAME }}
-          # 验证权限设置
           if [ ! -x ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/${{ env.PROJECT_NAME }} ]; then
             echo "❌ Linux可执行文件权限设置失败"
             exit 1
           fi
         shell: bash
 
-      # 7. 打包发布文件（按平台+日期命名）
       - name: Package release files
         id: package
         run: |
-          # 生成日期（统一格式：YYYYMMDD）
           DATE=$(date +%Y%m%d)
-          # 压缩包名称：项目名_平台_日期.zip
           ZIP_NAME="${{ env.PROJECT_NAME }}_${{ matrix.target-os }}_${DATE}.zip"
           ZIP_PATH="${{ env.PUBLISH_DIR }}/${ZIP_NAME}"
 
-          # 打包（Windows用PowerShell，Linux用zip）
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             powershell Compress-Archive -Path "${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/*" -DestinationPath "$ZIP_PATH" -Force
           else
             zip -r "$ZIP_PATH" "${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/*"
           fi
 
-          # 验证压缩包
           if [ ! -f "$ZIP_PATH" ]; then
             echo "❌ 压缩包生成失败"
             exit 1
           fi
 
-          # 输出压缩包信息（供后续步骤使用）
           echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
           echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
           echo "✅ 压缩包生成成功：$ZIP_NAME"
         shell: bash
 
-      # 8. 上传构建产物（保留到Release步骤）
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target-os }}_artifact
           path: ${{ steps.package.outputs.zip_path }}
-          retention-days: 7  # 产物保留7天，避免存储占用
-          if-no-files-found: error  # 无文件则报错
+          retention-days: 7
+          if-no-files-found: error
 
-  # 发布Release作业（依赖build完成，仅Push/手动触发）
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: build  # 等待所有构建完成
+    needs: build
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
-      contents: write  # 显式授予写权限，避免Tag/Push失败
+      contents: write
 
     steps:
-      # 1. 下载所有构建产物
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
-          merge-multiple: false  # 保留平台目录结构
+          merge-multiple: false
 
-      # 2. 配置Git用户（用于推送Tag）
       - name: Configure Git user
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git fetch --tags  # 拉取已有Tag，避免重复
+          git fetch --tags
         shell: bash
 
-      # 3. 生成日期Tag（避免重复）
       - name: Generate date-based Tag
         id: create_tag
         run: |
-          # 基础Tag：vYYYYMMDD
           BASE_TAG="v$(date +%Y%m%d)"
-          # 拼接后缀（如 v20240103-beta1）
           TAG_SUFFIX="${{ github.event.inputs.tagSuffix }}"
           if [ -n "$TAG_SUFFIX" ]; then
             FINAL_TAG="${BASE_TAG}-${TAG_SUFFIX}"
@@ -205,21 +196,17 @@ jobs:
             FINAL_TAG="${BASE_TAG}"
           fi
 
-          # 检查Tag是否已存在
           if git rev-parse "$FINAL_TAG" >/dev/null 2>&1; then
             echo "ℹ️ Tag $FINAL_TAG 已存在，跳过创建"
           else
-            # 创建并推送Tag
             git tag "$FINAL_TAG"
             git push origin "$FINAL_TAG"
             echo "✅ 成功创建Tag：$FINAL_TAG"
           fi
 
-          # 输出Tag名称（供后续步骤使用）
           echo "tag_name=$FINAL_TAG" >> $GITHUB_OUTPUT
         shell: bash
 
-      # 4. 创建GitHub Release
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -231,19 +218,16 @@ jobs:
             - 构建编号：${{ github.run_number }}
             - 包含平台：Windows x64 / Linux x64
             - 构建模式：Release | 单文件 | 自包含 | 依赖裁剪
-          # 上传所有平台的压缩包
           files: |
             ./artifacts/win-x64_artifact/*.zip
             ./artifacts/linux-x64_artifact/*.zip
-          # 预发布标记（手动触发时可自定义，有后缀默认预发布）
           prerelease: ${{ github.event.inputs.preRelease == 'true' || github.event.inputs.tagSuffix != '' }}
-          draft: false  # 直接发布，不创建草稿
+          draft: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub自动注入的令牌
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5. 清理产物（可选，节省存储空间）
       - name: Cleanup artifacts
-        if: always()  # 无论前面步骤是否失败都执行
+        if: always()
         run: |
           rm -rf ./artifacts
           echo "✅ 产物清理完成"
