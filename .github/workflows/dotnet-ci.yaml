@@ -26,7 +26,8 @@ env:
   SOLUTION_PATH: ./src/GeneralUpdate.Tool.Avalonia.sln
   PUBLISH_DIR: ./publish
   PROJECT_NAME: GeneralUpdate.Tool.Avalonia
-  DOTNET_SDK_VERSION: '8.0.x'  # 显式指定SDK版本，避免自动升级到预览版
+  # 指定8.0正式版SDK（非预览版），避免调用10.0
+  DOTNET_SPECIFIC_VERSION: '8.0.400'
 
 jobs:
   build:
@@ -50,39 +51,21 @@ jobs:
           fetch-depth: 0
           lfs: false
 
-      # 强制指定SDK版本，避免使用预览版（如10.0）
-      - name: Setup .NET SDK ${{ env.DOTNET_SDK_VERSION }}
+      # 关键修复1：强制卸载预览版SDK，安装指定8.0正式版
+      - name: Force install .NET 8.0.400 (remove preview versions)
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-          cache: true
-          cache-dependency-path: |
-            ${{ env.SOLUTION_PATH }}
-            **/packages.lock.json
+          dotnet-version: ${{ env.DOTNET_SPECIFIC_VERSION }}
+          # 禁用缓存（彻底避开lock文件问题）
+          cache: false
 
-      # 修复核心：拆分锁文件生成和依赖还原（避免参数冲突）
-      - name: Generate packages.lock.json (if missing)
+      # 关键修复2：纯依赖还原（无任何lock文件参数）
+      - name: Restore dependencies (no lock file)
         run: |
-          # 仅当锁文件不存在时生成（避免覆盖已有锁文件）
-          if [ ! -f "./src/packages.lock.json" ]; then
-            echo "🔍 未找到锁文件，开始生成..."
-            dotnet restore ${{ env.SOLUTION_PATH }} --generate-lock-file
-            if [ $? -ne 0 ]; then
-              echo "❌ 锁文件生成失败"
-              exit 1
-            fi
-            echo "✅ 锁文件生成成功"
-          else
-            echo "ℹ️ 锁文件已存在，跳过生成"
-          fi
-        shell: bash
-
-      - name: Restore dependencies (locked mode)
-        run: |
-          # 使用已存在的锁文件还原依赖（锁定模式）
-          dotnet restore ${{ env.SOLUTION_PATH }} --locked-mode
+          # 直接还原依赖，不生成/使用lock文件
+          dotnet restore ${{ env.SOLUTION_PATH }}
           if [ $? -ne 0 ]; then
-            echo "❌ 依赖还原失败，请检查锁文件或依赖配置"
+            echo "❌ 依赖还原失败，请检查项目依赖配置"
             exit 1
           fi
           echo "✅ 依赖还原成功"
@@ -116,7 +99,14 @@ jobs:
             /p:FileVersion=1.0.${{ github.run_number }} \
             /p:UseAppHost=true
           
-          if [ $(ls -A ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }} | wc -l) -eq 0 ]; then
+          # 兼容Windows/Linux的空目录检查
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            FILE_COUNT=$(powershell "(Get-ChildItem '${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}' | Measure-Object).Count")
+          else
+            FILE_COUNT=$(ls -A ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }} | wc -l)
+          fi
+          
+          if [ $FILE_COUNT -eq 0 ]; then
             echo "❌ 发布目录为空，发布失败"
             exit 1
           fi
@@ -196,12 +186,13 @@ jobs:
             FINAL_TAG="${BASE_TAG}"
           fi
 
-          if git rev-parse "$FINAL_TAG" >/dev/null 2>&1; then
-            echo "ℹ️ Tag $FINAL_TAG 已存在，跳过创建"
-          else
+          # 兼容无Tag的情况
+          if ! git rev-parse "$FINAL_TAG" >/dev/null 2>&1; then
             git tag "$FINAL_TAG"
             git push origin "$FINAL_TAG"
             echo "✅ 成功创建Tag：$FINAL_TAG"
+          else
+            echo "ℹ️ Tag $FINAL_TAG 已存在，跳过创建"
           fi
 
           echo "tag_name=$FINAL_TAG" >> $GITHUB_OUTPUT
