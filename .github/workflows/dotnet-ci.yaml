@@ -1,225 +1,70 @@
-name: .NET CI/CD - Multi-Platform Release
+name: dotnet-release
 
 on:
   push:
-    branches: [ main, master ]
-    paths-ignore:
-      - '**.md'
-      - '**.gitignore'
-      - '.github/**/*.yml'
-  pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
-    inputs:
-      tagSuffix:
-        description: 'Tag后缀（可选，如 beta1、rc2）'
-        required: false
-        default: ''
-        type: string
-      preRelease:
-        description: '是否标记为预发布版本'
-        required: false
-        default: 'false'
-        type: boolean
-
-env:
-  SOLUTION_PATH: ./src/GeneralUpdate.Tool.Avalonia.sln
-  PUBLISH_DIR: ./publish
-  PROJECT_NAME: GeneralUpdate.Tool.Avalonia
-  # 指定8.0正式版SDK（非预览版），避免调用10.0
-  DOTNET_SPECIFIC_VERSION: '8.0.400'
 
 jobs:
   build:
-    name: Build ${{ matrix.os }} - ${{ matrix.target-os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     strategy:
-      fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
-        target-os: [win-x64, linux-x64]
-        exclude:
-          - os: windows-latest
-            target-os: linux-x64
-          - os: ubuntu-latest
-            target-os: win-x64
+        runtime: [win-x64, linux-x64]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          lfs: false
+      - uses: actions/checkout@v4
 
-      # 关键修复1：强制卸载预览版SDK，安装指定8.0正式版
-      - name: Force install .NET 8.0.400 (remove preview versions)
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_SPECIFIC_VERSION }}
-          # 禁用缓存（彻底避开lock文件问题）
-          cache: false
+          dotnet-version: 8.0.x
+          cache: false  # 禁用缓存避免锁文件问题
 
-      # 关键修复2：纯依赖还原（无任何lock文件参数）
-      - name: Restore dependencies (no lock file)
+      - name: 还原依赖
+        run: dotnet restore ./src/GeneralUpdate.Tool.Avalonia.sln
+
+      - name: 发布应用
+        run: dotnet publish ./src/GeneralUpdate.Tool.Avalonia.sln -c Release -r ${{ matrix.runtime }} -o ./publish/${{ matrix.runtime }} --self-contained true /p:PublishSingleFile=true
+
+      - name: 打包压缩包
         run: |
-          # 直接还原依赖，不生成/使用lock文件
-          dotnet restore ${{ env.SOLUTION_PATH }}
-          if [ $? -ne 0 ]; then
-            echo "❌ 依赖还原失败，请检查项目依赖配置"
-            exit 1
-          fi
-          echo "✅ 依赖还原成功"
-        shell: bash
+          $date = Get-Date -Format "yyyyMMdd"
+          Compress-Archive -Path ./publish/${{ matrix.runtime }}/* -DestinationPath ./${{ matrix.runtime }}_$date.zip -Force
 
-      - name: Build Release version
-        run: |
-          dotnet build ${{ env.SOLUTION_PATH }} \
-            -c Release \
-            -r ${{ matrix.target-os }} \
-            --no-restore \
-            /p:WarningLevel=1
-        shell: bash
-
-      - name: Publish application
-        run: |
-          mkdir -p ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}
-          
-          dotnet publish ${{ env.SOLUTION_PATH }} \
-            -c Release \
-            -r ${{ matrix.target-os }} \
-            -o ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }} \
-            --no-build \
-            --self-contained true \
-            /p:PublishSingleFile=true \
-            /p:PublishTrimmed=true \
-            /p:TrimUnusedDependencies=true \
-            /p:DebugType=None \
-            /p:DebugSymbols=false \
-            /p:AssemblyVersion=1.0.${{ github.run_number }} \
-            /p:FileVersion=1.0.${{ github.run_number }} \
-            /p:UseAppHost=true
-          
-          # 兼容Windows/Linux的空目录检查
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            FILE_COUNT=$(powershell "(Get-ChildItem '${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}' | Measure-Object).Count")
-          else
-            FILE_COUNT=$(ls -A ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }} | wc -l)
-          fi
-          
-          if [ $FILE_COUNT -eq 0 ]; then
-            echo "❌ 发布目录为空，发布失败"
-            exit 1
-          fi
-        shell: bash
-
-      - name: Set execute permission (Linux only)
-        if: matrix.target-os == 'linux-x64'
-        run: |
-          chmod +x ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/${{ env.PROJECT_NAME }}
-          if [ ! -x ${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/${{ env.PROJECT_NAME }} ]; then
-            echo "❌ Linux可执行文件权限设置失败"
-            exit 1
-          fi
-        shell: bash
-
-      - name: Package release files
-        id: package
-        run: |
-          DATE=$(date +%Y%m%d)
-          ZIP_NAME="${{ env.PROJECT_NAME }}_${{ matrix.target-os }}_${DATE}.zip"
-          ZIP_PATH="${{ env.PUBLISH_DIR }}/${ZIP_NAME}"
-
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            powershell Compress-Archive -Path "${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/*" -DestinationPath "$ZIP_PATH" -Force
-          else
-            zip -r "$ZIP_PATH" "${{ env.PUBLISH_DIR }}/${{ matrix.target-os }}/*"
-          fi
-
-          if [ ! -f "$ZIP_PATH" ]; then
-            echo "❌ 压缩包生成失败"
-            exit 1
-          fi
-
-          echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
-          echo "zip_path=$ZIP_PATH" >> $GITHUB_OUTPUT
-          echo "✅ 压缩包生成成功：$ZIP_NAME"
-        shell: bash
-
-      - name: Upload build artifact
+      - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target-os }}_artifact
-          path: ${{ steps.package.outputs.zip_path }}
-          retention-days: 7
-          if-no-files-found: error
+          name: ${{ matrix.runtime }}_package
+          path: ./${{ matrix.runtime }}_*.zip
 
   release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    permissions:
-      contents: write
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
 
     steps:
-      - name: Download all artifacts
+      - name: 下载所有压缩包
         uses: actions/download-artifact@v4
         with:
           path: ./artifacts
-          merge-multiple: false
 
-      - name: Configure Git user
+      - name: 生成日期Tag
         run: |
+          TAG=v$(date +%Y%m%d)
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git fetch --tags
-        shell: bash
-
-      - name: Generate date-based Tag
-        id: create_tag
-        run: |
-          BASE_TAG="v$(date +%Y%m%d)"
-          TAG_SUFFIX="${{ github.event.inputs.tagSuffix }}"
-          if [ -n "$TAG_SUFFIX" ]; then
-            FINAL_TAG="${BASE_TAG}-${TAG_SUFFIX}"
-          else
-            FINAL_TAG="${BASE_TAG}"
+          if ! git rev-parse $TAG >/dev/null 2>&1; then
+            git tag $TAG && git push origin $TAG
           fi
 
-          # 兼容无Tag的情况
-          if ! git rev-parse "$FINAL_TAG" >/dev/null 2>&1; then
-            git tag "$FINAL_TAG"
-            git push origin "$FINAL_TAG"
-            echo "✅ 成功创建Tag：$FINAL_TAG"
-          else
-            echo "ℹ️ Tag $FINAL_TAG 已存在，跳过创建"
-          fi
-
-          echo "tag_name=$FINAL_TAG" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Create Release
+      - name: 创建Release并上传包
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.create_tag.outputs.tag_name }}
-          name: Release ${{ steps.create_tag.outputs.tag_name }}
-          body: |
-            ## 🚀 自动构建发布
-            - 构建日期：${{ steps.create_tag.outputs.tag_name }}
-            - 构建编号：${{ github.run_number }}
-            - 包含平台：Windows x64 / Linux x64
-            - 构建模式：Release | 单文件 | 自包含 | 依赖裁剪
+          tag_name: v$(date +%Y%m%d)
           files: |
-            ./artifacts/win-x64_artifact/*.zip
-            ./artifacts/linux-x64_artifact/*.zip
-          prerelease: ${{ github.event.inputs.preRelease == 'true' || github.event.inputs.tagSuffix != '' }}
-          draft: false
+            ./artifacts/win-x64_package/*.zip
+            ./artifacts/linux-x64_package/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cleanup artifacts
-        if: always()
-        run: |
-          rm -rf ./artifacts
-          echo "✅ 产物清理完成"
-        shell: bash
