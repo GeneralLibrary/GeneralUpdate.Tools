@@ -1,18 +1,127 @@
 name: dotnet-ci
 
-on: [push, pull_request]
+# 触发条件：push、pull_request 触发构建，手动触发支持指定版本
+on:
+  push:
+    branches: [ main, master ]  # 限定仅主分支触发
+  pull_request:
+  workflow_dispatch:  # 支持手动触发
+    inputs:
+      tagSuffix:
+        description: 'Tag后缀（可选，如 beta1）'
+        required: false
+        default: ''
 
 jobs:
+  # 构建多平台版本
   build:
     runs-on: windows-latest
-
+    strategy:
+      matrix:
+        # 构建目标平台
+        target-os: [win-x64, linux-x64]
+    
     steps:
-    - uses: actions/checkout@v1
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v3
+    - name: 检出代码
+      uses: actions/checkout@v4  # 升级到最新版
+      with:
+        fetch-depth: 0  # 拉取完整历史，用于生成版本信息
+
+    - name: 设置 .NET SDK
+      uses: actions/setup-dotnet@v4  # 升级到最新版
       with:
         dotnet-version: '8.0.x'
-    - name: Restore dependencies
+        cache: true  # 启用缓存加速构建
+
+    - name: 还原依赖
       run: dotnet restore ./src/GeneralUpdate.Tool.Avalonia.sln
-    - name: build
-      run: dotnet build ./src/GeneralUpdate.Tool.Avalonia.sln -c Release
+
+    - name: 构建发布版本
+      run: |
+        dotnet build ./src/GeneralUpdate.Tool.Avalonia.sln `
+          -c Release `
+          -r ${{ matrix.target-os }} `
+          --self-contained true `
+          /p:PublishSingleFile=true `
+          /p:DebugType=None `
+          /p:TrimUnusedDependencies=true
+
+    - name: 发布应用
+      run: |
+        dotnet publish ./src/GeneralUpdate.Tool.Avalonia.sln `
+          -c Release `
+          -r ${{ matrix.target-os }} `
+          -o ./publish/${{ matrix.target-os }} `
+          --self-contained true `
+          /p:PublishSingleFile=true `
+          /p:DebugType=None `
+          /p:TrimUnusedDependencies=true `
+          /p:AssemblyVersion=1.0.${{ github.run_number }} `
+          /p:FileVersion=1.0.${{ github.run_number }}
+
+    - name: 打包发布文件
+      run: |
+        # 根据平台生成不同的压缩包名称
+        $zipName = "GeneralUpdate.Tool.Avalonia_${{ matrix.target-os }}_$(Get-Date -Format 'yyyyMMdd').zip"
+        Compress-Archive -Path ./publish/${{ matrix.target-os }}/* -DestinationPath ./$zipName
+        echo "zip_path=./$zipName" >> $env:GITHUB_ENV
+        echo "zip_name=$zipName" >> $env:GITHUB_ENV
+
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.target-os }}_build
+        path: ${{ env.zip_path }}
+
+  # 发布版本（生成Tag并上传Release）
+  release:
+    needs: build  # 依赖build作业完成
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'  # 仅push或手动触发时发布
+
+    steps:
+    - name: 下载所有构建产物
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+
+    - name: 生成日期Tag
+      id: create_tag
+      run: |
+        # 生成格式：v20240520 或带后缀 v20240520-beta1
+        TAG_DATE=$(date +%Y%m%d)
+        TAG_SUFFIX="${{ github.event.inputs.tagSuffix }}"
+        if [ -n "$TAG_SUFFIX" ]; then
+          TAG_NAME="v$TAG_DATE-$TAG_SUFFIX"
+        else
+          TAG_NAME="v$TAG_DATE"
+        fi
+        
+        # 检查Tag是否已存在，不存在则创建
+        if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+          echo "Tag $TAG_NAME 已存在"
+        else
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+          echo "创建Tag: $TAG_NAME"
+        fi
+        
+        echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+    - name: 创建GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.create_tag.outputs.tag_name }}
+        name: Release ${{ steps.create_tag.outputs.tag_name }}
+        body: |
+          ## 自动构建发布
+          - 构建日期: ${{ steps.create_tag.outputs.tag_name }}
+          - 包含平台: Windows x64 / Linux x64
+          - 构建编号: ${{ github.run_number }}
+        files: |
+          ./artifacts/win-x64_build/*.zip
+          ./artifacts/linux-x64_build/*.zip
+        draft: false
+        prerelease: ${{ github.event.inputs.tagSuffix != '' }}  # 有后缀则标记为预发布
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
