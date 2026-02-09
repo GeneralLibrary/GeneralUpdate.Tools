@@ -273,21 +273,30 @@ public class ExtensionViewModel : ObservableObject
             // Create manifest.json with all ExtensionDTO fields
             var platformValue = ConfigModel.Platform?.Value ?? 0;
             var targetPlatform = MapPlatformValue(platformValue);
-            ConfigModel.Platform = new PlatformModel{ DisplayName = targetPlatform.ToString(), Value = platformValue };
+            ConfigModel.Platform = new PlatformModel { DisplayName = targetPlatform.ToString(), Value = platformValue };
             
             // Get file info for the zip
             var fileInfo = new FileInfo(zipFilePath);
             ConfigModel.FileSize = fileInfo.Length;
             
-            // Serialize manifest to JSON
-            var manifestJson = JsonConvert.SerializeObject(ConfigModel);
+            // Serialize manifest to JSON with explicit settings
+            var jsonSettings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            var manifestJson = JsonConvert.SerializeObject(ConfigModel, jsonSettings);
             if (!string.IsNullOrEmpty(manifestJson))
             {
                 // Add manifest.json to the zip file
                 await ZipUtility.AddFileToZipAsync(zipFilePath, "manifest.json", manifestJson);
             }
 
-            await MessageBox.ShowAsync($"Extension package created successfully at:\n{zipFilePath}", "Success", Buttons.OK);
+            var fileName = Path.GetFileName(zipFilePath);
+            var directory = Path.GetDirectoryName(zipFilePath);
+            await MessageBox.ShowAsync(
+                $"Extension package created successfully:\n\nFile: {fileName}\nLocation: {directory}", 
+                "Success", 
+                Buttons.OK);
         }
         catch (UnauthorizedAccessException ex)
         {
