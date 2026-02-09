@@ -25,8 +25,8 @@ public class ExtensionViewModel : ObservableObject
     private RelayCommand? _clearCommand;
     private AsyncRelayCommand? _selectDependenciesCommand;
     private ExtensionDependencySelectionModel? _selectedDependency;
-    private RelayCommand<CustomPropertyModel>? _removeCustomPropertyCommand;
-    private RelayCommand? _addCustomPropertyCommand;
+    private AsyncRelayCommand<CustomPropertyModel>? _removeCustomPropertyCommand;
+    private AsyncRelayCommand? _addCustomPropertyCommand;
     private string? _newCustomPropertyKey;
     private string? _newCustomPropertyValue;
 
@@ -77,14 +77,14 @@ public class ExtensionViewModel : ObservableObject
         set => SetProperty(ref _selectedDependency, value);
     }
 
-    public RelayCommand<CustomPropertyModel> RemoveCustomPropertyCommand
+    public AsyncRelayCommand<CustomPropertyModel> RemoveCustomPropertyCommand
     {
-        get => _removeCustomPropertyCommand ??= new RelayCommand<CustomPropertyModel>(RemoveCustomPropertyAction);
+        get => _removeCustomPropertyCommand ??= new AsyncRelayCommand<CustomPropertyModel>(RemoveCustomPropertyAction);
     }
 
-    public RelayCommand AddCustomPropertyCommand
+    public AsyncRelayCommand AddCustomPropertyCommand
     {
-        get => _addCustomPropertyCommand ??= new RelayCommand(AddCustomPropertyAction, CanAddCustomProperty);
+        get => _addCustomPropertyCommand ??= new AsyncRelayCommand(AddCustomPropertyAction, CanAddCustomProperty);
     }
 
     public string? NewCustomPropertyKey
@@ -311,7 +311,7 @@ public class ExtensionViewModel : ObservableObject
                !string.IsNullOrWhiteSpace(NewCustomPropertyValue);
     }
 
-    private async void AddCustomPropertyAction()
+    private async Task AddCustomPropertyAction()
     {
         try
         {
@@ -357,19 +357,13 @@ public class ExtensionViewModel : ObservableObject
         }
     }
 
-    private async void RemoveCustomPropertyAction(CustomPropertyModel? property)
+    private async Task RemoveCustomPropertyAction(CustomPropertyModel? property)
     {
         try
         {
             if (property == null)
             {
                 await MessageBox.ShowAsync("No property selected to remove", "Validation Error", Buttons.OK);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(property.Key))
-            {
-                await MessageBox.ShowAsync("Property key is invalid", "Validation Error", Buttons.OK);
                 return;
             }
 
