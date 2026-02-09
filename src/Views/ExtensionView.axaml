@@ -112,8 +112,7 @@
                     Classes="Primary"
                     Command="{Binding SelectFolderCommand}"
                     CommandParameter="ExtensionDirectory"
-                    Theme="{DynamicResource SolidButton}">
-                    <PathIcon Width="15" Height="15" Data="{DynamicResource PickFileSVG}" />
+                    Theme="{DynamicResource SolidButton}" Content="Pick">
                 </Button>
                 
                 <!-- Extension Path -->
@@ -134,8 +133,8 @@
                     Classes="Primary"
                     Command="{Binding SelectFolderCommand}"
                     CommandParameter="ExportPath"
-                    Theme="{DynamicResource SolidButton}">
-                    <PathIcon Width="15" Height="15" Data="{DynamicResource PickFileSVG}" />
+                    Theme="{DynamicResource SolidButton}"
+                    Content="Pick">
                 </Button>
                 
                 <!-- Dependencies -->
