@@ -1,0 +1,371 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:GeneralUpdate.Tool.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="GeneralUpdate.Tool.Avalonia.Views.ExtensionView"
+             x:DataType="vm:ExtensionViewModel">
+    <Grid RowDefinitions="9*,1*">
+        <ScrollViewer>
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="2*,6*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                <!-- Extension Name -->
+                <TextBlock
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Extension Name" />
+                <TextBox
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.Name, Mode=TwoWay}" />
+                
+                <!-- Display Name -->
+                <TextBlock
+                    Grid.Row="1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Display Name" />
+                <TextBox
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.DisplayName, Mode=TwoWay}"/>
+                
+                <!-- Extension Version -->
+                <TextBlock
+                    Grid.Row="2"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Version" />
+                <TextBox
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.Version, Mode=TwoWay}" />
+                
+                <!-- Extension Description -->
+                <TextBlock
+                    Grid.Row="3"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Description" />
+                <TextBox
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Margin="5"
+                    AcceptsReturn="True"
+                    Height="80"
+                    Text="{Binding ConfigModel.Description, Mode=TwoWay}" />
+                
+                <!-- Publisher -->
+                <TextBlock
+                    Grid.Row="4"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Publisher" />
+                <TextBox
+                    Grid.Row="4"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.Publisher, Mode=TwoWay}" />
+                
+                <!-- License -->
+                <TextBlock
+                    Grid.Row="5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="License" />
+                <TextBox
+                    Grid.Row="5"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.License, Mode=TwoWay}" />
+                
+                <!-- Categories -->
+                <TextBlock
+                    Grid.Row="6"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Categories" />
+                <TextBox
+                    Grid.Row="6"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.CategoriesText, Mode=TwoWay}" />
+                
+                <!-- Extension Directory -->
+                <TextBlock
+                    Grid.Row="7"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Extension Directory" />
+                <TextBox
+                    Grid.Row="7"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.ExtensionDirectory}" />
+                <Button
+                    Grid.Row="7"
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="ExtensionDirectory"
+                    Theme="{DynamicResource SolidButton}">
+                    <PathIcon Width="15" Height="15" Data="{DynamicResource PickFileSVG}" />
+                </Button>
+                
+                <!-- Extension Path -->
+                <TextBlock
+                    Grid.Row="8"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Export Path" />
+                <TextBox
+                    Grid.Row="8"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.Path, Mode=TwoWay}" />
+                <Button
+                    Grid.Row="8"
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="ExportPath"
+                    Theme="{DynamicResource SolidButton}">
+                    <PathIcon Width="15" Height="15" Data="{DynamicResource PickFileSVG}" />
+                </Button>
+                
+                <!-- Dependencies -->
+                <TextBlock
+                    Grid.Row="9"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Dependencies" />
+                <TextBox Grid.Row="9"
+                         Grid.Column="1"
+                         HorizontalAlignment="Stretch"
+                         Margin="5"
+                         Text="{Binding ConfigModel.Dependencies}"/>
+                
+                <!-- Min Host Version -->
+                <TextBlock
+                    Grid.Row="10"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Min Host Version" />
+                <TextBox
+                    Grid.Row="10"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.MinHostVersion, Mode=TwoWay}"/>
+                
+                <!-- Max Host Version -->
+                <TextBlock
+                    Grid.Row="11"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Max Host Version" />
+                <TextBox
+                    Grid.Row="11"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.MaxHostVersion, Mode=TwoWay}" />
+                
+                <!-- Format -->
+                <TextBlock
+                    Grid.Row="12"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Format" />
+                <TextBox
+                    Grid.Row="12"
+                    Grid.Column="1"
+                    Margin="5"
+                    IsReadOnly="True"
+                    Text="{Binding ConfigModel.Format, Mode=TwoWay}"/>
+                
+                <!-- Release Date -->
+                <TextBlock
+                    Grid.Row="13"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Release Date" />
+                <CalendarDatePicker
+                    Grid.Row="13"
+                    Grid.Column="1"
+                    Margin="5"
+                    SelectedDate="{Binding ConfigModel.ReleaseDate, Mode=TwoWay}" />
+                
+                <!-- Platform -->
+                <TextBlock
+                    Grid.Row="14"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Platform" />
+                <ComboBox
+                    Grid.Row="14"
+                    Grid.Column="1"
+                    Margin="5"
+                    ItemsSource="{Binding Platforms}"
+                    SelectedItem="{Binding ConfigModel.Platform}" />
+                
+                <!-- Pre-release and Upload to Server Checkbox -->
+                <TextBlock
+                    Grid.Row="15"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Options" />
+                <StackPanel 
+                    Grid.Row="15"
+                    Grid.Column="1"
+                    Margin="5"
+                    Orientation="Horizontal"
+                    Spacing="10">
+                    <CheckBox
+                        VerticalAlignment="Center"
+                        Content="Pre-release"
+                        IsChecked="{Binding ConfigModel.IsPreRelease, Mode=TwoWay}" />
+                </StackPanel>
+                
+                <!-- Custom Properties -->
+                <TextBlock
+                    Grid.Row="16"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="Custom Properties" />
+                <CheckBox
+                    Grid.Row="16"
+                    Grid.Column="1"
+                    Margin="5"
+                    VerticalAlignment="Center"
+                    Content="Enable Custom Properties"
+                    IsChecked="{Binding ConfigModel.ShowCustomProperties, Mode=TwoWay}" />
+            </Grid>
+            
+            <!-- Custom Properties Input Section -->
+            <Border
+                Margin="5"
+                Padding="10"
+                BorderBrush="{DynamicResource SystemAccentColor}"
+                BorderThickness="1"
+                CornerRadius="5"
+                IsVisible="{Binding ConfigModel.ShowCustomProperties}">
+                <StackPanel Spacing="10">
+                    <TextBlock 
+                        FontWeight="Bold" 
+                        Text="Custom Properties" />
+                    
+                    <!-- Input Area -->
+                    <Grid ColumnDefinitions="2*,7*,Auto" RowDefinitions="Auto,Auto">
+                        <TextBlock 
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Margin="5"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right"
+                            Text="Property:" />
+                        <TextBox 
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="5"
+                            Text="{Binding NewCustomPropertyKey, Mode=TwoWay}"
+                            Watermark="Property key" />
+                        
+                        <TextBlock 
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Margin="5"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right"
+                            Text="Value:" />
+                        <TextBox 
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="5"
+                            Text="{Binding NewCustomPropertyValue, Mode=TwoWay}"
+                            Watermark="Property value" />
+                        
+                        <Button
+                            Grid.Row="0"
+                            Grid.RowSpan="2"
+                            Grid.Column="2"
+                            Margin="5"
+                            VerticalAlignment="Center"
+                            Classes="Primary"
+                            Command="{Binding AddCustomPropertyCommand}"
+                            Content="Add"
+                            Theme="{DynamicResource SolidButton}" />
+                    </Grid>
+                    
+                    <!-- Properties List -->
+                    <Border
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        MaxHeight="200">
+                        <ScrollViewer>
+                            <ItemsControl ItemsSource="{Binding CustomPropertiesCollection}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border 
+                                            Margin="2"
+                                            Padding="5"
+                                            Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                            CornerRadius="3">
+                                            <Grid ColumnDefinitions="*,*,Auto">
+                                                <TextBlock 
+                                                    Grid.Column="0"
+                                                    Margin="5"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center"
+                                                    FontWeight="Bold"
+                                                    Text="{Binding Key}" />
+                                                <TextBlock 
+                                                    Grid.Column="1"
+                                                    Margin="5"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center"
+                                                    Text="{Binding Value}" />
+                                                <Button
+                                                    Grid.Column="2"
+                                                    Margin="2"
+                                                    Padding="5"
+                                                    Command="{Binding $parent[UserControl].((vm:ExtensionViewModel)DataContext).RemoveCustomPropertyCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="Remove"
+                                                    Theme="{DynamicResource TransparentButton}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </StackPanel>
+            </Border>
+            </StackPanel>
+        </ScrollViewer>
+        
+        <!-- Action Buttons -->
+        <StackPanel
+            Grid.Row="1"
+            Margin="5"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Spacing="10">
+            <Button
+                Classes="Primary"
+                Command="{Binding ClearCommand}"
+                Content="Clear"
+                Theme="{DynamicResource SolidButton}" />
+            <Button
+                Classes="Primary"
+                Command="{Binding GenerateCommand}"
+                Content="Build"
+                Theme="{DynamicResource SolidButton}" />
+        </StackPanel>
+    </Grid>
+</UserControl>
