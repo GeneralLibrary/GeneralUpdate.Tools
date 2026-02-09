@@ -280,7 +280,7 @@ public class ExtensionViewModel : ObservableObject
             ConfigModel.FileSize = fileInfo.Length;
             
             // Serialize manifest to JSON
-            var manifestJson = JsonConvert.SerializeObject(ConfigModel, Formatting.Indented);
+            var manifestJson = JsonConvert.SerializeObject(ConfigModel);
             if (!string.IsNullOrEmpty(manifestJson))
             {
                 // Add manifest.json to the zip file
@@ -347,9 +347,6 @@ public class ExtensionViewModel : ObservableObject
             // Clear input fields
             NewCustomPropertyKey = string.Empty;
             NewCustomPropertyValue = string.Empty;
-
-            // Notify command to re-evaluate its CanExecute state
-            AddCustomPropertyCommand.NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
