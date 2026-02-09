@@ -311,26 +311,26 @@ public class ExtensionViewModel : ObservableObject
                !string.IsNullOrWhiteSpace(NewCustomPropertyValue);
     }
 
-    private void AddCustomPropertyAction()
+    private async void AddCustomPropertyAction()
     {
         try
         {
             if (string.IsNullOrWhiteSpace(NewCustomPropertyKey))
             {
-                MessageBox.Show("Property key cannot be empty", "Validation Error", Buttons.OK);
+                await MessageBox.ShowAsync("Property key cannot be empty", "Validation Error", Buttons.OK);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(NewCustomPropertyValue))
             {
-                MessageBox.Show("Property value cannot be empty", "Validation Error", Buttons.OK);
+                await MessageBox.ShowAsync("Property value cannot be empty", "Validation Error", Buttons.OK);
                 return;
             }
 
             // Check if key already exists
             if (ConfigModel.CustomProperties.ContainsKey(NewCustomPropertyKey))
             {
-                MessageBox.Show($"Property key '{NewCustomPropertyKey}' already exists", "Validation Error", Buttons.OK);
+                await MessageBox.ShowAsync($"Property key '{NewCustomPropertyKey}' already exists", "Validation Error", Buttons.OK);
                 return;
             }
 
@@ -353,23 +353,23 @@ public class ExtensionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to add custom property: {ex.Message}", "Error", Buttons.OK);
+            await MessageBox.ShowAsync($"Failed to add custom property: {ex.Message}", "Error", Buttons.OK);
         }
     }
 
-    private void RemoveCustomPropertyAction(CustomPropertyModel? property)
+    private async void RemoveCustomPropertyAction(CustomPropertyModel? property)
     {
         try
         {
             if (property == null)
             {
-                MessageBox.Show("No property selected to remove", "Validation Error", Buttons.OK);
+                await MessageBox.ShowAsync("No property selected to remove", "Validation Error", Buttons.OK);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(property.Key))
             {
-                MessageBox.Show("Property key is invalid", "Validation Error", Buttons.OK);
+                await MessageBox.ShowAsync("Property key is invalid", "Validation Error", Buttons.OK);
                 return;
             }
 
@@ -384,7 +384,7 @@ public class ExtensionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Failed to remove custom property: {ex.Message}", "Error", Buttons.OK);
+            await MessageBox.ShowAsync($"Failed to remove custom property: {ex.Message}", "Error", Buttons.OK);
         }
     }
 
