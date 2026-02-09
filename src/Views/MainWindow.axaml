@@ -9,10 +9,13 @@
         Title="GeneralUpdate.Tool.Avalonia">
 <TabControl>
     <TabItem Header="Packet">
-        <views:PacketView></views:PacketView>
+        <views:PacketView/>
     </TabItem>
     <TabItem Header="OSS Packet">
-        <views:OSSPacketView></views:OSSPacketView>
+        <views:OSSPacketView/>
+    </TabItem>
+    <TabItem Header="Extension">
+        <views:ExtensionView/>
     </TabItem>
 </TabControl>
 </Window>
