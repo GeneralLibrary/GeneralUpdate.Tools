@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.Tool.Avalonia.Common;
 using GeneralUpdate.Tool.Avalonia.Models;
 using Newtonsoft.Json;
+using Nlnet.Avalonia.Controls;
 
 namespace GeneralUpdate.Tool.Avalonia.ViewModels;
 
@@ -19,13 +20,13 @@ public class ExtensionViewModel : ObservableObject
     
     private ExtensionConfigModel? _configModel;
     private AsyncRelayCommand? _generateCommand;
-    private AsyncRelayCommand<string>? _selectFolderCommand;
+    private AsyncRelayCommand<string?>? _selectFolderCommand;
     private RelayCommand? _loadedCommand;
     private RelayCommand? _clearCommand;
     private AsyncRelayCommand? _selectDependenciesCommand;
     private ExtensionDependencySelectionModel? _selectedDependency;
-    private RelayCommand<CustomPropertyModel>? _removeCustomPropertyCommand;
-    private RelayCommand? _addCustomPropertyCommand;
+    private AsyncRelayCommand<CustomPropertyModel>? _removeCustomPropertyCommand;
+    private AsyncRelayCommand? _addCustomPropertyCommand;
     private string? _newCustomPropertyKey;
     private string? _newCustomPropertyValue;
 
@@ -38,9 +39,9 @@ public class ExtensionViewModel : ObservableObject
         get { return _loadedCommand ??= new RelayCommand(LoadedAction); }
     }
 
-    public AsyncRelayCommand<string> SelectFolderCommand
+    public AsyncRelayCommand<string?> SelectFolderCommand
     {
-        get => _selectFolderCommand ??= new AsyncRelayCommand<string>(SelectFolderAction);
+        get => _selectFolderCommand ??= new AsyncRelayCommand<string?>(SelectFolderAction);
     }
 
     public AsyncRelayCommand GenerateCommand
@@ -76,14 +77,14 @@ public class ExtensionViewModel : ObservableObject
         set => SetProperty(ref _selectedDependency, value);
     }
 
-    public RelayCommand<CustomPropertyModel> RemoveCustomPropertyCommand
+    public AsyncRelayCommand<CustomPropertyModel> RemoveCustomPropertyCommand
     {
-        get => _removeCustomPropertyCommand ??= new RelayCommand<CustomPropertyModel>(RemoveCustomPropertyAction);
+        get => _removeCustomPropertyCommand ??= new AsyncRelayCommand<CustomPropertyModel>(RemoveCustomPropertyAction);
     }
 
-    public RelayCommand AddCustomPropertyCommand
+    public AsyncRelayCommand AddCustomPropertyCommand
     {
-        get => _addCustomPropertyCommand ??= new RelayCommand(AddCustomPropertyAction, CanAddCustomProperty);
+        get => _addCustomPropertyCommand ??= new AsyncRelayCommand(AddCustomPropertyAction, CanAddCustomProperty);
     }
 
     public string? NewCustomPropertyKey
@@ -91,7 +92,10 @@ public class ExtensionViewModel : ObservableObject
         get => _newCustomPropertyKey;
         set
         {
-            SetProperty(ref _newCustomPropertyKey, value);
+            if (SetProperty(ref _newCustomPropertyKey, value))
+            {
+                AddCustomPropertyCommand.NotifyCanExecuteChanged();
+            }
         }
     }
 
@@ -100,7 +104,10 @@ public class ExtensionViewModel : ObservableObject
         get => _newCustomPropertyValue;
         set
         {
-            SetProperty(ref _newCustomPropertyValue, value);
+            if (SetProperty(ref _newCustomPropertyValue, value))
+            {
+                AddCustomPropertyCommand.NotifyCanExecuteChanged();
+            }
         }
     }
 
@@ -159,26 +166,42 @@ public class ExtensionViewModel : ObservableObject
         NewCustomPropertyValue = string.Empty;
     }
 
-    private async Task SelectFolderAction(string value)
+    private async Task SelectFolderAction(string? value)
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                await MessageBox.ShowAsync("Invalid folder selection parameter", "Error", Buttons.OK);
+                return;
+            }
+
             var folders = await Storage.Instance.SelectFolderDialog();
             if (!folders.Any()) return;
 
             var folder = folders.First();
+            if (folder?.Path?.LocalPath == null)
+            {
+                await MessageBox.ShowAsync("Selected folder path is invalid", "Error", Buttons.OK);
+                return;
+            }
+
             switch (value)
             {
                 case "ExtensionDirectory":
-                    ConfigModel.ExtensionDirectory = folder!.Path.LocalPath;
+                    ConfigModel.ExtensionDirectory = folder.Path.LocalPath;
                     break;
                 case "ExportPath":
-                    ConfigModel.Path = folder!.Path.LocalPath;
+                    ConfigModel.Path = folder.Path.LocalPath;
+                    break;
+                default:
+                    await MessageBox.ShowAsync($"Unknown folder selection type: {value}", "Error", Buttons.OK);
                     break;
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
+            await MessageBox.ShowAsync($"Failed to select folder: {ex.Message}", "Error", Buttons.OK);
         }
     }
 
@@ -192,26 +215,31 @@ public class ExtensionViewModel : ObservableObject
             // Validate input
             if (string.IsNullOrWhiteSpace(ConfigModel.Name))
             {
-                //eventAggregator.PublishWarning("Extension name is required");
+                await MessageBox.ShowAsync("Extension name is required", "Validation Error", Buttons.OK);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ConfigModel.Version))
             {
-                //eventAggregator.PublishWarning("Extension version is required");
+                await MessageBox.ShowAsync("Extension version is required", "Validation Error", Buttons.OK);
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ConfigModel.ExtensionDirectory) ||
-                !Directory.Exists(ConfigModel.ExtensionDirectory))
+            if (string.IsNullOrWhiteSpace(ConfigModel.ExtensionDirectory))
             {
-                //eventAggregator.PublishWarning("Extension directory is invalid");
+                await MessageBox.ShowAsync("Extension directory is required", "Validation Error", Buttons.OK);
+                return;
+            }
+
+            if (!Directory.Exists(ConfigModel.ExtensionDirectory))
+            {
+                await MessageBox.ShowAsync($"Extension directory does not exist: {ConfigModel.ExtensionDirectory}", "Validation Error", Buttons.OK);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ConfigModel.Path))
             {
-                //eventAggregator.PublishWarning("Export path is required");
+                await MessageBox.ShowAsync("Export path is required", "Validation Error", Buttons.OK);
                 return;
             }
 
@@ -232,8 +260,6 @@ public class ExtensionViewModel : ObservableObject
             var zipFileName = $"{sanitizedName}_{sanitizedVersion}.zip";
             var zipFilePath = Path.Combine(exportDirectory, zipFileName);
 
-            //eventAggregator.PublishSuccess("Starting extension compression...");
-
             // Compress the extension directory into a zip file
             await ZipUtility.CompressDirectoryAsync(
                 ConfigModel.ExtensionDirectory, 
@@ -247,20 +273,42 @@ public class ExtensionViewModel : ObservableObject
             // Create manifest.json with all ExtensionDTO fields
             var platformValue = ConfigModel.Platform?.Value ?? 0;
             var targetPlatform = MapPlatformValue(platformValue);
-            ConfigModel.Platform = new PlatformModel{ DisplayName = targetPlatform.ToString(), Value = platformValue };
+            ConfigModel.Platform = new PlatformModel { DisplayName = targetPlatform.ToString(), Value = platformValue };
+            
             // Get file info for the zip
             var fileInfo = new FileInfo(zipFilePath);
             ConfigModel.FileSize = fileInfo.Length;
-            // Serialize manifest to JSON
-            var manifestJson = JsonConvert.SerializeObject(ConfigModel);
+            
+            // Serialize manifest to JSON with explicit settings
+            var jsonSettings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            var manifestJson = JsonConvert.SerializeObject(ConfigModel, jsonSettings);
             if (!string.IsNullOrEmpty(manifestJson))
             {
                 // Add manifest.json to the zip file
                 await ZipUtility.AddFileToZipAsync(zipFilePath, "manifest.json", manifestJson);
             }
+
+            var fileName = Path.GetFileName(zipFilePath);
+            var directory = Path.GetDirectoryName(zipFilePath);
+            await MessageBox.ShowAsync(
+                $"Extension package created successfully:\n\nFile: {fileName}\nLocation: {directory}", 
+                "Success", 
+                Buttons.OK);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await MessageBox.ShowAsync($"Access denied: {ex.Message}\nPlease check file permissions.", "Error", Buttons.OK);
+        }
+        catch (IOException ex)
+        {
+            await MessageBox.ShowAsync($"I/O error: {ex.Message}", "Error", Buttons.OK);
         }
         catch (Exception ex)
         {
+            await MessageBox.ShowAsync($"Failed to generate package: {ex.Message}", "Error", Buttons.OK);
         }
     }
     
@@ -272,19 +320,26 @@ public class ExtensionViewModel : ObservableObject
                !string.IsNullOrWhiteSpace(NewCustomPropertyValue);
     }
 
-    private void AddCustomPropertyAction()
+    private async Task AddCustomPropertyAction()
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(NewCustomPropertyKey) ||
-                string.IsNullOrWhiteSpace(NewCustomPropertyValue))
+            if (string.IsNullOrWhiteSpace(NewCustomPropertyKey))
             {
+                await MessageBox.ShowAsync("Property key cannot be empty", "Validation Error", Buttons.OK);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(NewCustomPropertyValue))
+            {
+                await MessageBox.ShowAsync("Property value cannot be empty", "Validation Error", Buttons.OK);
                 return;
             }
 
             // Check if key already exists
             if (ConfigModel.CustomProperties.ContainsKey(NewCustomPropertyKey))
             {
+                await MessageBox.ShowAsync($"Property key '{NewCustomPropertyKey}' already exists", "Validation Error", Buttons.OK);
                 return;
             }
 
@@ -301,23 +356,24 @@ public class ExtensionViewModel : ObservableObject
             // Clear input fields
             NewCustomPropertyKey = string.Empty;
             NewCustomPropertyValue = string.Empty;
-
         }
         catch (Exception ex)
         {
+            await MessageBox.ShowAsync($"Failed to add custom property: {ex.Message}", "Error", Buttons.OK);
         }
     }
 
-    private void RemoveCustomPropertyAction(CustomPropertyModel? property)
+    private async Task RemoveCustomPropertyAction(CustomPropertyModel? property)
     {
         try
         {
             if (property == null)
             {
+                await MessageBox.ShowAsync("No property selected to remove", "Validation Error", Buttons.OK);
                 return;
             }
 
-            // Remove from dictionary - use TryGetValue for safety
+            // Remove from dictionary
             if (ConfigModel.CustomProperties.ContainsKey(property.Key))
             {
                 ConfigModel.CustomProperties.Remove(property.Key);
@@ -325,10 +381,10 @@ public class ExtensionViewModel : ObservableObject
 
             // Remove from observable collection
             CustomPropertiesCollection.Remove(property);
-
         }
         catch (Exception ex)
         {
+            await MessageBox.ShowAsync($"Failed to remove custom property: {ex.Message}", "Error", Buttons.OK);
         }
     }
 
