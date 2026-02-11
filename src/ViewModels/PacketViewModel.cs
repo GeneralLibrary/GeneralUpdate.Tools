@@ -93,11 +93,12 @@ public class PacketViewModel : ObservableObject
         ConfigModel.ReleaseDirectory = GetPlatformSpecificPath();
         ConfigModel.AppDirectory = GetPlatformSpecificPath();
         ConfigModel.PatchDirectory = GetPlatformSpecificPath();
+        ConfigModel.DriverDirectory = string.Empty;
         ConfigModel.Encoding = Encodings.First();
         ConfigModel.Format = Formats.First();
     }
     
-       /// <summary>
+    /// <summary>
     /// Choose a path
     /// </summary>
     /// <param name="value"></param>
@@ -122,6 +123,10 @@ public class PacketViewModel : ObservableObject
                 case "Patch":
                     ConfigModel.PatchDirectory = folder!.Path.LocalPath;
                     break;
+
+                case "Driver":
+                    ConfigModel.DriverDirectory = folder!.Path.LocalPath;
+                    break;
             }
         }
         catch (Exception e)
@@ -140,6 +145,25 @@ public class PacketViewModel : ObservableObject
             await DifferentialCore.Instance.Clean(ConfigModel.AppDirectory,
                 ConfigModel.ReleaseDirectory,
                 ConfigModel.PatchDirectory);
+
+            // Copy driver files to drivers folder if driver directory is specified
+            if (!string.IsNullOrWhiteSpace(ConfigModel.DriverDirectory) && 
+                Directory.Exists(ConfigModel.DriverDirectory))
+            {
+                try
+                {
+                    var driversFolder = Path.Combine(ConfigModel.PatchDirectory, "drivers");
+                    Directory.CreateDirectory(driversFolder);
+                    
+                    CopyDriverFiles(ConfigModel.DriverDirectory, driversFolder);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Failed to copy driver files: {ex.Message}");
+                    await MessageBox.ShowAsync("Failed to copy driver files. Please check the driver directory permissions and available disk space.", "Warning", Buttons.OK);
+                    // Continue with the build process even if driver copying fails
+                }
+            }
 
             var directoryInfo = new DirectoryInfo(ConfigModel.PatchDirectory);
             var parentDirectory = directoryInfo.Parent!.FullName;
@@ -210,5 +234,25 @@ public class PacketViewModel : ObservableObject
             DeleteDirectoryRecursively(dir);
         }
         Directory.Delete(targetDir, false);
+    }
+
+    private void CopyDriverFiles(string sourceDir, string targetDir)
+    {
+        // Copy all files from source to target
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var fileName = Path.GetFileName(file);
+            var destFile = Path.Combine(targetDir, fileName);
+            File.Copy(file, destFile, true);
+        }
+
+        // Copy all subdirectories and their files recursively
+        foreach (var dir in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(dir);
+            var destDir = Path.Combine(targetDir, dirName);
+            Directory.CreateDirectory(destDir);
+            CopyDriverFiles(dir, destDir);
+        }
     }
 }

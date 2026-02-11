@@ -14,7 +14,7 @@
     </i:Interaction.Behaviors>
  <Grid RowDefinitions="9*,1*">
         <ScrollViewer>
-            <Grid ColumnDefinitions="1*,4*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+            <Grid ColumnDefinitions="1*,4*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                 <!--  SourcePath  -->
                 <TextBlock
                     HorizontalAlignment="Right"
@@ -72,25 +72,45 @@
                     CommandParameter="Patch" Content="Pick"
                     Theme="{DynamicResource SolidButton}">
                 </Button>
-                <!--  Packet name  -->
+                <!--  Driver path  -->
                 <TextBlock
                     Grid.Row="3"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    Text="PacketName" />
+                    Text="DriverDirectory" />
                 <TextBox
                     Grid.Row="3"
                     Grid.Column="1"
                     Margin="5"
-                    Text="{Binding ConfigModel.Name, Mode=TwoWay}" />
+                    Text="{Binding ConfigModel.DriverDirectory, Mode=TwoWay}" />
+                <Button
+                    Grid.Row="3"
+                    Grid.Column="2"
+                    Margin="5"
+                    Classes="Primary"
+                    Command="{Binding SelectFolderCommand}"
+                    CommandParameter="Driver" Content="Pick"
+                    Theme="{DynamicResource SolidButton}">
+                </Button>
                 <!--  Packet name  -->
                 <TextBlock
                     Grid.Row="4"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
+                    Text="PacketName" />
+                <TextBox
+                    Grid.Row="4"
+                    Grid.Column="1"
+                    Margin="5"
+                    Text="{Binding ConfigModel.Name, Mode=TwoWay}" />
+                <!--  Format  -->
+                <TextBlock
+                    Grid.Row="5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
                     Text="Format" />
                 <ComboBox
-                    Grid.Row="4"
+                    Grid.Row="5"
                     Grid.Column="1"
                     MinWidth="150"
                     Margin="5"
@@ -98,28 +118,18 @@
                     SelectedItem="{Binding ConfigModel.Format}" />
                 <!--  encoding  -->
                 <TextBlock
-                    Grid.Row="5"
+                    Grid.Row="6"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Text="Encoding" />
                 <ComboBox
-                    Grid.Row="5"
+                    Grid.Row="6"
                     Grid.Column="1"
                     MinWidth="150"
                     Margin="5"
                     ItemsSource="{Binding Encodings}"
                     SelectedIndex="0"
                     SelectedItem="{Binding ConfigModel.Encoding}" />
-                <Button
-                    Grid.Row="6"
-                    Grid.Column="2"
-                    Margin="5"
-                    Classes="Primary"
-                    IsVisible="False"
-                    Command="{Binding SelectFolderCommand}"
-                    CommandParameter="Driver" Content="Pick"
-                    Theme="{DynamicResource SolidButton}">
-                </Button>
             </Grid>
         </ScrollViewer>
         <StackPanel
