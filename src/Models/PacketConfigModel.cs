@@ -4,7 +4,7 @@ namespace GeneralUpdate.Tool.Avalonia.Models;
 
 public class PacketConfigModel : ObservableObject
 {
-    private string _appDirectory, _releaseDirectory, _patchDirectory, _name, _path;
+    private string _appDirectory, _releaseDirectory, _patchDirectory, _name, _path, _driverDirectory;
     private PlatformModel _platform;
     private FormatModel _format;
     private EncodingModel _encoding;
@@ -94,6 +94,19 @@ public class PacketConfigModel : ObservableObject
         {
             _path = value;
             OnPropertyChanged(nameof(Path));
+        }
+    }
+
+    /// <summary>
+    /// 驱动程序目录
+    /// </summary>
+    public string DriverDirectory
+    {
+        get => _driverDirectory;
+        set
+        {
+            _driverDirectory = value;
+            OnPropertyChanged(nameof(DriverDirectory));
         }
     }
 }
