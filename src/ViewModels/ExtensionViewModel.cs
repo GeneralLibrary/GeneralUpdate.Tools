@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.Tool.Avalonia.Common;
@@ -16,7 +17,6 @@ namespace GeneralUpdate.Tool.Avalonia.ViewModels;
 public class ExtensionViewModel : ObservableObject
 {
     #region Private Members
-
     
     private ExtensionConfigModel? _configModel;
     private AsyncRelayCommand? _generateCommand;
@@ -31,6 +31,11 @@ public class ExtensionViewModel : ObservableObject
     private string? _newCustomPropertyValue;
 
     #endregion
+
+    public ExtensionViewModel()
+    {
+        LoadedCommand.Execute(null);
+    }
 
     #region Public Properties
 
@@ -140,30 +145,33 @@ public class ExtensionViewModel : ObservableObject
 
     private void ResetAction()
     {
-        ConfigModel.Name = string.Empty;
-        ConfigModel.Version = "1.0.0.0";
-        ConfigModel.Description = string.Empty;
-        ConfigModel.ExtensionDirectory = string.Empty;
-        ConfigModel.Path = string.Empty;
-        ConfigModel.Dependencies = string.Empty;
-        ConfigModel.IsUploadToServer = false;
-        ConfigModel.Platform = Platforms.First();
-        ConfigModel.DisplayName = string.Empty;
-        ConfigModel.Publisher = string.Empty;
-        ConfigModel.License = string.Empty;
-        ConfigModel.CategoriesText = string.Empty;
-        ConfigModel.MinHostVersion = string.Empty;
-        ConfigModel.MaxHostVersion = string.Empty;
-        ConfigModel.ReleaseDate = DateTime.Now;
-        ConfigModel.IsPreRelease = false;
-        ConfigModel.Format = ".zip";
-        ConfigModel.Hash = string.Empty;
-        SelectedDependency = null;
-        ConfigModel.CustomProperties.Clear();
-        ConfigModel.ShowCustomProperties = false;
-        CustomPropertiesCollection.Clear();
-        NewCustomPropertyKey = string.Empty;
-        NewCustomPropertyValue = string.Empty;
+        Dispatcher.UIThread.Invoke(() =>
+        {
+            ConfigModel.Name = string.Empty;
+            ConfigModel.Version = "1.0.0.0";
+            ConfigModel.Description = string.Empty;
+            ConfigModel.ExtensionDirectory = string.Empty;
+            ConfigModel.Path = string.Empty;
+            ConfigModel.Dependencies = string.Empty;
+            ConfigModel.IsUploadToServer = false;
+            ConfigModel.Platform = Platforms.First();
+            ConfigModel.DisplayName = string.Empty;
+            ConfigModel.Publisher = string.Empty;
+            ConfigModel.License = string.Empty;
+            ConfigModel.CategoriesText = string.Empty;
+            ConfigModel.MinHostVersion = string.Empty;
+            ConfigModel.MaxHostVersion = string.Empty;
+            ConfigModel.ReleaseDate = DateTime.Now;
+            ConfigModel.IsPreRelease = false;
+            ConfigModel.Format = ".zip";
+            ConfigModel.Hash = string.Empty;
+            SelectedDependency = null;
+            ConfigModel.CustomProperties.Clear();
+            ConfigModel.ShowCustomProperties = false;
+            CustomPropertiesCollection.Clear();
+            NewCustomPropertyKey = string.Empty;
+            NewCustomPropertyValue = string.Empty;
+        });
     }
 
     private async Task SelectFolderAction(string? value)
