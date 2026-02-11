@@ -150,10 +150,19 @@ public class PacketViewModel : ObservableObject
             if (!string.IsNullOrWhiteSpace(ConfigModel.DriverDirectory) && 
                 Directory.Exists(ConfigModel.DriverDirectory))
             {
-                var driversFolder = Path.Combine(ConfigModel.PatchDirectory, "drivers");
-                Directory.CreateDirectory(driversFolder);
-                
-                CopyDriverFiles(ConfigModel.DriverDirectory, driversFolder);
+                try
+                {
+                    var driversFolder = Path.Combine(ConfigModel.PatchDirectory, "drivers");
+                    Directory.CreateDirectory(driversFolder);
+                    
+                    CopyDriverFiles(ConfigModel.DriverDirectory, driversFolder);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Failed to copy driver files: {ex.Message}");
+                    await MessageBox.ShowAsync("Failed to copy driver files. Please check the driver directory permissions and available disk space.", "Warning", Buttons.OK);
+                    // Continue with the build process even if driver copying fails
+                }
             }
 
             var directoryInfo = new DirectoryInfo(ConfigModel.PatchDirectory);

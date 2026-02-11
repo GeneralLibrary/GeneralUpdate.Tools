@@ -82,7 +82,7 @@
                     Grid.Row="3"
                     Grid.Column="1"
                     Margin="5"
-                    Text="{Binding ConfigModel.DriverDirectory}" />
+                    Text="{Binding ConfigModel.DriverDirectory, Mode=TwoWay}" />
                 <Button
                     Grid.Row="3"
                     Grid.Column="2"
