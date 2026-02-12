@@ -10,6 +10,8 @@
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![Avalonia](https://img.shields.io/badge/Avalonia-11.2-orange.svg)](https://avaloniaui.net/)
 
+English | [简体中文](README.zh-CN.md)
+
 </div>
 
 ---
