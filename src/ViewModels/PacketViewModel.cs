@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.Common.Compress;
+using GeneralUpdate.Common.Shared.Object;
 using GeneralUpdate.Differential;
 using GeneralUpdate.Tool.Avalonia.Common;
 using GeneralUpdate.Tool.Avalonia.Models;
@@ -331,22 +332,19 @@ public class PacketViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Create ConfigInfo JSON file in patch directory
+    /// Create Configinfo JSON file in patch directory
     /// </summary>
     private async Task<string> CreateConfigInfoFile()
     {
         try
         {
-            var configInfo = new ConfigInfo
+            var configInfo = new Configinfo
             {
                 ReportUrl = ConfigModel.ReportUrl,
                 UpdateUrl = ConfigModel.UpdateUrl,
                 AppName = ConfigModel.AppName,
                 MainAppName = ConfigModel.MainAppName,
-                ClientVersion = ConfigModel.ClientVersion,
-                PacketName = ConfigModel.Name,
-                Format = ConfigModel.Format?.Value ?? string.Empty,
-                Encoding = ConfigModel.Encoding?.DisplayName ?? string.Empty
+                ClientVersion = ConfigModel.ClientVersion
             };
 
             var json = JsonConvert.SerializeObject(configInfo, Formatting.Indented);
