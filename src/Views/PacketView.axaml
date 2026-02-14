@@ -208,7 +208,6 @@
                         Grid.Column="1"
                         MinWidth="150"
                         Margin="5"
-                        IsEnabled="False"
                         ItemsSource="{Binding Formats}"
                         SelectedItem="{Binding ConfigModel.Format}" />
                     
@@ -223,7 +222,6 @@
                         Grid.Column="1"
                         MinWidth="150"
                         Margin="5"
-                        IsEnabled="False"
                         ItemsSource="{Binding Encodings}"
                         SelectedIndex="0"
                         SelectedItem="{Binding ConfigModel.Encoding}" />

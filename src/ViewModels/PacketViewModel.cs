@@ -181,7 +181,7 @@ public class PacketViewModel : ObservableObject
             }
 
             // Create and save ConfigInfo JSON file
-            var configInfoPath = await CreateConfigInfoFile();
+            await CreateConfigInfoFile();
 
             var directoryInfo = new DirectoryInfo(ConfigModel.PatchDirectory);
             var parentDirectory = directoryInfo.Parent!.FullName;
