@@ -144,8 +144,22 @@ public static class CsprojReader
 
         try
         {
+            // First try to find .exe file (Windows)
             var exeFiles = Directory.GetFiles(directory, $"{baseName}.exe", SearchOption.AllDirectories);
-            return exeFiles.FirstOrDefault() ?? string.Empty;
+            if (exeFiles.Any())
+                return exeFiles.First();
+
+            // Then try to find executable without extension (Linux/Mac)
+            var allFiles = Directory.GetFiles(directory, baseName, SearchOption.AllDirectories);
+            foreach (var file in allFiles)
+            {
+                var fileInfo = new FileInfo(file);
+                // Check if file is executable (on Unix systems) or if it's an exact match
+                if (fileInfo.Name == baseName)
+                    return file;
+            }
+
+            return string.Empty;
         }
         catch (Exception ex)
         {

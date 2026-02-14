@@ -8,26 +8,26 @@ namespace GeneralUpdate.Tool.Avalonia.Models;
 public class ConfigInfo
 {
     [JsonProperty("reportUrl")]
-    public string ReportUrl { get; set; }
+    public string ReportUrl { get; set; } = string.Empty;
 
     [JsonProperty("updateUrl")]
-    public string UpdateUrl { get; set; }
+    public string UpdateUrl { get; set; } = string.Empty;
 
     [JsonProperty("appName")]
-    public string AppName { get; set; }
+    public string AppName { get; set; } = string.Empty;
 
     [JsonProperty("mainAppName")]
-    public string MainAppName { get; set; }
+    public string MainAppName { get; set; } = string.Empty;
 
     [JsonProperty("clientVersion")]
-    public string ClientVersion { get; set; }
+    public string ClientVersion { get; set; } = string.Empty;
 
     [JsonProperty("packetName")]
-    public string PacketName { get; set; }
+    public string PacketName { get; set; } = string.Empty;
 
     [JsonProperty("format")]
-    public string Format { get; set; }
+    public string Format { get; set; } = string.Empty;
 
     [JsonProperty("encoding")]
-    public string Encoding { get; set; }
+    public string Encoding { get; set; } = string.Empty;
 }
