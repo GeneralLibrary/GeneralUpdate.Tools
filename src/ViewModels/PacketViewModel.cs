@@ -150,7 +150,7 @@ public class PacketViewModel : ObservableObject
         try
         {
             // Validate required fields
-            if (!ValidateRequiredFields())
+            if (!await ValidateRequiredFields())
                 return;
 
             // Read configuration from .csproj
@@ -276,7 +276,7 @@ public class PacketViewModel : ObservableObject
     /// <summary>
     /// Validate required fields
     /// </summary>
-    private bool ValidateRequiredFields()
+    private async Task<bool> ValidateRequiredFields()
     {
         var errors = new System.Collections.Generic.List<string>();
 
@@ -298,7 +298,7 @@ public class PacketViewModel : ObservableObject
         if (errors.Any())
         {
             var message = $"The following required fields must be filled:\n{string.Join(", ", errors)}";
-            MessageBox.ShowAsync(message, "Validation Error", Buttons.OK).Wait();
+            await MessageBox.ShowAsync(message, "Validation Error", Buttons.OK);
             return false;
         }
 
@@ -345,8 +345,8 @@ public class PacketViewModel : ObservableObject
                 MainAppName = ConfigModel.MainAppName,
                 ClientVersion = ConfigModel.ClientVersion,
                 PacketName = ConfigModel.Name,
-                Format = ConfigModel.Format.Value,
-                Encoding = ConfigModel.Encoding.DisplayName
+                Format = ConfigModel.Format?.Value ?? string.Empty,
+                Encoding = ConfigModel.Encoding?.DisplayName ?? string.Empty
             };
 
             var json = JsonConvert.SerializeObject(configInfo, Formatting.Indented);

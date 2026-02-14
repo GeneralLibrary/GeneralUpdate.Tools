@@ -131,11 +131,22 @@ public static class CsprojReader
             return string.Empty;
 
         var csprojFiles = Directory.GetFiles(directory, "*.csproj", SearchOption.TopDirectoryOnly);
-        return csprojFiles.FirstOrDefault() ?? string.Empty;
+        
+        if (csprojFiles.Length == 0)
+            return string.Empty;
+        
+        if (csprojFiles.Length > 1)
+        {
+            Trace.WriteLine($"Warning: Multiple .csproj files found in {directory}. Using the first one: {csprojFiles[0]}");
+        }
+        
+        return csprojFiles[0];
     }
 
     /// <summary>
     /// Find .exe file with matching name recursively
+    /// Note: Uses SearchOption.AllDirectories which may be slow for large directory trees.
+    /// This is acceptable as release directories are typically small.
     /// </summary>
     private static string FindExeFile(string directory, string baseName)
     {
