@@ -10,7 +10,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GeneralUpdate.Common.Compress;
 using GeneralUpdate.Differential;
+using GeneralUpdate.Tool.Avalonia.Common;
 using GeneralUpdate.Tool.Avalonia.Models;
+using Newtonsoft.Json;
 using Nlnet.Avalonia.Controls;
 
 namespace GeneralUpdate.Tool.Avalonia.ViewModels;
@@ -94,6 +96,11 @@ public class PacketViewModel : ObservableObject
         ConfigModel.AppDirectory = GetPlatformSpecificPath();
         ConfigModel.PatchDirectory = GetPlatformSpecificPath();
         ConfigModel.DriverDirectory = string.Empty;
+        ConfigModel.ReportUrl = string.Empty;
+        ConfigModel.UpdateUrl = string.Empty;
+        ConfigModel.AppName = string.Empty;
+        ConfigModel.MainAppName = string.Empty;
+        ConfigModel.ClientVersion = string.Empty;
         ConfigModel.Encoding = Encodings.First();
         ConfigModel.Format = Formats.First();
     }
@@ -142,6 +149,13 @@ public class PacketViewModel : ObservableObject
     {
         try
         {
+            // Validate required fields
+            if (!ValidateRequiredFields())
+                return;
+
+            // Read configuration from .csproj
+            ReadProjectConfiguration();
+
             await DifferentialCore.Instance.Clean(ConfigModel.AppDirectory,
                 ConfigModel.ReleaseDirectory,
                 ConfigModel.PatchDirectory);
@@ -164,6 +178,9 @@ public class PacketViewModel : ObservableObject
                     // Continue with the build process even if driver copying fails
                 }
             }
+
+            // Create and save ConfigInfo JSON file
+            var configInfoPath = await CreateConfigInfoFile();
 
             var directoryInfo = new DirectoryInfo(ConfigModel.PatchDirectory);
             var parentDirectory = directoryInfo.Parent!.FullName;
@@ -253,6 +270,96 @@ public class PacketViewModel : ObservableObject
             var destDir = Path.Combine(targetDir, dirName);
             Directory.CreateDirectory(destDir);
             CopyDriverFiles(dir, destDir);
+        }
+    }
+
+    /// <summary>
+    /// Validate required fields
+    /// </summary>
+    private bool ValidateRequiredFields()
+    {
+        var errors = new System.Collections.Generic.List<string>();
+
+        if (string.IsNullOrWhiteSpace(ConfigModel.UpdateUrl))
+            errors.Add("UpdateUrl");
+        
+        if (string.IsNullOrWhiteSpace(ConfigModel.ReportUrl))
+            errors.Add("ReportUrl");
+        
+        if (string.IsNullOrWhiteSpace(ConfigModel.AppDirectory))
+            errors.Add("AppDirectory");
+        
+        if (string.IsNullOrWhiteSpace(ConfigModel.ReleaseDirectory))
+            errors.Add("ReleaseDirectory");
+        
+        if (string.IsNullOrWhiteSpace(ConfigModel.PatchDirectory))
+            errors.Add("PatchDirectory");
+
+        if (errors.Any())
+        {
+            var message = $"The following required fields must be filled:\n{string.Join(", ", errors)}";
+            MessageBox.ShowAsync(message, "Validation Error", Buttons.OK).Wait();
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Read project configuration from .csproj file
+    /// </summary>
+    private void ReadProjectConfiguration()
+    {
+        try
+        {
+            // Read MainAppName
+            ConfigModel.MainAppName = CsprojReader.ReadMainAppName(ConfigModel.ReleaseDirectory);
+            
+            // Read ClientVersion
+            ConfigModel.ClientVersion = CsprojReader.ReadClientVersion(ConfigModel.ReleaseDirectory);
+            
+            // Set AppName to MainAppName if MainAppName is not empty
+            if (!string.IsNullOrEmpty(ConfigModel.MainAppName))
+            {
+                ConfigModel.AppName = ConfigModel.MainAppName;
+            }
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"Error reading project configuration: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Create ConfigInfo JSON file in patch directory
+    /// </summary>
+    private async Task<string> CreateConfigInfoFile()
+    {
+        try
+        {
+            var configInfo = new ConfigInfo
+            {
+                ReportUrl = ConfigModel.ReportUrl,
+                UpdateUrl = ConfigModel.UpdateUrl,
+                AppName = ConfigModel.AppName,
+                MainAppName = ConfigModel.MainAppName,
+                ClientVersion = ConfigModel.ClientVersion,
+                PacketName = ConfigModel.Name,
+                Format = ConfigModel.Format.Value,
+                Encoding = ConfigModel.Encoding.DisplayName
+            };
+
+            var json = JsonConvert.SerializeObject(configInfo, Formatting.Indented);
+            var configFilePath = Path.Combine(ConfigModel.PatchDirectory, "config.json");
+            
+            await File.WriteAllTextAsync(configFilePath, json, Encoding.UTF8);
+            
+            return configFilePath;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"Error creating config info file: {ex.Message}");
+            throw;
         }
     }
 }
