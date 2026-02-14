@@ -5,6 +5,7 @@ namespace GeneralUpdate.Tool.Avalonia.Models;
 public class PacketConfigModel : ObservableObject
 {
     private string _appDirectory, _releaseDirectory, _patchDirectory, _name, _path, _driverDirectory;
+    private string _reportUrl, _updateUrl, _appName, _mainAppName, _clientVersion;
     private PlatformModel _platform;
     private FormatModel _format;
     private EncodingModel _encoding;
@@ -107,6 +108,71 @@ public class PacketConfigModel : ObservableObject
         {
             _driverDirectory = value;
             OnPropertyChanged(nameof(DriverDirectory));
+        }
+    }
+
+    /// <summary>
+    /// 报告地址
+    /// </summary>
+    public string ReportUrl
+    {
+        get => _reportUrl;
+        set
+        {
+            _reportUrl = value;
+            OnPropertyChanged(nameof(ReportUrl));
+        }
+    }
+
+    /// <summary>
+    /// 更新地址
+    /// </summary>
+    public string UpdateUrl
+    {
+        get => _updateUrl;
+        set
+        {
+            _updateUrl = value;
+            OnPropertyChanged(nameof(UpdateUrl));
+        }
+    }
+
+    /// <summary>
+    /// 应用程序名称
+    /// </summary>
+    public string AppName
+    {
+        get => _appName;
+        set
+        {
+            _appName = value;
+            OnPropertyChanged(nameof(AppName));
+        }
+    }
+
+    /// <summary>
+    /// 主应用程序名称
+    /// </summary>
+    public string MainAppName
+    {
+        get => _mainAppName;
+        set
+        {
+            _mainAppName = value;
+            OnPropertyChanged(nameof(MainAppName));
+        }
+    }
+
+    /// <summary>
+    /// 客户端版本
+    /// </summary>
+    public string ClientVersion
+    {
+        get => _clientVersion;
+        set
+        {
+            _clientVersion = value;
+            OnPropertyChanged(nameof(ClientVersion));
         }
     }
 }
