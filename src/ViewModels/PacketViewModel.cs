@@ -105,6 +105,7 @@ public class PacketViewModel : ObservableObject
         ConfigModel.ClientVersion = string.Empty;
         ConfigModel.Encoding = Encodings.First();
         ConfigModel.Format = Formats.First();
+        CreateDirectory();
     }
     
     /// <summary>
@@ -353,7 +354,7 @@ public class PacketViewModel : ObservableObject
             };
 
             var json = JsonConvert.SerializeObject(configInfo, Formatting.Indented);
-            var configFilePath = Path.Combine(ConfigModel.PatchDirectory, "config.json");
+            var configFilePath = Path.Combine(ConfigModel.PatchDirectory, "update_config.json");
             
             await File.WriteAllTextAsync(configFilePath, json, Encoding.UTF8);
             
@@ -476,5 +477,24 @@ public class PacketViewModel : ObservableObject
 
         // Concatenate directories into a string and return
         return string.Join(";", exeDirectories);
+    }
+    
+    private void CreateDirectory()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        
+        var packateDir = Path.Combine(baseDir, "packets");
+        if (!Directory.Exists(packateDir))
+        {
+            Directory.CreateDirectory(packateDir);
+        }
+        
+        var patchDir = Path.Combine(packateDir, "patch");
+        if (!Directory.Exists(patchDir))
+        {
+            Directory.CreateDirectory(patchDir);
+        }
+
+        ConfigModel.PatchDirectory = patchDir;
     }
 }
