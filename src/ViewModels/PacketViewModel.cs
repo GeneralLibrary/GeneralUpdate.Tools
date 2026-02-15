@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -99,7 +100,7 @@ public class PacketViewModel : ObservableObject
         ConfigModel.DriverDirectory = string.Empty;
         ConfigModel.ReportUrl = string.Empty;
         ConfigModel.UpdateUrl = string.Empty;
-        ConfigModel.AppName = string.Empty;
+        ConfigModel.AppName = "Update";
         ConfigModel.MainAppName = string.Empty;
         ConfigModel.ClientVersion = string.Empty;
         ConfigModel.Encoding = Encodings.First();
@@ -174,9 +175,7 @@ public class PacketViewModel : ObservableObject
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine($"Failed to copy driver files: {ex.Message}");
                     await MessageBox.ShowAsync("Failed to copy driver files. Please check the driver directory permissions and available disk space.", "Warning", Buttons.OK);
-                    // Continue with the build process even if driver copying fails
                 }
             }
 
@@ -190,7 +189,7 @@ public class PacketViewModel : ObservableObject
             
             CompressProvider.Compress(operationType
                 , ConfigModel.PatchDirectory
-                , Path.Combine(parentDirectory,ConfigModel.Name+ ConfigModel.Format.Value)
+                , Path.Combine(parentDirectory,ConfigModel.Name + ConfigModel.Format.Value)
                 , false, encoding);
             
             if (Directory.Exists(ConfigModel.PatchDirectory))
@@ -209,7 +208,6 @@ public class PacketViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            Trace.WriteLine(e.Message);
             await MessageBox.ShowAsync(e.Message, "Fail", Buttons.OK);
         }
     }
@@ -318,11 +316,18 @@ public class PacketViewModel : ObservableObject
             
             // Read ClientVersion
             ConfigModel.ClientVersion = CsprojReader.ReadClientVersion(ConfigModel.ReleaseDirectory);
-            
-            // Set AppName to MainAppName if MainAppName is not empty
-            if (!string.IsNullOrEmpty(ConfigModel.MainAppName))
+
+            // Read ReleaseDirectory
+            var directory = SearchExeFileAndGetDirectory(ConfigModel.ReleaseDirectory, ConfigModel.MainAppName);
+            var outputPath = CsprojReader.ReadOutputPath(ConfigModel.ReleaseDirectory);
+
+            if (!string.IsNullOrWhiteSpace(outputPath))
             {
-                ConfigModel.AppName = ConfigModel.MainAppName;
+                ConfigModel.ReleaseDirectory = outputPath;
+            }
+            else if (!string.IsNullOrWhiteSpace(directory))
+            {
+                ConfigModel.ReleaseDirectory = SearchExeFileAndGetDirectory(ConfigModel.ReleaseDirectory, ConfigModel.MainAppName);
             }
         }
         catch (Exception ex)
@@ -359,5 +364,117 @@ public class PacketViewModel : ObservableObject
             Trace.WriteLine($"Error creating config info file: {ex.Message}");
             throw;
         }
+    }
+    
+    /// <summary>
+    /// Searches for the specified exe file in release/debug directories under bin directories 
+    /// in the specified root directory, and returns the directories of the found exe files as a concatenated string
+    /// </summary>
+    /// <param name="rootDirectory">Root directory path</param>
+    /// <param name="exeFileName">Name of the exe file to search (including extension)</param>
+    /// <returns>Paths of directories containing matching exe files, separated by semicolons; 
+    /// returns empty string if no files are found</returns>
+    /// <exception cref="ArgumentNullException">Thrown when parameter is null or whitespace</exception>
+    /// <exception cref="ArgumentException">Thrown when parameter format is invalid</exception>
+    /// <exception cref="DirectoryNotFoundException">Thrown when root directory does not exist</exception>
+    private static string SearchExeFileAndGetDirectory(string rootDirectory, string exeFileName)
+    {
+        // Temporarily store directories of found exe files
+        List<string> exeDirectories = new List<string>();
+
+        // ===================== Step 1: Comprehensive parameter validation =====================
+        // 1. Validate if rootDirectory is null, empty or whitespace
+        if (string.IsNullOrWhiteSpace(rootDirectory))
+        {
+            throw new ArgumentNullException(nameof(rootDirectory), "Root directory path cannot be null, empty or whitespace");
+        }
+
+        // 2. Validate if rootDirectory path format is legal (avoid invalid paths like "::/\\abc")
+        try
+        {
+            // Attempt to resolve the path, exception will be thrown if format is illegal
+            string fullPath = Path.GetFullPath(rootDirectory);
+        }
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"Invalid root directory path format: {ex.Message}", nameof(rootDirectory), ex);
+        }
+
+        // 3. Validate if exeFileName is null, empty or whitespace
+        if (string.IsNullOrWhiteSpace(exeFileName))
+        {
+            throw new ArgumentNullException(nameof(exeFileName), "Exe file name to search cannot be null, empty or whitespace");
+        }
+
+        // 6. Basic validation: Check if root directory exists (kept after format validation)
+        if (!Directory.Exists(rootDirectory))
+        {
+            throw new DirectoryNotFoundException($"Specified root directory does not exist: {rootDirectory}");
+        }
+
+        // ===================== Step 2: Original core search logic =====================
+        try
+        {
+            // 1. Recursively find all bin directories (case-insensitive)
+            var binDirectories = Directory.EnumerateDirectories(
+                rootDirectory,
+                "bin",
+                SearchOption.AllDirectories)
+                .Where(dir => string.Equals(Path.GetFileName(dir), "bin", StringComparison.OrdinalIgnoreCase));
+
+            foreach (string binDir in binDirectories)
+            {
+                string targetDir = null;
+
+                // 2. Prioritize checking release directory
+                string releaseDir = Path.Combine(binDir, "release");
+                if (Directory.Exists(releaseDir))
+                {
+                    targetDir = releaseDir;
+                }
+                else
+                {
+                    // Fallback to check debug directory
+                    string debugDir = Path.Combine(binDir, "debug");
+                    if (Directory.Exists(debugDir))
+                    {
+                        targetDir = debugDir;
+                    }
+                }
+
+                // 3. If release/debug directory is found, search for exe files
+                if (!string.IsNullOrEmpty(targetDir))
+                {
+                    var exeFiles = Directory.EnumerateFiles(
+                        targetDir,
+                        "*.exe",
+                        SearchOption.AllDirectories);
+
+                    foreach (string filePath in exeFiles)
+                    {
+                        string fileName = Path.GetFileName(filePath);
+                        if (fileName.Contains(exeFileName))
+                        {
+                            string exeDir = Path.GetDirectoryName(filePath);
+                            if (!exeDirectories.Contains(exeDir))
+                            {
+                                exeDirectories.Add(exeDir);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Console.WriteLine($"Insufficient permissions to access directory: {ex.Message}");
+        }
+        catch (PathTooLongException ex)
+        {
+            Console.WriteLine($"File path is too long: {ex.Message}");
+        }
+
+        // Concatenate directories into a string and return
+        return string.Join(";", exeDirectories);
     }
 }
