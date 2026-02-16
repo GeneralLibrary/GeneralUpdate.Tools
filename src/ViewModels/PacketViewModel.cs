@@ -181,7 +181,7 @@ public class PacketViewModel : ObservableObject
             }
 
             // Create and save ConfigInfo JSON file
-            await CreateConfigInfoFile();
+            var configFile = await CreateConfigInfoFile();
 
             var directoryInfo = new DirectoryInfo(ConfigModel.PatchDirectory);
             var parentDirectory = directoryInfo.Parent!.FullName;
@@ -201,6 +201,7 @@ public class PacketViewModel : ObservableObject
             {
                 ConfigModel.Path = packetInfo.FullName;
                 await MessageBox.ShowAsync("Build success", "Success", Buttons.OK);
+                OpenFileDirectoryAndSelectFile(configFile);
             }
             else
             {
@@ -354,7 +355,7 @@ public class PacketViewModel : ObservableObject
             };
 
             var json = JsonConvert.SerializeObject(configInfo, Formatting.Indented);
-            var configFilePath = Path.Combine(ConfigModel.PatchDirectory, "update_config.json");
+            var configFilePath = Path.Combine(AppContext.BaseDirectory, "update_config.json");
             
             await File.WriteAllTextAsync(configFilePath, json, Encoding.UTF8);
             
@@ -496,5 +497,20 @@ public class PacketViewModel : ObservableObject
         }
 
         ConfigModel.PatchDirectory = patchDir;
+    }
+    
+    static void OpenFileDirectoryAndSelectFile(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException("The file is not exists!", filePath);
+        }
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "explorer.exe",
+            Arguments = $"/select, \"{filePath}\"", // /select 参数用于选中文件
+            UseShellExecute = true
+        });
     }
 }
