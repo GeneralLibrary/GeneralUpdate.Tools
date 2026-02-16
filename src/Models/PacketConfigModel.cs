@@ -4,11 +4,25 @@ namespace GeneralUpdate.Tool.Avalonia.Models;
 
 public class PacketConfigModel : ObservableObject
 {
+    private string _serverAddress;
     private string _appDirectory, _releaseDirectory, _patchDirectory, _name, _path, _driverDirectory;
     private string _reportUrl, _updateUrl, _appName, _mainAppName, _clientVersion;
     private PlatformModel _platform;
     private FormatModel _format;
     private EncodingModel _encoding;
+    
+    public string ServerAddress
+    {
+        get => _serverAddress;
+        set
+        {
+            _serverAddress = value;
+            OnPropertyChanged(nameof(ServerAddress));
+            
+            ReportUrl = $"{_serverAddress}/report";
+            UpdateUrl = $"{_serverAddress}/update";
+        }
+    }
  
     /// <summary>
     /// 压缩包格式

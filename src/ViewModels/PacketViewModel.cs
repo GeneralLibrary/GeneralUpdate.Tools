@@ -93,7 +93,7 @@ public class PacketViewModel : ObservableObject
     
     private void ResetAction() 
     {
-        ConfigModel.Name = GenerateFileName("1.0.0.0");
+        ConfigModel.Name = GenerateFileName();
         ConfigModel.ReleaseDirectory = GetPlatformSpecificPath();
         ConfigModel.AppDirectory = GetPlatformSpecificPath();
         ConfigModel.PatchDirectory = GetPlatformSpecificPath();
@@ -232,10 +232,10 @@ public class PacketViewModel : ObservableObject
         throw new PlatformNotSupportedException("Unsupported OS");
     }
     
-    private string GenerateFileName(string version)
+    private string GenerateFileName()
     {
-        string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-        return $"packet_{timestamp}_{version}";
+        var timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+        return $"packet_{timestamp}";
     }
     
     private void DeleteDirectoryRecursively(string targetDir)

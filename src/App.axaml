@@ -3,6 +3,7 @@
              x:Class="GeneralUpdate.Tool.Avalonia.App"
              xmlns:local="using:GeneralUpdate.Tool.Avalonia"
              xmlns:semi="https://irihi.tech/semi"
+             xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
              RequestedThemeVariant="Default">
     <Application.Resources>
         <ResourceDictionary>
@@ -12,7 +13,7 @@
         </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>
-        <FluentTheme />
-        <semi:SemiTheme />
+        <semi:SemiTheme Locale="en" />
+        <u-semi:SemiTheme Locale="en"/>
     </Application.Styles>
 </Application>

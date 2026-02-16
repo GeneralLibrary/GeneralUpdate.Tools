@@ -6,6 +6,7 @@
              xmlns:i="clr-namespace:Avalonia.Xaml.Interactivity;assembly=Avalonia.Xaml.Interactivity"
              xmlns:ia="clr-namespace:Avalonia.Xaml.Interactions.Core;assembly=Avalonia.Xaml.Interactions"
              xmlns:vm="clr-namespace:GeneralUpdate.Tool.Avalonia.ViewModels"
+             xmlns:u="https://irihi.tech/ursa"
              x:Class="GeneralUpdate.Tool.Avalonia.Views.PacketView" x:DataType="vm:PacketViewModel">
     <i:Interaction.Behaviors>
         <ia:EventTriggerBehavior EventName="Loaded">
@@ -16,216 +17,55 @@
         <ScrollViewer>
             <StackPanel Margin="10">
                 <!--  Required Fields Section  -->
-                <TextBlock 
-                    Text="Required Fields" 
-                    FontWeight="Bold" 
-                    FontSize="14"
-                    Margin="0,5,0,5" />
-                <Separator Margin="0,0,0,10" />
-                
-                <Grid ColumnDefinitions="1*,4*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                <!--  UpdateUrl (Required)  -->
-                    <TextBlock
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="UpdateUrl*" />
-                    <TextBox
-                        Grid.Column="1"
-                        Margin="5"
-                        Text="{Binding ConfigModel.UpdateUrl}" />
-                    
-                    <!--  ReportUrl (Required)  -->
-                    <TextBlock
-                        Grid.Row="1"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="ReportUrl*" />
-                    <TextBox
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Margin="5"
-                        Text="{Binding ConfigModel.ReportUrl}" />
-                    
-                    <!--  AppDirectory (Required)  -->
-                    <TextBlock
-                        Grid.Row="2"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="AppDirectory*" />
-                    <TextBox
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        Margin="5"
-                        Text="{Binding ConfigModel.AppDirectory}" />
-                    <Button
-                        Grid.Row="2"
-                        Grid.Column="2"
-                        Margin="5"
-                        Classes="Primary"
-                        Command="{Binding SelectFolderCommand}"
-                        CommandParameter="App" Content="Pick"
-                        Theme="{DynamicResource SolidButton}" >
-                    </Button>
-                    
-                    <!--  ReleaseDirectory (Required)  -->
-                    <TextBlock
-                        Grid.Row="3"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="ReleaseDirectory*" />
-                    <TextBox
-                        Grid.Row="3"
-                        Grid.Column="1"
-                        Margin="5"
-                        Text="{Binding ConfigModel.ReleaseDirectory}" />
-                    <Button
-                        Grid.Row="3"
-                        Grid.Column="2"
-                        Margin="5"
-                        Classes="Primary"
-                        Command="{Binding SelectFolderCommand}"
-                        CommandParameter="Release" Content="Pick"
-                        Theme="{DynamicResource SolidButton}">
-                    </Button>
-                    
-                    <!--  PatchDirectory (Required)  -->
-                    <TextBlock
-                        Grid.Row="4"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="PatchDirectory*" />
-                    <TextBox
-                        Grid.Row="4"
-                        Grid.Column="1"
-                        Margin="5"
-                        Text="{Binding ConfigModel.PatchDirectory}" />
-                    <Button
-                        Grid.Row="4"
-                        Grid.Column="2"
-                        Margin="5"
-                        Classes="Primary"
-                        Command="{Binding SelectFolderCommand}"
-                        CommandParameter="Patch" Content="Pick"
-                        Theme="{DynamicResource SolidButton}">
-                    </Button>
-                </Grid>
-                
-                <!--  Optional Fields Section  -->
-                <TextBlock 
-                    Text="Optional Fields" 
-                    FontWeight="Bold" 
-                    FontSize="14"
-                    Margin="0,15,0,5" />
-                <Separator Margin="0,0,0,10" />
-                
-                <Grid ColumnDefinitions="1*,4*,1*" RowDefinitions="Auto">
-                <!--  DriverDirectory (Optional)  -->
-                    <TextBlock
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="DriverDirectory" />
-                    <TextBox
-                        Grid.Column="1"
-                        Margin="5"
-                        Text="{Binding ConfigModel.DriverDirectory, Mode=TwoWay}" />
-                    <Button
-                        Grid.Column="2"
-                        Margin="5"
-                        Classes="Primary"
-                        Command="{Binding SelectFolderCommand}"
-                        CommandParameter="Driver" Content="Pick"
-                        Theme="{DynamicResource SolidButton}">
-                    </Button>
-                </Grid>
+                <u:Divider Content="Required Fields"/>
+                <u:Form LabelPosition="Left" LabelWidth="*" Margin="10">
+                    <StackPanel Orientation="Horizontal" u:FormItem.IsRequired="True" u:FormItem.Label="ServerAddress">
+                        <TextBox Width="400" Text="{Binding ConfigModel.ServerAddress}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" u:FormItem.IsRequired="True" u:FormItem.Label="AppDirectory" >
+                        <TextBox Width="400" Text="{Binding ConfigModel.AppDirectory}"/>
+                        <Button Margin="5,0,0,0"
+                                Classes="Primary" 
+                                Command="{Binding SelectFolderCommand}"
+                                CommandParameter="App" 
+                                Content="Pick"
+                                Theme="{DynamicResource SolidButton}" >
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" u:FormItem.IsRequired="True" u:FormItem.Label="ReleaseDirectory" >
+                        <TextBox Width="400" Text="{Binding ConfigModel.ReleaseDirectory}" />
+                        <Button Margin="5,0,0,0"
+                                Classes="Primary"
+                                Command="{Binding SelectFolderCommand}"
+                                CommandParameter="Release" 
+                                Content="Pick"
+                                Theme="{DynamicResource SolidButton}">
+                        </Button>
+                    </StackPanel>
+                </u:Form>
                 
                 <!--  Auto-generated Fields Section  -->
-                <TextBlock 
-                    Text="Auto-generated Fields" 
-                    FontWeight="Bold" 
-                    FontSize="14"
-                    Margin="0,15,0,5" />
-                <Separator Margin="0,0,0,10" />
-                
-                <Grid ColumnDefinitions="1*,4*,1*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
-                <!--  AppName (Auto-generated)  -->
-                    <TextBlock
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="AppName" />
-                    <TextBox
-                        Grid.Column="1"
-                        Margin="5"
-                        IsReadOnly="True"
-                        Text="{Binding ConfigModel.AppName, Mode=OneWay}" />
-                    
-                    <!--  MainAppName (Auto-generated)  -->
-                    <TextBlock
-                        Grid.Row="1"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="MainAppName" />
-                    <TextBox
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Margin="5"
-                        IsReadOnly="True"
-                        Text="{Binding ConfigModel.MainAppName, Mode=OneWay}" />
-                    
-                    <!--  ClientVersion (Auto-generated)  -->
-                    <TextBlock
-                        Grid.Row="2"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="ClientVersion" />
-                    <TextBox
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        Margin="5"
-                        IsReadOnly="True"
-                        Text="{Binding ConfigModel.ClientVersion, Mode=OneWay}" />
-                    
-                    <!--  PacketName (Auto-generated)  -->
-                    <TextBlock
-                        Grid.Row="3"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="PacketName" />
-                    <TextBox
-                        Grid.Row="3"
-                        Grid.Column="1"
-                        Margin="5"
-                        IsReadOnly="True"
-                        Text="{Binding ConfigModel.Name, Mode=OneWay}" />
-                    
-                    <!--  Format (Auto-generated)  -->
-                    <TextBlock
-                        Grid.Row="4"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="Format" />
-                    <ComboBox
-                        Grid.Row="4"
-                        Grid.Column="1"
-                        MinWidth="150"
-                        Margin="5"
-                        ItemsSource="{Binding Formats}"
-                        SelectedItem="{Binding ConfigModel.Format}" />
-                    
-                    <!--  Encoding (Auto-generated)  -->
-                    <TextBlock
-                        Grid.Row="5"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Text="Encoding" />
-                    <ComboBox
-                        Grid.Row="5"
-                        Grid.Column="1"
-                        MinWidth="150"
-                        Margin="5"
-                        ItemsSource="{Binding Encodings}"
-                        SelectedIndex="0"
-                        SelectedItem="{Binding ConfigModel.Encoding}" />
-                </Grid>
+                <u:Divider Content="Auto-generated Fields"/>
+                <u:Form LabelPosition="Left" LabelWidth="*" Margin="10">
+                    <TextBox Width="400" u:FormItem.Label="UpdateUrl" Text="{Binding ConfigModel.UpdateUrl}" />
+                    <TextBox Width="400" u:FormItem.Label="ReportUrl" Text="{Binding ConfigModel.ReportUrl}"/>
+                    <TextBox Width="400" u:FormItem.Label="AppName" Text="{Binding ConfigModel.AppName, Mode=OneWay}" />
+                    <TextBox Width="400" u:FormItem.Label="MainAppName" Text="{Binding ConfigModel.MainAppName, Mode=OneWay}" />
+                    <TextBox Width="400" u:FormItem.Label="ClientVersion" Text="{Binding ConfigModel.ClientVersion, Mode=OneWay}" />
+                    <TextBox Width="400" u:FormItem.Label="PacketName" Text="{Binding ConfigModel.Name, Mode=OneWay}" />
+                    <ComboBox u:FormItem.Label="Format" Width="400" ItemsSource="{Binding Formats}" SelectedItem="{Binding ConfigModel.Format}" />
+                    <ComboBox u:FormItem.Label="Encoding" Width="400" ItemsSource="{Binding Encodings}" SelectedIndex="0" SelectedItem="{Binding ConfigModel.Encoding}" />
+                    <StackPanel Orientation="Horizontal" u:FormItem.Label="PatchDirectory">
+                        <TextBox Width="400" Text="{Binding ConfigModel.PatchDirectory}" />
+                        <Button Margin="5,0,0,0"
+                                Classes="Primary"
+                                Command="{Binding SelectFolderCommand}"
+                                CommandParameter="Patch" 
+                                Content="Pick"
+                                Theme="{DynamicResource SolidButton}">
+                        </Button>
+                    </StackPanel>
+                </u:Form>
             </StackPanel>
         </ScrollViewer>
         <StackPanel
@@ -235,11 +75,11 @@
             VerticalAlignment="Center"
             Orientation="Horizontal"
             Spacing="10">
-            <Button
+            <u:IconButton
                 Classes="Primary"
                 Command="{Binding BuildCommand}"
                 Theme="{DynamicResource SolidButton}" Content="Build">
-            </Button>
+            </u:IconButton>
             <Button
                 Classes="Primary"
                 Command="{Binding ClearCommand}"
