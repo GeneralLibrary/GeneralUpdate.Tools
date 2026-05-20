@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -36,8 +37,26 @@ public partial class SimulateViewModel : ViewModelBase
     public SimulateViewModel()
     {
         _status = _loc["Patch.Ready"];
-        Config.Platform = Platforms[0];
-        Config.AppType = AppTypes[0];
+    }
+
+    /// <summary>
+    /// Maps Config.Platform (int) to Platforms collection index.
+    /// 1 (Windows) → 0, 2 (Linux) → 1.
+    /// </summary>
+    public int PlatformIndex
+    {
+        get => Config.Platform == 2 ? 1 : 0;
+        set => Config.Platform = value == 1 ? 2 : 1;
+    }
+
+    /// <summary>
+    /// Maps Config.AppType (int) to AppTypes collection index.
+    /// 1 (ClientApp) → 0, 2 (UpgradeApp) → 1.
+    /// </summary>
+    public int AppTypeIndex
+    {
+        get => Config.AppType == 2 ? 1 : 0;
+        set => Config.AppType = value == 1 ? 2 : 1;
     }
 
     async Task<string?> PickFolder(string title)
@@ -87,7 +106,6 @@ public partial class SimulateViewModel : ViewModelBase
                 foreach (var note in result.Notes)
                     L($"  Note: {note}");
 
-                // Generate report
                 var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
                 L($"Report: {reportPath}");
             }
