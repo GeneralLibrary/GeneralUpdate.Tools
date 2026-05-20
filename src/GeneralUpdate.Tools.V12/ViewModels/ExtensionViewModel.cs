@@ -1,0 +1,60 @@
+﻿using System;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Tools.V12.Models;
+using GeneralUpdate.Tools.V12.Services;
+
+namespace GeneralUpdate.Tools.V12.ViewModels;
+
+public partial class ExtensionViewModel : ViewModelBase
+{
+    private readonly PackageService _pkg = new();
+    public ExtensionConfigModel Config { get; } = new();
+    [ObservableProperty] private bool _isBuilding;
+    [ObservableProperty] private string _status = "就绪";
+    [ObservableProperty] private string _newPropKey = "";
+    [ObservableProperty] private string _newPropValue = "";
+    public ObservableCollection<CustomPropModel> CustomProps { get; } = new();
+
+    async Task<string?> Pick() { var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow); if (tl == null) return null; var r = await tl.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions { Title = "选择目录", AllowMultiple = false }); return r.Count > 0 ? r[0].Path.LocalPath : null; }
+
+    [RelayCommand] async Task SelectExt() { var p = await Pick(); if (p != null) Config.ExtensionDirectory = p; }
+    [RelayCommand] async Task SelectExport() { var p = await Pick(); if (p != null) Config.ExportPath = p; }
+    [RelayCommand] void AddProp() { if (!string.IsNullOrWhiteSpace(NewPropKey) && !string.IsNullOrWhiteSpace(NewPropValue)) { CustomProps.Add(new(NewPropKey, NewPropValue)); NewPropKey = ""; NewPropValue = ""; } }
+    [RelayCommand] void RemoveProp(CustomPropModel? item) { if (item != null) CustomProps.Remove(item); }
+
+    [RelayCommand] async Task Generate()
+    {
+        if (string.IsNullOrWhiteSpace(Config.Name) || string.IsNullOrWhiteSpace(Config.Version)) { Status = "请填写扩展名称和版本"; return; }
+        if (string.IsNullOrWhiteSpace(Config.ExtensionDirectory) || !Directory.Exists(Config.ExtensionDirectory)) { Status = "请选择有效的扩展目录"; return; }
+        IsBuilding = true; Status = "正在生成扩展包...";
+        try
+        {
+            var dir = string.IsNullOrWhiteSpace(Config.ExportPath) ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Config.ExportPath;
+            var zip = Path.Combine(dir, $"{Sanitize(Config.Name)}_{Config.Version}.zip");
+            await _pkg.CompressDirectoryAsync(Config.ExtensionDirectory, zip);
+            await _pkg.CreateManifestAsync(zip, new {
+                name = Config.Name, version = Config.Version, description = Config.Description,
+                publisher = Config.Publisher, license = Config.License, dependencies = Config.Dependencies,
+                minHostVersion = Config.MinHostVersion, maxHostVersion = Config.MaxHostVersion,
+                isPreRelease = Config.IsPreRelease,
+                customProperties = CustomProps.ToDictionary(p => p.Key, p => p.Value)
+            });
+            Config.OutputPath = zip;
+            Status = $"成功: {Path.GetFileName(zip)}";
+        }
+        catch (Exception ex) { Status = $"失败: {ex.Message}"; }
+        finally { IsBuilding = false; }
+    }
+    static string Sanitize(string n) => string.Join("_", n.Split(Path.GetInvalidFileNameChars()));
+}
+
+public partial class CustomPropModel(string key, string value) : ObservableObject
+{
+    public string Key { get; set; } = key;
+    public string Value { get; set; } = value;
+}
