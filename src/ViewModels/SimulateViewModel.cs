@@ -20,6 +20,7 @@ public partial class SimulateViewModel : ViewModelBase
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private string _status;
+    [ObservableProperty] private string _startButtonText;
     [ObservableProperty] private ObservableCollection<string> _log = new();
 
     public ObservableCollection<PlatformItem> Platforms { get; } = new()
@@ -37,6 +38,7 @@ public partial class SimulateViewModel : ViewModelBase
     public SimulateViewModel()
     {
         _status = _loc["Patch.Ready"];
+        _startButtonText = _loc["Sim.Start"];
     }
 
     /// <summary>
@@ -90,7 +92,7 @@ public partial class SimulateViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = _loc["Sim.ValidateDirs"]; return; }
         if (string.IsNullOrWhiteSpace(Config.OutputDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
 
-        IsRunning = true; Log.Clear(); Status = _loc["Sim.Starting"];
+        IsRunning = true; StartButtonText = "⏳ Running..."; Log.Clear(); Status = _loc["Sim.Starting"];
         try
         {
             var progress = new Progress<string>(L);
@@ -116,7 +118,7 @@ public partial class SimulateViewModel : ViewModelBase
             var reportPath = await _report.GenerateAsync(Config, failResult, Config.OutputDirectory);
             L(_loc.T("Sim.Report", reportPath));
         }
-        finally { IsRunning = false; }
+        finally { IsRunning = false; StartButtonText = _loc["Sim.Start"]; }
     }
 
     void L(string msg) => Log.Add($"[{DateTime.Now:HH:mm:ss}] {msg}");
