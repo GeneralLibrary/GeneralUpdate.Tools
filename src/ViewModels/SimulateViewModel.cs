@@ -13,6 +13,7 @@ public partial class SimulateViewModel : ViewModelBase
 {
     private readonly LocalizationService _loc = LocalizationService.Instance;
     private readonly SimulationService _sim = new();
+    private readonly ReportGeneratorService _report = new();
 
     public SimulateConfigModel Config { get; } = new();
 
@@ -85,8 +86,8 @@ public partial class SimulateViewModel : ViewModelBase
                     L($"  Note: {note}");
 
                 // Generate report
-                var reportPath = Path.Combine(Config.OutputDirectory, "simulation_report.md");
-                // report generation will be in next PR
+                var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
+                L($"Report: {reportPath}");
             }
             else
             {
