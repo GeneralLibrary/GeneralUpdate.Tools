@@ -82,6 +82,8 @@
             </Border>
 
             <!-- Run -->
+            <CheckBox Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.CompileUpgrade]}"
+                      IsChecked="{Binding Config.CompileUpgrade}"/>
             <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Start]}"
                     Command="{Binding StartSimulationCommand}"
                     IsEnabled="{Binding !IsRunning}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>

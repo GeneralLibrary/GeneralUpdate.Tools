@@ -36,10 +36,19 @@ public class SimulationService
             Directory.CreateDirectory(config.OutputDirectory);
 
             // 3. Generate scripts
-            Log("STEP 3: Generating client.csx and upgrade.csx", progress);
+            Log("STEP 3: Generating scripts", progress);
             await _generator.GenerateAsync(config, config.OutputDirectory);
             Log($"  client.csx → {config.OutputDirectory}", progress);
-            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
+            if (config.CompileUpgrade)
+            {
+                Log("  Compiling upgrade to .exe (dotnet publish)...", progress);
+                await _generator.PublishUpgradeAsync(config.OutputDirectory);
+                Log("  upgrade.exe ready", progress);
+            }
+            else
+            {
+                Log($"  upgrade.csx → {config.OutputDirectory}", progress);
+            }
 
             // 4. Start server
             Log("STEP 4: Starting local server", progress);
