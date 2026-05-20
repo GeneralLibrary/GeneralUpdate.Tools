@@ -33,4 +33,7 @@ public partial class SimulateConfigModel : ObservableObject
 
     /// <summary>Directory where client.cs / upgrade.cs and server are generated.</summary>
     [ObservableProperty] private string _outputDirectory = string.Empty;
+
+    /// <summary>Server port assigned at runtime (set by SimulationService).</summary>
+    public int ServerPort { get; set; } = 5000;
 }
