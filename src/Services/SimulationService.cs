@@ -57,14 +57,14 @@ public class SimulationService
             config.ServerPort = _server.Port;
 
             // 4. Generate client/upgrade scripts
-            Log("STEP 4: Generating client/upgrade projects", progress);
+            Log("STEP 4: Generating client.cs and upgrade.cs", progress);
             await _generator.GenerateAsync(config, config.OutputDirectory);
-            Log($"  client/ → {config.OutputDirectory}/client", progress);
-            Log($"  upgrade/ → {config.OutputDirectory}/upgrade", progress);
+            Log($"  client.cs → {config.OutputDirectory}", progress);
+            Log($"  upgrade.cs → {config.OutputDirectory}", progress);
 
-            // 5. Run client via dotnet run --project
-            Log("STEP 5: Running client (dotnet run --project client)", progress);
-            var clientResult = await RunDotNetProject(Path.Combine(config.OutputDirectory, "client"), ct);
+            // 5. Run client
+            Log("STEP 5: Running client (dotnet run client.cs)", progress);
+            var clientResult = await RunDotNetScript(config.OutputDirectory, "client.cs", ct);
             Log(clientResult.Output, progress);
 
             if (!clientResult.Success)
@@ -137,11 +137,11 @@ public class SimulationService
         catch { throw new InvalidOperationException("dotnet CLI not found. Install .NET 10.0 SDK."); }
     }
 
-    private async Task<(bool Success, string Output)> RunDotNetProject(string projectDir, CancellationToken ct)
+    private async Task<(bool Success, string Output)> RunDotNetScript(string workDir, string script, CancellationToken ct)
     {
-        var psi = new ProcessStartInfo("dotnet", "run --project .")
+        var psi = new ProcessStartInfo("dotnet", $"run {script}")
         {
-            WorkingDirectory = projectDir,
+            WorkingDirectory = workDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             StandardOutputEncoding = System.Text.Encoding.UTF8,
