@@ -20,7 +20,7 @@ using GeneralUpdate.ClientCore;
 using GeneralUpdate.Common.Shared.Object;
 using GeneralUpdate.Common.Internal.Event;
 
-var log = (string msg) => Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {msg}");
+var log = (string msg) => Console.WriteLine($"[{{DateTime.Now:HH:mm:ss}}] {{msg}}");
 
 try
 {{
@@ -79,7 +79,7 @@ using GeneralUpdate.Core;
 using GeneralUpdate.Common.Shared;
 using GeneralUpdate.Common.Internal.Event;
 
-var log = (string msg) => Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {msg}");
+var log = (string msg) => Console.WriteLine($"[{{DateTime.Now:HH:mm:ss}}] {{msg}}");
 
 try
 {{
