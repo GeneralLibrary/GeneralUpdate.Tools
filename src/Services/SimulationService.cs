@@ -12,7 +12,6 @@ namespace GeneralUpdate.Tools.Services;
 
 public class SimulationService
 {
-    private readonly ClientGeneratorService _generator = new();
     private readonly LocalUpdateServer _server = new();
     private readonly StringBuilder _fullLog = new();
     private int _timeoutSeconds = 120;
@@ -35,11 +34,23 @@ public class SimulationService
             Log($"STEP 2: Preparing {config.OutputDirectory}", progress);
             Directory.CreateDirectory(config.OutputDirectory);
 
-            // 3. Generate scripts
-            Log("STEP 3: Generating client.csx and upgrade.csx", progress);
-            await _generator.GenerateAsync(config, config.OutputDirectory);
-            Log($"  client.csx → {config.OutputDirectory}", progress);
-            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
+            // 3. Copy test app executables
+            Log("STEP 3: Copying test executables", progress);
+            var toolsDir = AppDomain.CurrentDomain.BaseDirectory;
+            var clientSrc = Path.Combine(toolsDir, "test_app", "Client.exe");
+            var upgradeSrc = Path.Combine(toolsDir, "test_app", "Upgrade.exe");
+
+            if (!File.Exists(clientSrc))
+                throw new FileNotFoundException($"Client.exe not found at {clientSrc}. Ensure test_app is deployed.");
+            if (!File.Exists(upgradeSrc))
+                throw new FileNotFoundException($"Upgrade.exe not found at {upgradeSrc}. Ensure test_app is deployed.");
+
+            var clientDest = Path.Combine(config.OutputDirectory, "Client.exe");
+            var upgradeDest = Path.Combine(config.OutputDirectory, "Upgrade.exe");
+            File.Copy(clientSrc, clientDest, true);
+            File.Copy(upgradeSrc, upgradeDest, true);
+            Log($"  Client.exe → {config.OutputDirectory}", progress);
+            Log($"  Upgrade.exe → {config.OutputDirectory}", progress);
 
             // 4. Start server
             Log("STEP 4: Starting local server", progress);
@@ -58,8 +69,10 @@ public class SimulationService
             config.ServerPort = _server.Port;
 
             // 5. Run client
-            Log("STEP 5: Running client (dotnet script client.csx)", progress);
-            var clientResult = await RunDotNetScript(config.OutputDirectory, "client.csx", ct);
+            Log("STEP 5: Running Client.exe", progress);
+            var clientExe = Path.Combine(config.OutputDirectory, "Client.exe");
+            var clientArgs = $"--server-url {_server.BaseUrl} --install-path \"{config.AppDirectory}\" --current-version {config.CurrentVersion} --app-secret {config.AppSecretKey} --product-id {config.ProductId} --app-name Upgrade.exe";
+            var clientResult = await RunExe(clientExe, clientArgs, ct);
             Log(clientResult.Output, progress);
 
             if (!clientResult.Success)
@@ -116,11 +129,10 @@ public class SimulationService
         catch { throw new InvalidOperationException("dotnet CLI not found"); }
     }
 
-    private async Task<(bool Success, string Output)> RunDotNetScript(string workDir, string script, CancellationToken ct)
+    private async Task<(bool Success, string Output)> RunExe(string exePath, string arguments, CancellationToken ct)
     {
-        var psi = new ProcessStartInfo("dotnet", $"script {script}")
+        var psi = new ProcessStartInfo(exePath, arguments)
         {
-            WorkingDirectory = workDir,
             RedirectStandardOutput = true, RedirectStandardError = true,
             StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
             UseShellExecute = false, CreateNoWindow = true
