@@ -20,7 +20,14 @@ public partial class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel()
     {
         SyncNavItems();
-        _loc.PropertyChanged += (_, _) => { SyncNavItems(); LocaleText = _loc.Locale == "zh-CN" ? "EN" : "中"; };
+        _loc.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(LocalizationService.Locale))
+                return;
+
+            SyncNavItems();
+            LocaleText = _loc.Locale == "zh-CN" ? "EN" : "中";
+        };
     }
 
     private void SyncNavItems()
