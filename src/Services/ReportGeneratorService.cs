@@ -26,8 +26,8 @@ public class ReportGeneratorService
         sb.AppendLine("|-------|-------|");
         sb.AppendLine($"| Patch | {EscapeMd(config.PatchFilePath)} |");
         sb.AppendLine($"| App Directory | {EscapeMd(config.AppDirectory)} |");
-        sb.AppendLine($"| Platform | {config.Platform.DisplayName} |");
-        sb.AppendLine($"| AppType | {config.AppType.DisplayName} |");
+        sb.AppendLine($"| Platform | {config.Platform} |");
+        sb.AppendLine($"| AppType | {config.AppType} |");
         sb.AppendLine($"| Version | {config.CurrentVersion} → {config.TargetVersion} |");
         sb.AppendLine($"| Server Port | {config.ServerPort} |");
         sb.AppendLine($"| Simulation Time | {DateTime.Now:yyyy-MM-dd HH:mm:ss} |");
