@@ -98,14 +98,24 @@ public partial class SimulateViewModel : ViewModelBase
             if (result.Success)
             {
                 Status = _loc.T("Sim.Completed", result.Elapsed.TotalSeconds);
-                L($"Result: {(result.Success ? "PASS" : "FAIL")}");
-                foreach (var note in result.Notes) L($"  Note: {note}");
-                var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
-                L(_loc.T("Sim.Report", reportPath));
             }
-            else { Status = _loc.T("Sim.Failed", result.ErrorMessage ?? "unknown"); }
+            else
+            {
+                Status = _loc.T("Sim.Failed", result.ErrorMessage ?? "unknown");
+            }
+            L($"Result: {(result.Success ? "PASS" : "FAIL")}");
+            foreach (var note in result.Notes) L($"  Note: {note}");
+            var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
+            L(_loc.T("Sim.Report", reportPath));
         }
-        catch (Exception ex) { Status = $"Error: {ex.Message}"; L($"FATAL: {ex}"); }
+        catch (Exception ex)
+        {
+            Status = $"Error: {ex.Message}";
+            L($"FATAL: {ex}");
+            var failResult = new SimulationResult { Success = false, ErrorMessage = ex.Message };
+            var reportPath = await _report.GenerateAsync(Config, failResult, Config.OutputDirectory);
+            L(_loc.T("Sim.Report", reportPath));
+        }
         finally { IsRunning = false; }
     }
 
