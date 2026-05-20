@@ -1,21 +1,11 @@
-name: Publish
+﻿name: Publish
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            rid: linux-x64
-            ext: ""
-          - os: windows-latest
-            rid: win-x64
-            ext: ".exe"
-    runs-on: ${{ matrix.os }}
+  build-windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -27,32 +17,62 @@ jobs:
       - name: Publish
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
-          -c Release
-          -r ${{ matrix.rid }}
-          -p:PublishSingleFile=true
-          -p:PublishTrimmed=true
-          --self-contained
-          -o publish/${{ matrix.rid }}
+          -c Release -r win-x64
+          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
+          -o publish/win-x64
+
+      - name: Upload win artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeneralUpdate.Tools-win-x64
+          path: publish/win-x64/GeneralUpdate.Tools.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish
+        run: >
+          dotnet publish src/GeneralUpdate.Tools.csproj
+          -c Release -r linux-x64
+          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
+          -o publish/linux-x64
+
+      - name: Upload linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeneralUpdate.Tools-linux-x64
+          path: publish/linux-x64/GeneralUpdate.Tools
+
+  release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
 
       - name: Get timestamp
         id: ts
-        shell: bash
         run: echo "timestamp=$(date -u '+%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Package (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
+      - name: Package zips
         run: |
-          Compress-Archive -Path publish/${{ matrix.rid }}/GeneralUpdate.Tools.exe -DestinationPath GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip
+          chmod +x GeneralUpdate.Tools-linux-x64/GeneralUpdate.Tools
+          cd GeneralUpdate.Tools-win-x64 && zip ../../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip GeneralUpdate.Tools.exe && cd ..
+          cd GeneralUpdate.Tools-linux-x64 && zip ../../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip GeneralUpdate.Tools && cd ..
 
-      - name: Package (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cd publish/${{ matrix.rid }}
-          zip ../../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip GeneralUpdate.Tools
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_${{ matrix.rid }}
-          path: GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_${{ matrix.rid }}.zip
+          tag_name: v${{ steps.ts.outputs.timestamp }}
+          name: Release ${{ steps.ts.outputs.timestamp }}
+          files: |
+            GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip
+            GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip
