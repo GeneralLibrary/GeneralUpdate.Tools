@@ -55,7 +55,7 @@ public partial class PatchViewModel : ViewModelBase
             L(_loc.T("Patch.Packing", Path.GetFileName(zip)));
             await _pkg.CompressDirectoryAsync(tmp, zip);
             Directory.Delete(tmp, true);
-            Progress = 100; Config.OutputPath = zip;
+            Progress = 100;
             Status = _loc.T("Patch.Success", Path.GetFileName(zip), new FileInfo(zip).Length / 1024.0);
             L(Status);
         }
