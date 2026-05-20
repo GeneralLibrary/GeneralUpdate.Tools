@@ -2,9 +2,9 @@
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GeneralUpdate.Tools.V12.Models;
+using GeneralUpdate.Tools.Models;
 
-namespace GeneralUpdate.Tools.V12.ViewModels;
+namespace GeneralUpdate.Tools.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {

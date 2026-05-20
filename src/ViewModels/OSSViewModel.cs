@@ -4,11 +4,11 @@ using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using GeneralUpdate.Tools.V12.Models;
-using GeneralUpdate.Tools.V12.Services;
+using GeneralUpdate.Tools.Models;
+using GeneralUpdate.Tools.Services;
 using Newtonsoft.Json;
 
-namespace GeneralUpdate.Tools.V12.ViewModels;
+namespace GeneralUpdate.Tools.ViewModels;
 
 public partial class OSSViewModel : ViewModelBase
 {

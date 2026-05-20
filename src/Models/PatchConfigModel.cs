@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace GeneralUpdate.Tools.V12.Models;
+namespace GeneralUpdate.Tools.Models;
 
 public partial class PatchConfigModel : ObservableObject
 {

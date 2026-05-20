@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace GeneralUpdate.Tools.V12.Services;
+namespace GeneralUpdate.Tools.Services;
 
 public class PackageService
 {

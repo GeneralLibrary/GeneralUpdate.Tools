@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using GeneralUpdate.Differential;
 
-namespace GeneralUpdate.Tools.V12.Services;
+namespace GeneralUpdate.Tools.Services;
 
 public class DiffService
 {

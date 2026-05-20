@@ -1,8 +1,8 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:GeneralUpdate.Tools.V12.ViewModels"
-             xmlns:m="using:GeneralUpdate.Tools.V12.Models"
-             x:Class="GeneralUpdate.Tools.V12.Views.OSSView" x:Name="OssRoot"
+             xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+             xmlns:m="using:GeneralUpdate.Tools.Models"
+             x:Class="GeneralUpdate.Tools.Views.OSSView" x:Name="OssRoot"
              x:DataType="vm:OSSViewModel">
     <ScrollViewer>
         <StackPanel Margin="28,24" Spacing="14">

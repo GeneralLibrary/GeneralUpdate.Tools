@@ -1,7 +1,7 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:GeneralUpdate.Tools.V12.ViewModels"
-             x:Class="GeneralUpdate.Tools.V12.Views.PatchView"
+             xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+             x:Class="GeneralUpdate.Tools.Views.PatchView"
              x:DataType="vm:PatchViewModel">
     <ScrollViewer>
         <StackPanel Margin="28,24" Spacing="14">
