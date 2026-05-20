@@ -39,7 +39,7 @@ public class LocalUpdateServer : IAsyncDisposable
             var match = Updates.Find(u => u.CurrentVersion == currentVer);
             if (match == default)
             {
-                await context.Response.WriteAsJsonAsync(new { code = 204, body = Array.Empty<object>() });
+                await context.Response.WriteAsJsonAsync(new { Code = 204, Body = Array.Empty<object>() });
                 return;
             }
 
@@ -47,20 +47,20 @@ public class LocalUpdateServer : IAsyncDisposable
             {
                 new
                 {
-                    name = Path.GetFileName(match.ZipPath),
-                    version = match.TargetVersion,
-                    hash = match.Hash,
-                    url = $"{BaseUrl}/patch/{Uri.EscapeDataString(Path.GetFileName(match.ZipPath))}",
-                    appType = match.AppType,
-                    releaseDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    isForcibly = false
+                    Name = Path.GetFileName(match.ZipPath),
+                    Version = match.TargetVersion,
+                    Hash = match.Hash,
+                    Url = $"{BaseUrl}/patch/{Uri.EscapeDataString(Path.GetFileName(match.ZipPath))}",
+                    AppType = match.AppType,
+                    ReleaseDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                    IsForcibly = false
                 }
             };
-            await context.Response.WriteAsJsonAsync(new { code = 200, body });
+            await context.Response.WriteAsJsonAsync(new { Code = 200, Body = body });
         });
 
         // POST /Upgrade/Report
-        _app.MapPost("/Upgrade/Report", () => Results.Ok(new { code = 200 }));
+        _app.MapPost("/Upgrade/Report", () => Results.Ok(new { Code = 200 }));
 
         // GET /patch/{filename}
         _app.MapGet("/patch/{filename}", async (string filename) =>
