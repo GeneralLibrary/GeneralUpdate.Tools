@@ -118,7 +118,7 @@ catch (Exception ex)
             string.Format(ClientTemplate,
                 EscapeForCSharp(config.AppDirectory),
                 serverUrl,
-                "upgrade.csx",
+                "upgrade.bat",
                 "client.csx",
                 config.CurrentVersion,
                 "1.0.0.0",
@@ -130,6 +130,10 @@ catch (Exception ex)
             string.Format(UpgradeTemplate,
                 EscapeForCSharp(config.AppDirectory)),
             Encoding.UTF8);
+
+        await File.WriteAllTextAsync(Path.Combine(outputDir, "upgrade.bat"),
+            "@echo off\r\ndotnet script upgrade.csx\r\n",
+            Encoding.ASCII);
     }
 
     private static string EscapeForCSharp(string s) =>
