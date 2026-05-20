@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+             xmlns:svc="using:GeneralUpdate.Tools.Services"
+             x:Class="GeneralUpdate.Tools.Views.SimulateView"
+             x:DataType="vm:SimulateViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="28,24" Spacing="14">
+            <TextBlock Text="🧪 Simulate Update" FontSize="20" FontWeight="Bold"/>
+
+            <!-- Test target -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Test Target" FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="Old App Dir" VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.AppDirectory}" IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectAppDirCommand}" MinWidth="80"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="Patch Package" VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.PatchFilePath}" IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectPatchCommand}" MinWidth="80"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Config -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Update Config" FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto,*">
+                        <TextBlock Grid.Column="0" Text="Current Ver" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.CurrentVersion}" Margin="8,0,16,0"/>
+                        <TextBlock Grid.Column="2" Text="Target Ver" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="3" Text="{Binding Config.TargetVersion}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto,*">
+                        <TextBlock Grid.Column="0" Text="Platform" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Platforms}"
+                                  SelectedItem="{Binding Config.Platform}" Margin="8,0,16,0"/>
+                        <TextBlock Grid.Column="2" Text="AppType" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding AppTypes}"
+                                  SelectedItem="{Binding Config.AppType}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="AppSecret" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.AppSecretKey}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="Product ID" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.ProductId}" Margin="8,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Output -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Output" FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="Simulate Dir" VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.OutputDirectory}" IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectOutputDirCommand}" MinWidth="80"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Run -->
+            <Button Content="🚀 Start Simulation" Command="{Binding StartSimulationCommand}"
+                    IsEnabled="{Binding !IsRunning}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
+            <TextBlock Text="{Binding Status}" FontSize="13"/>
+
+            <!-- Log -->
+            <Border Padding="10" CornerRadius="6" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" MaxHeight="200">
+                <ListBox ItemsSource="{Binding Log}" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate><TextBlock Text="{Binding}" FontSize="11" FontFamily="Consolas,monospace"/></DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
