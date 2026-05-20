@@ -48,7 +48,6 @@ public class SimulationService
             else
             {
                 Log($"  upgrade.csx → {config.OutputDirectory}", progress);
-                Log($"  upgrade.bat → {config.OutputDirectory}", progress);
             }
 
             // 4. Start server

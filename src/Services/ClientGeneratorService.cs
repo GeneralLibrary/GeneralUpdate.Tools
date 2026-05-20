@@ -161,7 +161,7 @@ catch (Exception ex)
     public async Task GenerateAsync(SimulateConfigModel config, string outputDir)
     {
         var serverUrl = $"http://127.0.0.1:{config.ServerPort}";
-        var appName = config.CompileUpgrade ? "upgrade.exe" : "upgrade.bat";
+        var appName = config.CompileUpgrade ? "upgrade.exe" : "upgrade.csx";
 
         await File.WriteAllTextAsync(Path.Combine(outputDir, "client.csx"),
             string.Format(ClientScript,
@@ -187,8 +187,6 @@ catch (Exception ex)
         {
             await File.WriteAllTextAsync(Path.Combine(outputDir, "upgrade.csx"),
                 string.Format(UpgradeScript, EscapeForCSharp(config.AppDirectory)), Encoding.UTF8);
-            await File.WriteAllTextAsync(Path.Combine(outputDir, "upgrade.bat"),
-                "@echo off\r\ndotnet script upgrade.csx\r\n", Encoding.ASCII);
         }
     }
 
