@@ -355,7 +355,8 @@ public class PacketViewModel : ObservableObject
             };
 
             var json = JsonConvert.SerializeObject(configInfo, Formatting.Indented);
-            var configFilePath = Path.Combine(AppContext.BaseDirectory, "update_config.json");
+            Directory.CreateDirectory(ConfigModel.PatchDirectory);
+            var configFilePath = Path.Combine(ConfigModel.PatchDirectory, "update_config.json");
             
             await File.WriteAllTextAsync(configFilePath, json, Encoding.UTF8);
             
@@ -482,21 +483,32 @@ public class PacketViewModel : ObservableObject
     
     private void CreateDirectory()
     {
-        var baseDir = AppContext.BaseDirectory;
+        var baseDir = GetApplicationDataDirectory();
         
-        var packateDir = Path.Combine(baseDir, "packets");
-        if (!Directory.Exists(packateDir))
+        var packetDir = Path.Combine(baseDir, "packets");
+        if (!Directory.Exists(packetDir))
         {
-            Directory.CreateDirectory(packateDir);
+            Directory.CreateDirectory(packetDir);
         }
         
-        var patchDir = Path.Combine(packateDir, "patch");
+        var patchDir = Path.Combine(packetDir, "patch");
         if (!Directory.Exists(patchDir))
         {
             Directory.CreateDirectory(patchDir);
         }
 
         ConfigModel.PatchDirectory = patchDir;
+    }
+
+    private static string GetApplicationDataDirectory()
+    {
+        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (string.IsNullOrWhiteSpace(localApplicationData))
+        {
+            return AppContext.BaseDirectory;
+        }
+
+        return Path.Combine(localApplicationData, "GeneralUpdate.Tool.Avalonia");
     }
     
     static void OpenFileDirectoryAndSelectFile(string filePath)
