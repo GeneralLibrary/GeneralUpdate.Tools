@@ -82,9 +82,10 @@
             </Border>
 
             <!-- Run -->
-            <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Start]}"
+            <Button Content="{Binding StartButtonText}"
                     Command="{Binding StartSimulationCommand}"
                     IsEnabled="{Binding !IsRunning}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
+            <ProgressBar IsVisible="{Binding IsRunning}" IsIndeterminate="True" Height="4"/>
             <TextBlock Text="{Binding Status}" FontSize="13"/>
 
             <!-- Log -->
