@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -13,14 +13,33 @@ namespace GeneralUpdate.Tools.ViewModels;
 public partial class ExtensionViewModel : ViewModelBase
 {
     private readonly PackageService _pkg = new();
+    private readonly LocalizationService _loc = LocalizationService.Instance;
+
     public ExtensionConfigModel Config { get; } = new();
     [ObservableProperty] private bool _isBuilding;
-    [ObservableProperty] private string _status = "就绪";
+    [ObservableProperty] private string _status;
     [ObservableProperty] private string _newPropKey = "";
     [ObservableProperty] private string _newPropValue = "";
     public ObservableCollection<CustomPropModel> CustomProps { get; } = new();
 
-    async Task<string?> Pick() { var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow); if (tl == null) return null; var r = await tl.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions { Title = "选择目录", AllowMultiple = false }); return r.Count > 0 ? r[0].Path.LocalPath : null; }
+    public ExtensionViewModel() { _status = _loc["Patch.Ready"]; }
+
+    string GetFolderPickerTitle()
+    {
+        var title = _loc["Ext.SelectDirectoryTitle"];
+        if (!string.IsNullOrWhiteSpace(title) && title != "Ext.SelectDirectoryTitle") return title;
+        return string.Equals(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, "zh", StringComparison.OrdinalIgnoreCase)
+            ? "选择目录"
+            : "Select folder";
+    }
+
+    async Task<string?> Pick()
+    {
+        var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+        if (tl == null) return null;
+        var r = await tl.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions { Title = GetFolderPickerTitle(), AllowMultiple = false });
+        return r.Count > 0 ? r[0].Path.LocalPath : null;
+    }
 
     [RelayCommand] async Task SelectExt() { var p = await Pick(); if (p != null) Config.ExtensionDirectory = p; }
     [RelayCommand] async Task SelectExport() { var p = await Pick(); if (p != null) Config.ExportPath = p; }
@@ -29,9 +48,9 @@ public partial class ExtensionViewModel : ViewModelBase
 
     [RelayCommand] async Task Generate()
     {
-        if (string.IsNullOrWhiteSpace(Config.Name) || string.IsNullOrWhiteSpace(Config.Version)) { Status = "请填写扩展名称和版本"; return; }
-        if (string.IsNullOrWhiteSpace(Config.ExtensionDirectory) || !Directory.Exists(Config.ExtensionDirectory)) { Status = "请选择有效的扩展目录"; return; }
-        IsBuilding = true; Status = "正在生成扩展包...";
+        if (string.IsNullOrWhiteSpace(Config.Name) || string.IsNullOrWhiteSpace(Config.Version)) { Status = _loc["Ext.ValidateNameVer"]; return; }
+        if (string.IsNullOrWhiteSpace(Config.ExtensionDirectory) || !Directory.Exists(Config.ExtensionDirectory)) { Status = _loc["Ext.ValidateDir"]; return; }
+        IsBuilding = true; Status = _loc["Ext.Building"];
         try
         {
             var dir = string.IsNullOrWhiteSpace(Config.ExportPath) ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Config.ExportPath;
@@ -45,9 +64,9 @@ public partial class ExtensionViewModel : ViewModelBase
                 customProperties = CustomProps.ToDictionary(p => p.Key, p => p.Value)
             });
             Config.OutputPath = zip;
-            Status = $"成功: {Path.GetFileName(zip)}";
+            Status = _loc.T("Ext.Success", Path.GetFileName(zip));
         }
-        catch (Exception ex) { Status = $"失败: {ex.Message}"; }
+        catch (Exception ex) { Status = _loc.T("Ext.Failed", ex.Message); }
         finally { IsBuilding = false; }
     }
     static string Sanitize(string n) => string.Join("_", n.Split(Path.GetInvalidFileNameChars()));
