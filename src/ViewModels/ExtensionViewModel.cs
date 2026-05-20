@@ -24,11 +24,20 @@ public partial class ExtensionViewModel : ViewModelBase
 
     public ExtensionViewModel() { _status = _loc["Patch.Ready"]; }
 
+    string GetFolderPickerTitle()
+    {
+        var title = _loc["Ext.SelectDirectoryTitle"];
+        if (!string.IsNullOrWhiteSpace(title) && title != "Ext.SelectDirectoryTitle") return title;
+        return string.Equals(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, "zh", StringComparison.OrdinalIgnoreCase)
+            ? "选择目录"
+            : "Select folder";
+    }
+
     async Task<string?> Pick()
     {
         var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         if (tl == null) return null;
-        var r = await tl.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions { Title = _loc["Patch.Select"], AllowMultiple = false });
+        var r = await tl.StorageProvider.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions { Title = GetFolderPickerTitle(), AllowMultiple = false });
         return r.Count > 0 ? r[0].Path.LocalPath : null;
     }
 
