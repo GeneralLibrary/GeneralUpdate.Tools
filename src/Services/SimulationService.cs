@@ -40,8 +40,25 @@ public class SimulationService
             Log($"STEP 2: Preparing {config.OutputDirectory}", progress);
             Directory.CreateDirectory(config.OutputDirectory);
 
-            // 3. Copy patch to server working dir
-            Log("STEP 3: Setting up local server", progress);
+            // 3. Generate scripts first (always, even in manual mode)
+            Log("STEP 3: Generating client.csx and upgrade.csx", progress);
+            await _generator.GenerateAsync(config, config.OutputDirectory);
+            Log($"  client.csx → {config.OutputDirectory}", progress);
+            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
+
+            // Manual mode: skip server + client run
+            if (!config.AutoRun)
+            {
+                Log("  Auto-run disabled — scripts ready for manual execution", progress);
+                Log($"  cd {config.OutputDirectory}", progress);
+                Log("  dotnet script client.csx", progress);
+                result.Success = true;
+                result.Notes.Add("Manual mode: scripts generated, not executed");
+                return result;
+            }
+
+            // 4. Set up server + copy patch
+            Log("STEP 4: Setting up local server", progress);
             var serverPatchDir = Path.Combine(config.OutputDirectory, ".server");
             Directory.CreateDirectory(serverPatchDir);
             var patchName = Path.GetFileName(config.PatchFilePath);
@@ -55,12 +72,6 @@ public class SimulationService
             await _server.StartAsync(config.ServerPort);
             Log($"  Server running on {_server.BaseUrl}", progress);
             config.ServerPort = _server.Port;
-
-            // 4. Generate client/upgrade scripts
-            Log("STEP 4: Generating client.csx and upgrade.csx", progress);
-            await _generator.GenerateAsync(config, config.OutputDirectory);
-            Log($"  client.csx → {config.OutputDirectory}", progress);
-            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
 
             // 5. Run client
             Log("STEP 5: Running client (dotnet script client.csx)", progress);
