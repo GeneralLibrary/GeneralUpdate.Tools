@@ -14,7 +14,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Publish
+      - name: Publish Tools
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
           -c Release -r win-x64
@@ -23,11 +23,31 @@ jobs:
           -p:IncludeAllContentForSelfExtract=true
           -o publish/win-x64
 
+      - name: Publish Client
+        run: >
+          dotnet publish test_app/Client/ClientSample.csproj
+          -c Release -r win-x64
+          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
+          -o publish/test_app/Client
+
+      - name: Publish Upgrade
+        run: >
+          dotnet publish test_app/Upgrade/UpgradeSample.csproj
+          -c Release -r win-x64
+          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
+          -o publish/test_app/Upgrade
+
+      - name: Copy test apps to Tools output
+        run: |
+          mkdir -p publish/win-x64/test_app
+          cp publish/test_app/Client/ClientSample.exe publish/win-x64/test_app/Client.exe
+          cp publish/test_app/Upgrade/UpgradeSample.exe publish/win-x64/test_app/Upgrade.exe
+
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: win-x64
-          path: publish/win-x64/GeneralUpdate.Tools.exe
+          path: publish/win-x64/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -39,7 +59,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Publish
+      - name: Publish Tools
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
           -c Release -r linux-x64
@@ -52,7 +72,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-x64
-          path: publish/linux-x64/GeneralUpdate.Tools
+          path: publish/linux-x64/
 
   release:
     needs: [build-windows, build-linux]
@@ -62,22 +82,19 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
 
-      - name: Show structure (debug)
-        run: find . -type f
-
       - name: Get timestamp
         id: ts
         run: echo "timestamp=$(date -u '+%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Build
+      - name: Package win
         working-directory: win-x64
-        run: zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip *
+        run: zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip -r *
 
-      - name: Build
+      - name: Package linux
         working-directory: linux-x64
         run: |
           chmod +x *
-          zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip *
+          zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip -r *
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
