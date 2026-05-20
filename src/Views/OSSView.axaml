@@ -1,39 +1,68 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
              xmlns:m="using:GeneralUpdate.Tools.Models"
-             x:Class="GeneralUpdate.Tools.Views.OSSView" x:Name="OssRoot"
+             xmlns:svc="using:GeneralUpdate.Tools.Services"
+             x:Class="GeneralUpdate.Tools.Views.OSSView"
+             x:Name="OssRoot"
              x:DataType="vm:OSSViewModel">
     <ScrollViewer>
         <StackPanel Margin="28,24" Spacing="14">
-            <TextBlock Text="OSS 配置生成" FontSize="20" FontWeight="Bold"/>
+            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.Title]}"
+                       FontSize="20" FontWeight="Bold"/>
+
             <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="新建条目" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.NewEntry]}" FontSize="14" FontWeight="SemiBold"/>
                     <Grid ColumnDefinitions="Auto,*,Auto,*">
-                        <TextBlock Grid.Column="0" Text="包名" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.PacketName]}" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="1" Text="{Binding Current.PacketName}" Margin="8,0,16,0"/>
-                        <TextBlock Grid.Column="2" Text="版本" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.Version]}" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="3" Text="{Binding Current.Version}" Margin="8,0"/>
                     </Grid>
-                    <Grid ColumnDefinitions="Auto,*"><TextBlock Grid.Column="0" Text="URL" VerticalAlignment="Center"/><TextBox Grid.Column="1" Text="{Binding Current.Url}" Margin="8,0"/></Grid>
-                    <Grid ColumnDefinitions="Auto,*,Auto"><TextBlock Grid.Column="0" Text="SHA256" Width="55" VerticalAlignment="Center"/><TextBox Grid.Column="1" Text="{Binding Current.Hash}" IsReadOnly="True" Margin="8,0"/><Button Grid.Column="2" Content="计算" Command="{Binding ComputeHashCommand}" MinWidth="60"/></Grid>
-                    <Button Content="添加到列表" Command="{Binding AppendCommand}" Height="34" HorizontalAlignment="Stretch"/>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.Url]}" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Current.Url}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.SHA256]}" Width="55" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding Current.Hash}" IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.ComputeHash]}" Command="{Binding ComputeHashCommand}" MinWidth="60"/>
+                    </Grid>
+                    <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.AddToList]}"
+                            Command="{Binding AppendCommand}" Height="34" HorizontalAlignment="Stretch"/>
                 </StackPanel>
             </Border>
+
             <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <StackPanel Spacing="10">
-                    <Grid ColumnDefinitions="*,Auto"><TextBlock Text="配置列表" FontSize="14" FontWeight="SemiBold"/><Button Grid.Column="1" Content="清空" Command="{Binding ClearCommand}"/></Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.ConfigList]}" FontSize="14" FontWeight="SemiBold"/>
+                        <Button Grid.Column="1" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.Clear]}" Command="{Binding ClearCommand}"/>
+                    </Grid>
                     <ItemsControl ItemsSource="{Binding Configs}" MaxHeight="260">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="m:OSSConfigModel">
-                                <Border Padding="8" Margin="0,2"><Grid ColumnDefinitions="*,Auto"><StackPanel Grid.Column="0" Spacing="2"><TextBlock FontWeight="SemiBold" Text="{Binding PacketName}"/><TextBlock FontSize="10" Foreground="Gray" Text="{Binding Hash}"/><TextBlock FontSize="11" Text="{Binding Version}"/></StackPanel><Button Grid.Column="1" Content="X" VerticalAlignment="Center" Command="{Binding ElementName=OssRoot, Path=DataContext.RemoveCommand}" CommandParameter="{Binding}"/></Grid></Border>
+                                <Border Padding="8" Margin="0,2">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding PacketName}"/>
+                                            <TextBlock FontSize="10" Foreground="Gray" Text="{Binding Hash}"/>
+                                            <TextBlock FontSize="11" Text="{Binding Version}"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="✕" VerticalAlignment="Center"
+                                                Command="{Binding ElementName=OssRoot, Path=DataContext.RemoveCommand}"
+                                                CommandParameter="{Binding}"/>
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
             </Border>
-            <Button Content="导出 JSON" Command="{Binding ExportCommand}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
+
+            <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.Export]}"
+                    Command="{Binding ExportCommand}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
             <TextBlock Text="{Binding Status}" FontSize="13"/>
         </StackPanel>
     </ScrollViewer>

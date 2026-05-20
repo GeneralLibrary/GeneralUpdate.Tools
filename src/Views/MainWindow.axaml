@@ -1,17 +1,24 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+        xmlns:svc="using:GeneralUpdate.Tools.Services"
         x:Class="GeneralUpdate.Tools.Views.MainWindow"
         x:Name="MainWin"
         x:DataType="vm:MainWindowViewModel"
-        Title="GeneralUpdate Tools" Width="960" Height="640" MinWidth="780" MinHeight="540"
+        Title="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[App.Title]}"
+        Width="960" Height="640" MinWidth="780" MinHeight="540"
         WindowStartupLocation="CenterScreen">
     <DockPanel>
+        <!-- Left Sidebar -->
         <Border DockPanel.Dock="Left" Width="200" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-            <Grid RowDefinitions="Auto,*">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Title -->
                 <Border Grid.Row="0" Padding="18,20,18,12">
-                    <TextBlock Text="GeneralUpdate Tools" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[App.Title]}"
+                               FontSize="16" FontWeight="Bold"/>
                 </Border>
+
+                <!-- Nav Items -->
                 <ItemsControl Grid.Row="1" ItemsSource="{Binding NavItems}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:NavItem">
@@ -28,8 +35,24 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
+                <!-- Bottom controls: theme + locale -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal"
+                            HorizontalAlignment="Center" Spacing="4" Margin="8,12">
+                    <Button Content="{Binding ThemeButtonText}"
+                            Command="{Binding ToggleThemeCommand}"
+                            Background="Transparent" BorderThickness="0"
+                            FontSize="16" Width="40" Height="36"
+                            ToolTip.Tip="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Theme.Toggle]}"/>
+                    <Button Content="{Binding LocaleText}"
+                            Command="{Binding ToggleLocaleCommand}"
+                            Background="Transparent" BorderThickness="0"
+                            FontSize="14" Width="40" Height="36"/>
+                </StackPanel>
             </Grid>
         </Border>
+
+        <!-- Content Area -->
         <ContentControl Content="{Binding CurrentPage}"/>
     </DockPanel>
 </Window>
