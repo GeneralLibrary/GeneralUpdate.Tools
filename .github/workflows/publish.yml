@@ -1,0 +1,58 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            ext: ""
+          - os: windows-latest
+            rid: win-x64
+            ext: ".exe"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish
+        run: >
+          dotnet publish src/GeneralUpdate.Tools.csproj
+          -c Release
+          -r ${{ matrix.rid }}
+          -p:PublishSingleFile=true
+          -p:PublishTrimmed=true
+          --self-contained
+          -o publish/${{ matrix.rid }}
+
+      - name: Get timestamp
+        id: ts
+        shell: bash
+        run: echo "timestamp=$(date -u '+%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path publish/${{ matrix.rid }}/GeneralUpdate.Tools.exe -DestinationPath GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip
+
+      - name: Package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd publish/${{ matrix.rid }}
+          zip ../../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip GeneralUpdate.Tools
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_${{ matrix.rid }}
+          path: GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_${{ matrix.rid }}.zip
