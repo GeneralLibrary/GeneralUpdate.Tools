@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,6 +12,7 @@ namespace GeneralUpdate.Tools.ViewModels;
 public partial class SimulateViewModel : ViewModelBase
 {
     private readonly LocalizationService _loc = LocalizationService.Instance;
+    private readonly SimulationService _sim = new();
 
     public SimulateConfigModel Config { get; } = new();
 
@@ -62,11 +64,44 @@ public partial class SimulateViewModel : ViewModelBase
     [RelayCommand]
     async Task StartSimulation()
     {
-        // Validation will be implemented in issue #4
-        if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { Status = "请选择旧版本应用目录"; return; }
-        if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = "请选择补丁包文件"; return; }
-        if (string.IsNullOrWhiteSpace(Config.OutputDirectory)) { Status = "请选择模拟输出目录"; return; }
-        Status = "模拟功能将在后续 issue 中实现";
+        if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
+        if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = _loc["Sim.ValidateDirs"]; return; }
+        if (string.IsNullOrWhiteSpace(Config.OutputDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
+
+        IsRunning = true;
+        Log.Clear();
+        Status = "Starting simulation...";
+
+        try
+        {
+            var progress = new Progress<string>(L);
+            var result = await _sim.RunAsync(Config, progress);
+
+            if (result.Success)
+            {
+                Status = $"Simulation completed ({result.Elapsed.TotalSeconds:F1}s)";
+                L($"Result: {(result.Success ? "PASS" : "FAIL")}");
+                foreach (var note in result.Notes)
+                    L($"  Note: {note}");
+
+                // Generate report
+                var reportPath = Path.Combine(Config.OutputDirectory, "simulation_report.md");
+                // report generation will be in next PR
+            }
+            else
+            {
+                Status = $"Simulation failed: {result.ErrorMessage}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Status = $"Error: {ex.Message}";
+            L($"FATAL: {ex}");
+        }
+        finally
+        {
+            IsRunning = false;
+        }
     }
 
     void L(string msg) => Log.Add($"[{DateTime.Now:HH:mm:ss}] {msg}");
