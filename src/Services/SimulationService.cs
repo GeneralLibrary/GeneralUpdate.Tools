@@ -18,7 +18,7 @@ public class SimulationService
     private readonly ClientGeneratorService _generator = new();
     private readonly LocalUpdateServer _server = new();
     private readonly StringBuilder _fullLog = new();
-    private int _timeoutSeconds = 60;
+    private int _timeoutSeconds = 120;
 
     public IReadOnlyList<string> LogLines => _fullLog.ToString().Split('\n').ToList();
 
@@ -144,6 +144,8 @@ public class SimulationService
             WorkingDirectory = workDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+            StandardErrorEncoding = System.Text.Encoding.UTF8,
             UseShellExecute = false,
             CreateNoWindow = true
         };
