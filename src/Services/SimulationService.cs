@@ -173,8 +173,12 @@ public class SimulationService
             return (false, output + "\n[TIMEOUT] Simulation exceeded time limit");
         }
 
+        // Also check output for error indicators (GeneralUpdate catches exceptions internally)
         await Task.WhenAll(readTask, errorTask);
-        return (p.ExitCode == 0, output.ToString());
+        var outputStr = output.ToString();
+        var hasError = outputStr.Contains("ERROR:") || outputStr.Contains("FATAL:") || outputStr.Contains("JsonException");
+
+        return (!hasError && p.ExitCode == 0, outputStr);
     }
 
     private void VerifyUpdateResult(SimulateConfigModel config, SimulationResult result)
