@@ -37,7 +37,8 @@ public partial class MainWindowViewModel : ViewModelBase
         NavItems.Add(new("OSS", _loc["Nav.OSS"], typeof(OSSViewModel), false));
     }
 
-    [RelayCommand] private void Navigate(NavItem item)
+    [RelayCommand]
+    private void Navigate(NavItem item)
     {
         foreach (var n in NavItems) n.IsSelected = false;
         item.IsSelected = true;
@@ -73,5 +74,12 @@ public partial class NavItem : ObservableObject
     public string Title { get; }
     public System.Type PageType { get; }
     [ObservableProperty] private bool _isSelected;
-    public NavItem(string key, string title, System.Type pageType, bool selected) { Key = key; Title = title; PageType = pageType; _isSelected = selected; }
+
+    public NavItem(string key, string title, System.Type pageType, bool selected)
+    {
+        Key = key;
+        Title = title;
+        PageType = pageType;
+        _isSelected = selected;
+    }
 }

@@ -17,7 +17,15 @@ public class LocalizationService : INotifyPropertyChanged
     public string Locale
     {
         get => _locale;
-        set { if (_locale != value) { _locale = value; OnPropertyChanged(); OnPropertyChanged("Item"); } }
+        set
+        {
+            if (_locale != value)
+            {
+                _locale = value;
+                OnPropertyChanged();
+                OnPropertyChanged("Item");
+            }
+        }
     }
 
     public string this[string key]
@@ -27,7 +35,8 @@ public class LocalizationService : INotifyPropertyChanged
             if (_strings.TryGetValue(_locale, out var langDict) && langDict.TryGetValue(key, out var val))
                 return val;
             // Fallback to zh-CN
-            if (_locale != "zh-CN" && _strings.TryGetValue("zh-CN", out var fallback) && fallback.TryGetValue(key, out var fb))
+            if (_locale != "zh-CN" && _strings.TryGetValue("zh-CN", out var fallback) &&
+                fallback.TryGetValue(key, out var fb))
                 return fb;
             return key;
         }
@@ -57,7 +66,7 @@ public class LocalizationService : INotifyPropertyChanged
             ["Patch.Ready"] = "就绪",
             ["Patch.ValidateDirs"] = "请选择新旧版本目录",
             ["Patch.Building"] = "正在生成差分补丁...",
-            ["Patch.Comparing"] = "对比目录差异 + 生成 BSDiff40 补丁...",
+            ["Patch.Comparing"] = "对比目录差异 + 生成补丁...",
             ["Patch.PatchDone"] = "补丁生成完成",
             ["Patch.Packing"] = "打包: {0}",
             ["Patch.Success"] = "成功: {0} ({1:F1} KB)",
@@ -129,7 +138,7 @@ public class LocalizationService : INotifyPropertyChanged
             ["Patch.Ready"] = "Ready",
             ["Patch.ValidateDirs"] = "Please select both old and new directories",
             ["Patch.Building"] = "Generating diff patch...",
-            ["Patch.Comparing"] = "Comparing directories + generating BSDiff40 patches...",
+            ["Patch.Comparing"] = "Comparing directories + generating patches...",
             ["Patch.PatchDone"] = "Patch generation complete",
             ["Patch.Packing"] = "Packing: {0}",
             ["Patch.Success"] = "Success: {0} ({1:F1} KB)",
@@ -182,6 +191,7 @@ public class LocalizationService : INotifyPropertyChanged
     };
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
     private void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 

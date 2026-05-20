@@ -19,7 +19,10 @@ public partial class OSSViewModel : ViewModelBase
     [ObservableProperty] private OSSConfigModel _current = new();
     [ObservableProperty] private string _status;
 
-    public OSSViewModel() { _status = _loc["Patch.Ready"]; }
+    public OSSViewModel()
+    {
+        _status = _loc["Patch.Ready"];
+    }
 
     private string GetOpenFilePickerTitle()
     {
@@ -32,21 +35,60 @@ public partial class OSSViewModel : ViewModelBase
         return title;
     }
 
-    [RelayCommand] async Task ComputeHash()
+    [RelayCommand]
+    async Task ComputeHash()
     {
-        var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+        var tl = Avalonia.Controls.TopLevel.GetTopLevel(
+            (Avalonia.Application.Current?.ApplicationLifetime as
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         if (tl == null) return;
-        var files = await tl.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions { Title = GetOpenFilePickerTitle(), AllowMultiple = false });
-        if (files.Count > 0) { Current.Hash = await _hash.ComputeHashAsync(files[0].Path.LocalPath); Status = _loc.T("OSS.HashResult", Current.Hash); }
+        var files = await tl.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            { Title = GetOpenFilePickerTitle(), AllowMultiple = false });
+        if (files.Count > 0)
+        {
+            Current.Hash = await _hash.ComputeHashAsync(files[0].Path.LocalPath);
+            Status = _loc.T("OSS.HashResult", Current.Hash);
+        }
     }
-    [RelayCommand] void Append() { Configs.Add(new() { PacketName = Current.PacketName, Hash = Current.Hash, Version = Current.Version, Url = Current.Url, ReleaseDate = Current.ReleaseDate }); Status = _loc["OSS.Added"]; }
-    [RelayCommand] void Remove(OSSConfigModel? item) { if (item != null) Configs.Remove(item); }
-    [RelayCommand] void Clear() { Configs.Clear(); Status = _loc["OSS.Cleared"]; }
-    [RelayCommand] async Task Export()
+
+    [RelayCommand]
+    void Append()
     {
-        var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
+        Configs.Add(new()
+        {
+            PacketName = Current.PacketName, Hash = Current.Hash, Version = Current.Version, Url = Current.Url,
+            ReleaseDate = Current.ReleaseDate
+        });
+        Status = _loc["OSS.Added"];
+    }
+
+    [RelayCommand]
+    void Remove(OSSConfigModel? item)
+    {
+        if (item != null) Configs.Remove(item);
+    }
+
+    [RelayCommand]
+    void Clear()
+    {
+        Configs.Clear();
+        Status = _loc["OSS.Cleared"];
+    }
+
+    [RelayCommand]
+    async Task Export()
+    {
+        var tl = Avalonia.Controls.TopLevel.GetTopLevel(
+            (Avalonia.Application.Current?.ApplicationLifetime as
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         if (tl == null) return;
-        var file = await tl.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions { Title = _loc["OSS.Export"], DefaultExtension = ".json", SuggestedFileName = "oss_config.json" });
-        if (file != null) { await File.WriteAllTextAsync(file.Path.LocalPath, JsonConvert.SerializeObject(Configs, Formatting.Indented), System.Text.Encoding.UTF8); Status = _loc.T("OSS.Exported", Configs.Count); }
+        var file = await tl.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            { Title = _loc["OSS.Export"], DefaultExtension = ".json", SuggestedFileName = "oss_config.json" });
+        if (file != null)
+        {
+            await File.WriteAllTextAsync(file.Path.LocalPath, JsonConvert.SerializeObject(Configs, Formatting.Indented),
+                System.Text.Encoding.UTF8);
+            Status = _loc.T("OSS.Exported", Configs.Count);
+        }
     }
 }
