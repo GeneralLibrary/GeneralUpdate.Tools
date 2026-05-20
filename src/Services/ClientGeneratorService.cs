@@ -13,8 +13,8 @@ namespace GeneralUpdate.Tools.Services;
 public class ClientGeneratorService
 {
     private const string ClientTemplate = """
-#r "nuget: GeneralUpdate.ClientCore, 10.*"
-#r "nuget: GeneralUpdate.Core, 10.*"
+#r "nuget: GeneralUpdate.ClientCore"
+#r "nuget: GeneralUpdate.Core"
 
 using GeneralUpdate.ClientCore;
 using GeneralUpdate.Common.Shared.Object;
@@ -72,8 +72,8 @@ catch (Exception ex)
 """;
 
     private const string UpgradeTemplate = """
-#r "nuget: GeneralUpdate.Core, 10.*"
-#r "nuget: GeneralUpdate.ClientCore, 10.*"
+#r "nuget: GeneralUpdate.Core"
+#r "nuget: GeneralUpdate.ClientCore"
 
 using GeneralUpdate.Core;
 using GeneralUpdate.Common.Shared;
