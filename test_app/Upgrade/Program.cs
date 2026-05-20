@@ -1,89 +1,60 @@
-using System.Text.Json;
+﻿using GeneralUpdate.Common.Download;
+using GeneralUpdate.Common.Internal;
+using GeneralUpdate.Common.Shared.Object;
 using GeneralUpdate.Core;
-
-// Parse command-line args
-var cliArgs = ParseArgs(Environment.GetCommandLineArgs()[1..]);
-
-// Write ProcessInfo as env var for GeneralUpdateBootstrap
-var processInfoJson = JsonSerializer.Serialize(new Dictionary<string, object>
-{
-    ["AppName"] = "Client.exe",
-    ["InstallPath"] = cliArgs.InstallPath,
-    ["CurrentVersion"] = cliArgs.CurrentVersion,
-    ["LastVersion"] = cliArgs.LastVersion,
-    ["CompressEncoding"] = "utf-8",
-    ["CompressFormat"] = ".zip",
-    ["DownloadTimeOut"] = 60,
-    ["AppSecretKey"] = cliArgs.AppSecret,
-    ["UpdateVersions"] = new[]
-    {
-        new Dictionary<string, object?>
-        {
-            ["Name"] = cliArgs.PatchName,
-            ["Version"] = cliArgs.TargetVersion,
-            ["Hash"] = cliArgs.Hash,
-            ["AppType"] = 1,
-            ["IsForcibly"] = false
-        }
-    }
-});
-
-Environment.SetEnvironmentVariable("ProcessInfo", processInfoJson);
-
-Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Upgrade started");
-Console.WriteLine($"Install path: {cliArgs.InstallPath}");
 
 try
 {
-    await new GeneralUpdateBootstrap()
-        .AddListenerMultiDownloadStatistics((_, e) =>
-        {
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Download: {e.ProgressPercentage}%");
-        })
-        .AddListenerMultiAllDownloadCompleted((_, e) =>
-        {
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Downloads: {(e.IsAllDownloadCompleted ? "done" : "failed")}");
-        })
-        .AddListenerException((_, e) =>
-        {
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ERROR: {e.Exception}");
-        })
+    Console.WriteLine($"升级程序初始化，{DateTime.Now}！");
+    Console.WriteLine("当前运行目录：" + Thread.GetDomain().BaseDirectory);
+    _ = await new GeneralUpdateBootstrap()
+        //单个或多个更新包下载速度、剩余下载事件、当前下载版本信息通知事件
+        .AddListenerMultiDownloadStatistics(OnMultiDownloadStatistics)
+        //单个或多个更新包下载完成
+        .AddListenerMultiDownloadCompleted(OnMultiDownloadCompleted)
+        //完成所有的下载任务通知
+        .AddListenerMultiAllDownloadCompleted(OnMultiAllDownloadCompleted)
+        //下载过程出现的异常通知
+        .AddListenerMultiDownloadError(OnMultiDownloadError)
+        //整个更新过程出现的任何问题都会通过这个事件通知
+        .AddListenerException(OnException)
+        //设置字段映射表，用于解析所有驱动包的信息的字符串
+        //.SetFieldMappings(fieldMappingsCN)
+        //是否开启驱动更新
+        //.Option(UpdateOption.Drive, true)
         .LaunchAsync();
-
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Upgrade completed");
+    Console.WriteLine($"升级程序已启动，{DateTime.Now}！");
+    await Task.Delay(2000);
 }
-catch (Exception ex)
+catch (Exception e)
 {
-    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] FATAL: {ex.Message}");
-    Environment.Exit(1);
-}
-
-static UpgradeArgs ParseArgs(string[] argv)
-{
-    var a = new UpgradeArgs();
-    for (int i = 0; i < argv.Length; i++)
-    {
-        switch (argv[i])
-        {
-            case "--install-path" when i + 1 < argv.Length: a.InstallPath = argv[++i]; break;
-            case "--current-version" when i + 1 < argv.Length: a.CurrentVersion = argv[++i]; break;
-            case "--target-version" when i + 1 < argv.Length: a.TargetVersion = argv[++i]; break;
-            case "--last-version" when i + 1 < argv.Length: a.LastVersion = argv[++i]; break;
-            case "--app-secret" when i + 1 < argv.Length: a.AppSecret = argv[++i]; break;
-            case "--patch-name" when i + 1 < argv.Length: a.PatchName = argv[++i]; break;
-            case "--hash" when i + 1 < argv.Length: a.Hash = argv[++i]; break;
-        }
-    }
-    return a;
+    Console.WriteLine(e.Message + "\n" + e.StackTrace);
 }
 
-class UpgradeArgs
+void OnMultiDownloadError(object arg1, MultiDownloadErrorEventArgs arg2)
 {
-    public string InstallPath { get; set; } = AppDomain.CurrentDomain.BaseDirectory;
-    public string CurrentVersion { get; set; } = "1.0.0.0";
-    public string TargetVersion { get; set; } = "2.0.0.0";
-    public string LastVersion { get; set; } = "1.0.0.0";
-    public string AppSecret { get; set; } = "";
-    public string PatchName { get; set; } = "";
-    public string Hash { get; set; } = "";
+    var version = arg2.Version as VersionInfo;
+    Console.WriteLine($"{version?.Version} {arg2.Exception}");
+}
+
+void OnMultiAllDownloadCompleted(object arg1, MultiAllDownloadCompletedEventArgs arg2)
+{
+    Console.WriteLine(arg2.IsAllDownloadCompleted ? "所有的下载任务已完成！" : $"下载任务已失败！{arg2.FailedVersions.Count}");
+}
+
+void OnMultiDownloadCompleted(object arg1, MultiDownloadCompletedEventArgs arg2)
+{
+    var version = arg2.Version as VersionInfo;
+    Console.WriteLine(arg2.IsComplated ? $"当前下载版本：{version?.Version}, 下载完成！" : $"当前下载版本：{version?.Version}, 下载失败！");
+}
+
+void OnMultiDownloadStatistics(object arg1, MultiDownloadStatisticsEventArgs arg2)
+{
+    var version = arg2.Version as VersionInfo;
+    Console.WriteLine($"当前下载版本：{version?.Version}，下载速度：{arg2.Speed}，剩余下载时间：{arg2.Remaining}，已下载大小：{arg2.BytesReceived}，总大小：{arg2.TotalBytesToReceive}, 进度百分比：{arg2.ProgressPercentage}%");
+}
+
+void OnException(object arg1, ExceptionEventArgs arg2)
+{
+    Console.WriteLine($"{arg2.Exception}");
 }
