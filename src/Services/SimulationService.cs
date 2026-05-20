@@ -50,7 +50,7 @@ public class SimulationService
 
             var hash = ComputeQuickHash(patchDest);
             LocalUpdateServerFiles.Register(patchName, patchDest);
-            _server.Updates.Add((config.CurrentVersion, config.TargetVersion, hash, patchDest, config.AppType));
+            _server.Updates.Add((config.CurrentVersion, config.TargetVersion, hash, patchDest, config.AppType.Value));
 
             await _server.StartAsync(config.ServerPort);
             Log($"  Server running on {_server.BaseUrl}", progress);

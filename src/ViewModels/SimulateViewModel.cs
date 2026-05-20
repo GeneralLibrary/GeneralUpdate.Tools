@@ -107,6 +107,3 @@ public partial class SimulateViewModel : ViewModelBase
 
     void L(string msg) => Log.Add($"[{DateTime.Now:HH:mm:ss}] {msg}");
 }
-
-public record PlatformItem(int Value, string DisplayName) { public override string ToString() => DisplayName; }
-public record AppTypeItem(int Value, string DisplayName) { public override string ToString() => DisplayName; }
