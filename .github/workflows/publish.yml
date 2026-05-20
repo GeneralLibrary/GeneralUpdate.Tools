@@ -1,4 +1,4 @@
-﻿name: Publish
+name: Publish
 
 on:
   workflow_dispatch:
@@ -21,10 +21,10 @@ jobs:
           -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
           -o publish/win-x64
 
-      - name: Upload win artifact
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: GeneralUpdate.Tools-win-x64
+          name: win-x64
           path: publish/win-x64/GeneralUpdate.Tools.exe
 
   build-linux:
@@ -44,10 +44,10 @@ jobs:
           -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
           -o publish/linux-x64
 
-      - name: Upload linux artifact
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: GeneralUpdate.Tools-linux-x64
+          name: linux-x64
           path: publish/linux-x64/GeneralUpdate.Tools
 
   release:
@@ -58,21 +58,28 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
 
+      - name: Show structure (debug)
+        run: find . -type f
+
       - name: Get timestamp
         id: ts
         run: echo "timestamp=$(date -u '+%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
 
-      - name: Package zips
+      - name: Build
+        working-directory: win-x64
+        run: zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip *
+
+      - name: Build
+        working-directory: linux-x64
         run: |
-          chmod +x GeneralUpdate.Tools-linux-x64/GeneralUpdate.Tools
-          cd GeneralUpdate.Tools-win-x64 && zip ../../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip GeneralUpdate.Tools.exe && cd ..
-          cd GeneralUpdate.Tools-linux-x64 && zip ../../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip GeneralUpdate.Tools && cd ..
+          chmod +x *
+          zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip *
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ts.outputs.timestamp }}
-          name: Release ${{ steps.ts.outputs.timestamp }}
+          name: GeneralUpdate.Tools ${{ steps.ts.outputs.timestamp }}
           files: |
             GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip
             GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip
