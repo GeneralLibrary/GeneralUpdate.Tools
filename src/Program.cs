@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using System;
 
-namespace GeneralUpdate.Tools.V12;
+namespace GeneralUpdate.Tools;
 
 sealed class Program
 {
