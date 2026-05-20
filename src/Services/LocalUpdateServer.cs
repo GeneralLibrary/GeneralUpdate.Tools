@@ -29,11 +29,17 @@ public class LocalUpdateServer : IAsyncDisposable
 
         _app = builder.Build();
 
-        // GET /Upgrade/Verification
-        _app.MapGet("/Upgrade/Verification", async (HttpContext context) =>
+        // POST /Upgrade/Verification
+        _app.MapPost("/Upgrade/Verification", async (HttpContext context) =>
         {
             var q = context.Request.Query;
             var currentVer = q["currentVersion"].ToString();
+            // Fallback: read from form body if query string is empty
+            if (string.IsNullOrEmpty(currentVer) && context.Request.HasFormContentType)
+            {
+                var form = await context.Request.ReadFormAsync();
+                currentVer = form["currentVersion"].ToString();
+            }
             _ = int.TryParse(q["appType"].ToString(), out var appType);
 
             var match = Updates.Find(u => u.CurrentVersion == currentVer);
