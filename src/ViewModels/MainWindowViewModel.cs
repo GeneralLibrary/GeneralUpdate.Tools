@@ -12,7 +12,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty] private ViewModelBase _currentPage = new PatchViewModel();
     [ObservableProperty] private bool _isDarkTheme;
-    [ObservableProperty] private string _themeButtonText = "🌙";
     [ObservableProperty] private string _localeText = "EN";
 
     public ObservableCollection<NavItem> NavItems { get; } = new();
@@ -47,7 +46,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ToggleTheme()
     {
         IsDarkTheme = !IsDarkTheme;
-        ThemeButtonText = IsDarkTheme ? "☀️" : "🌙";
         var app = Avalonia.Application.Current;
         if (app != null)
             app.RequestedThemeVariant = IsDarkTheme
