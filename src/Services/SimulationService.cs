@@ -35,14 +35,8 @@ public class SimulationService
             Log($"STEP 2: Preparing {config.OutputDirectory}", progress);
             Directory.CreateDirectory(config.OutputDirectory);
 
-            // 3. Generate scripts
-            Log("STEP 3: Generating client.csx and upgrade.csx", progress);
-            await _generator.GenerateAsync(config, config.OutputDirectory);
-            Log($"  client.csx → {config.OutputDirectory}", progress);
-            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
-
-            // 4. Start server
-            Log("STEP 4: Starting local server", progress);
+            // 3. Start server first (get actual port)
+            Log("STEP 3: Starting local server", progress);
             var serverPatchDir = Path.Combine(config.OutputDirectory, ".server");
             Directory.CreateDirectory(serverPatchDir);
             var patchName = Path.GetFileName(config.PatchFilePath);
@@ -54,8 +48,14 @@ public class SimulationService
             _server.Updates.Add((config.CurrentVersion, config.TargetVersion, hash, patchDest, config.AppType));
 
             await _server.StartAsync(config.ServerPort);
-            Log($"  Server running on {_server.BaseUrl}", progress);
             config.ServerPort = _server.Port;
+            Log($"  Server running on {_server.BaseUrl}", progress);
+
+            // 4. Generate scripts (now with actual port)
+            Log("STEP 4: Generating client.csx and upgrade.csx", progress);
+            await _generator.GenerateAsync(config, config.OutputDirectory);
+            Log($"  client.csx → {config.OutputDirectory}", progress);
+            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
 
             // 5. Run client
             Log("STEP 5: Running client (dotnet script client.csx)", progress);
