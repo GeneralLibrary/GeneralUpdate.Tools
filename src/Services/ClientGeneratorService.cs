@@ -7,14 +7,13 @@ using GeneralUpdate.Tools.Models;
 namespace GeneralUpdate.Tools.Services;
 
 /// <summary>
-/// Generates single-file client.cs and upgrade.cs for simulation,
-/// using dotnet run with #r directives (exact NuGet version).
+/// Generates single-file client.csx and upgrade.csx for simulation,
+/// using dotnet script with #r directives (exact NuGet version).
 /// </summary>
 public class ClientGeneratorService
 {
     private const string ClientTemplate = """
 #r "nuget:GeneralUpdate.ClientCore,10.4.6"
-#r "nuget:GeneralUpdate.Core,10.4.6"
 
 using GeneralUpdate.ClientCore;
 using GeneralUpdate.Common.Shared.Object;
@@ -73,7 +72,6 @@ catch (Exception ex)
 
     private const string UpgradeTemplate = """
 #r "nuget:GeneralUpdate.Core,10.4.6"
-#r "nuget:GeneralUpdate.ClientCore,10.4.6"
 
 using GeneralUpdate.Core;
 using GeneralUpdate.Common.Shared;
@@ -116,19 +114,19 @@ catch (Exception ex)
     {
         var serverUrl = $"http://127.0.0.1:{config.ServerPort}";
 
-        await File.WriteAllTextAsync(Path.Combine(outputDir, "client.cs"),
+        await File.WriteAllTextAsync(Path.Combine(outputDir, "client.csx"),
             string.Format(ClientTemplate,
                 EscapeForCSharp(config.AppDirectory),
                 serverUrl,
-                "upgrade.cs",
-                "client.cs",
+                "upgrade.csx",
+                "client.csx",
                 config.CurrentVersion,
                 "1.0.0.0",
                 config.ProductId,
                 config.AppSecretKey),
             Encoding.UTF8);
 
-        await File.WriteAllTextAsync(Path.Combine(outputDir, "upgrade.cs"),
+        await File.WriteAllTextAsync(Path.Combine(outputDir, "upgrade.csx"),
             string.Format(UpgradeTemplate,
                 EscapeForCSharp(config.AppDirectory)),
             Encoding.UTF8);
