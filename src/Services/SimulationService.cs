@@ -57,14 +57,14 @@ public class SimulationService
             config.ServerPort = _server.Port;
 
             // 4. Generate client/upgrade scripts
-            Log("STEP 4: Generating client.cs and upgrade.cs", progress);
+            Log("STEP 4: Generating client.csx and upgrade.csx", progress);
             await _generator.GenerateAsync(config, config.OutputDirectory);
-            Log($"  client.cs → {config.OutputDirectory}", progress);
-            Log($"  upgrade.cs → {config.OutputDirectory}", progress);
+            Log($"  client.csx → {config.OutputDirectory}", progress);
+            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
 
             // 5. Run client
-            Log("STEP 5: Running client (dotnet run client.cs)", progress);
-            var clientResult = await RunDotNetScript(config.OutputDirectory, "client.cs", ct);
+            Log("STEP 5: Running client (dotnet script client.csx)", progress);
+            var clientResult = await RunDotNetScript(config.OutputDirectory, "client.csx", ct);
             Log(clientResult.Output, progress);
 
             if (!clientResult.Success)
@@ -139,7 +139,7 @@ public class SimulationService
 
     private async Task<(bool Success, string Output)> RunDotNetScript(string workDir, string script, CancellationToken ct)
     {
-        var psi = new ProcessStartInfo("dotnet", $"run {script}")
+        var psi = new ProcessStartInfo("dotnet", $"script {script}")
         {
             WorkingDirectory = workDir,
             RedirectStandardOutput = true,
