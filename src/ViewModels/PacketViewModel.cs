@@ -485,13 +485,13 @@ public class PacketViewModel : ObservableObject
     {
         var baseDir = GetApplicationDataDirectory();
         
-        var packateDir = Path.Combine(baseDir, "packets");
-        if (!Directory.Exists(packateDir))
+        var packetDir = Path.Combine(baseDir, "packets");
+        if (!Directory.Exists(packetDir))
         {
-            Directory.CreateDirectory(packateDir);
+            Directory.CreateDirectory(packetDir);
         }
         
-        var patchDir = Path.Combine(packateDir, "patch");
+        var patchDir = Path.Combine(packetDir, "patch");
         if (!Directory.Exists(patchDir))
         {
             Directory.CreateDirectory(patchDir);
