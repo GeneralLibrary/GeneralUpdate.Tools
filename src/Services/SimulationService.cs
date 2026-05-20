@@ -34,23 +34,37 @@ public class SimulationService
             Log($"STEP 2: Preparing {config.OutputDirectory}", progress);
             Directory.CreateDirectory(config.OutputDirectory);
 
-            // 3. Copy test app executables
-            Log("STEP 3: Copying test executables", progress);
+            // 3. Compile test apps to .exe
+            Log("STEP 3: Compiling test apps", progress);
             var toolsDir = AppDomain.CurrentDomain.BaseDirectory;
-            var clientSrc = Path.Combine(toolsDir, "test_app", "Client.exe");
-            var upgradeSrc = Path.Combine(toolsDir, "test_app", "Upgrade.exe");
+            var clientProj = Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Client", "ClientSample.csproj");
+            var upgradeProj = Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Upgrade", "UpgradeSample.csproj");
 
-            if (!File.Exists(clientSrc))
-                throw new FileNotFoundException($"Client.exe not found at {clientSrc}. Ensure test_app is deployed.");
-            if (!File.Exists(upgradeSrc))
-                throw new FileNotFoundException($"Upgrade.exe not found at {upgradeSrc}. Ensure test_app is deployed.");
+            // Normalize paths
+            clientProj = Path.GetFullPath(clientProj);
+            upgradeProj = Path.GetFullPath(upgradeProj);
 
+            if (!File.Exists(clientProj))
+                throw new FileNotFoundException($"Client project not found at {clientProj}");
+            if (!File.Exists(upgradeProj))
+                throw new FileNotFoundException($"Upgrade project not found at {upgradeProj}");
+
+            var exeDir = Path.Combine(toolsDir, "test_app");
+            Directory.CreateDirectory(exeDir);
+
+            Log("  Compiling Client.exe...", progress);
+            await DotNetPublishAsync(clientProj, exeDir);
+            Log($"  Client.exe → {exeDir}", progress);
+
+            Log("  Compiling Upgrade.exe...", progress);
+            await DotNetPublishAsync(upgradeProj, exeDir);
+            Log($"  Upgrade.exe → {exeDir}", progress);
+
+            // Copy to simulation output
             var clientDest = Path.Combine(config.OutputDirectory, "Client.exe");
             var upgradeDest = Path.Combine(config.OutputDirectory, "Upgrade.exe");
-            File.Copy(clientSrc, clientDest, true);
-            File.Copy(upgradeSrc, upgradeDest, true);
-            Log($"  Client.exe → {config.OutputDirectory}", progress);
-            Log($"  Upgrade.exe → {config.OutputDirectory}", progress);
+            File.Copy(Path.Combine(exeDir, "ClientSample.exe"), clientDest, true);
+            File.Copy(Path.Combine(exeDir, "UpgradeSample.exe"), upgradeDest, true);
 
             // 4. Start server
             Log("STEP 4: Starting local server", progress);
@@ -107,6 +121,26 @@ public class SimulationService
         }
 
         return result;
+    }
+
+    private static async Task DotNetPublishAsync(string projectPath, string outputDir)
+    {
+        var psi = new ProcessStartInfo("dotnet", $"publish \"{projectPath}\" -c Release -r win-x64 -p:PublishSingleFile=true --self-contained -p:PublishTrimmed=true -o \"{outputDir}\"")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var p = Process.Start(psi)!;
+        var outTask = p.StandardOutput.ReadToEndAsync();
+        var errTask = p.StandardError.ReadToEndAsync();
+        await p.WaitForExitAsync();
+        if (p.ExitCode != 0)
+        {
+            var err = await errTask;
+            throw new InvalidOperationException($"dotnet publish failed (exit {p.ExitCode}):\n{err}");
+        }
     }
 
     private void Validate(SimulateConfigModel config)

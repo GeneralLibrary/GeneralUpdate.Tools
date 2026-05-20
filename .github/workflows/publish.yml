@@ -23,26 +23,6 @@ jobs:
           -p:IncludeAllContentForSelfExtract=true
           -o publish/win-x64
 
-      - name: Publish Client
-        run: >
-          dotnet publish test_app/Client/ClientSample.csproj
-          -c Release -r win-x64
-          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
-          -o publish/test_app/Client
-
-      - name: Publish Upgrade
-        run: >
-          dotnet publish test_app/Upgrade/UpgradeSample.csproj
-          -c Release -r win-x64
-          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
-          -o publish/test_app/Upgrade
-
-      - name: Copy test apps to Tools output
-        run: |
-          mkdir -p publish/win-x64/test_app
-          cp publish/test_app/Client/ClientSample.exe publish/win-x64/test_app/Client.exe
-          cp publish/test_app/Upgrade/UpgradeSample.exe publish/win-x64/test_app/Upgrade.exe
-
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
