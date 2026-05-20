@@ -21,11 +21,22 @@ public partial class OSSViewModel : ViewModelBase
 
     public OSSViewModel() { _status = _loc["Patch.Ready"]; }
 
+    private string GetOpenFilePickerTitle()
+    {
+        var title = _loc["Patch.SelectFile"];
+        if (string.IsNullOrWhiteSpace(title) || title == "Patch.SelectFile" || title == _loc["Patch.Select"])
+        {
+            return "选择文件";
+        }
+
+        return title;
+    }
+
     [RelayCommand] async Task ComputeHash()
     {
         var tl = Avalonia.Controls.TopLevel.GetTopLevel((Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
         if (tl == null) return;
-        var files = await tl.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions { Title = _loc["Patch.Select"], AllowMultiple = false });
+        var files = await tl.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions { Title = GetOpenFilePickerTitle(), AllowMultiple = false });
         if (files.Count > 0) { Current.Hash = await _hash.ComputeHashAsync(files[0].Path.LocalPath); Status = _loc.T("OSS.HashResult", Current.Hash); }
     }
     [RelayCommand] void Append() { Configs.Add(new() { PacketName = Current.PacketName, Hash = Current.Hash, Version = Current.Version, Url = Current.Url, ReleaseDate = Current.ReleaseDate }); Status = _loc["OSS.Added"]; }
