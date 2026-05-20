@@ -14,60 +14,51 @@ public class SimulationService
 {
     private readonly ClientGeneratorService _generator = new();
     private readonly LocalUpdateServer _server = new();
+    private readonly StringBuilder _fullLog = new();
     private int _timeoutSeconds = 120;
 
-    public string ServerBaseUrl => _server.BaseUrl;
-
-    /// <summary>
-    /// Generate scripts and start the local update server. Server stays running until StopServerAsync is called.
-    /// </summary>
-    public async Task StartServerAsync(SimulateConfigModel config, IProgress<string>? progress = null)
-    {
-        Log("STEP 1: Validating inputs", progress);
-        Validate(config);
-
-        Log("STEP 2: Generating client.csx and upgrade.csx", progress);
-        await _generator.GenerateAsync(config, config.OutputDirectory);
-        Log($"  client.csx → {config.OutputDirectory}", progress);
-        Log($"  upgrade.csx → {config.OutputDirectory}", progress);
-
-        Log("STEP 3: Starting local server", progress);
-        var serverPatchDir = Path.Combine(config.OutputDirectory, ".server");
-        Directory.CreateDirectory(serverPatchDir);
-        var patchName = Path.GetFileName(config.PatchFilePath);
-        var patchDest = Path.Combine(serverPatchDir, patchName);
-        File.Copy(config.PatchFilePath, patchDest, true);
-
-        var hash = ComputeQuickHash(patchDest);
-        LocalUpdateServerFiles.Register(patchName, patchDest);
-        _server.Updates.Add((config.CurrentVersion, config.TargetVersion, hash, patchDest, config.AppType));
-
-        await _server.StartAsync(config.ServerPort);
-        config.ServerPort = _server.Port;
-        config.ServerRunning = true;
-        Log($"  Server running on {_server.BaseUrl}", progress);
-    }
-
-    /// <summary>
-    /// Stop the local update server.
-    /// </summary>
-    public async Task StopServerAsync()
-    {
-        await _server.DisposeAsync();
-        LocalUpdateServerFiles.Clear();
-    }
-
-    /// <summary>
-    /// Run the client script and return results. Server must already be running.
-    /// </summary>
-    public async Task<SimulationResult> RunClientAsync(SimulateConfigModel config, IProgress<string>? progress = null, CancellationToken ct = default)
+    public async Task<SimulationResult> RunAsync(
+        SimulateConfigModel config,
+        IProgress<string>? progress = null,
+        CancellationToken ct = default)
     {
         var result = new SimulationResult();
         var sw = Stopwatch.StartNew();
 
         try
         {
-            Log("Running client (dotnet script client.csx)", progress);
+            // 1. Validate
+            Log("STEP 1: Validating inputs", progress);
+            Validate(config);
+
+            // 2. Prepare output
+            Log($"STEP 2: Preparing {config.OutputDirectory}", progress);
+            Directory.CreateDirectory(config.OutputDirectory);
+
+            // 3. Generate scripts
+            Log("STEP 3: Generating client.csx and upgrade.csx", progress);
+            await _generator.GenerateAsync(config, config.OutputDirectory);
+            Log($"  client.csx → {config.OutputDirectory}", progress);
+            Log($"  upgrade.csx → {config.OutputDirectory}", progress);
+
+            // 4. Start server
+            Log("STEP 4: Starting local server", progress);
+            var serverPatchDir = Path.Combine(config.OutputDirectory, ".server");
+            Directory.CreateDirectory(serverPatchDir);
+            var patchName = Path.GetFileName(config.PatchFilePath);
+            var patchDest = Path.Combine(serverPatchDir, patchName);
+            File.Copy(config.PatchFilePath, patchDest, true);
+
+            var hash = ComputeQuickHash(patchDest);
+            LocalUpdateServerFiles.Register(patchName, patchDest);
+            _server.Updates.Add((config.CurrentVersion, config.TargetVersion, hash, patchDest, config.AppType));
+
+            await _server.StartAsync(config.ServerPort);
+            Log($"  Server running on {_server.BaseUrl}", progress);
+            config.ServerPort = _server.Port;
+
+            // 5. Run client
+            Log("STEP 5: Running client (dotnet script client.csx)", progress);
             var clientResult = await RunDotNetScript(config.OutputDirectory, "client.csx", ct);
             Log(clientResult.Output, progress);
 
@@ -78,24 +69,30 @@ public class SimulationService
                 return result;
             }
 
-            Log("Client completed", progress);
-            await Task.Delay(2000, ct);
+            Log("  Client completed successfully", progress);
 
-            var fileCount = Directory.GetFiles(config.AppDirectory, "*", SearchOption.AllDirectories).Length;
-            result.Notes.Add($"Files in app directory after update: {fileCount}");
+            // 6. Verify
+            Log("STEP 6: Verifying update result", progress);
+            await Task.Delay(2000, ct);
+            VerifyUpdateResult(config, result);
 
             result.Success = true;
             result.Elapsed = sw.Elapsed;
-            Log($"Simulation complete ({sw.Elapsed.TotalSeconds:F1}s)", progress);
+            Log($"✅ Simulation complete ({sw.Elapsed.TotalSeconds:F1}s)", progress);
         }
         catch (Exception ex)
         {
             result.Success = false;
             result.ErrorMessage = ex.Message;
-            Log($"Simulation failed: {ex.Message}", progress);
+            Log($"❌ Simulation failed: {ex.Message}", progress);
+        }
+        finally
+        {
+            try { await _server.DisposeAsync(); } catch { }
+            LocalUpdateServerFiles.Clear();
+            result.FullLog = _fullLog.ToString();
         }
 
-        result.FullLog = "";
         return result;
     }
 
@@ -140,6 +137,16 @@ public class SimulationService
         return (!hasError && p.ExitCode == 0, outputStr);
     }
 
+    private void VerifyUpdateResult(SimulateConfigModel config, SimulationResult result)
+    {
+        var deleteFile = Path.Combine(config.AppDirectory, "delete_files.json");
+        if (File.Exists(deleteFile))
+            result.Notes.Add("delete_files.json still present - HandleDeleteList may not have run");
+
+        var fileCount = Directory.GetFiles(config.AppDirectory, "*", SearchOption.AllDirectories).Length;
+        result.Notes.Add($"Files in app directory after update: {fileCount}");
+    }
+
     private static string ComputeQuickHash(string filePath)
     {
         using var sha = System.Security.Cryptography.SHA256.Create();
@@ -147,7 +154,12 @@ public class SimulationService
         return BitConverter.ToString(sha.ComputeHash(fs)).Replace("-", "").ToLowerInvariant();
     }
 
-    private static void Log(string msg, IProgress<string>? progress) => progress?.Report($"[{DateTime.Now:HH:mm:ss}] {msg}");
+    private void Log(string msg, IProgress<string>? progress)
+    {
+        var line = $"[{DateTime.Now:HH:mm:ss}] {msg}";
+        _fullLog.AppendLine(line);
+        progress?.Report(line);
+    }
 }
 
 public class SimulationResult

@@ -84,7 +84,7 @@ public partial class SimulateViewModel : ViewModelBase
     [RelayCommand] async Task SelectOutputDir() { var p = await PickFolder(_loc["Sim.SelectOutput"]); if (p != null) Config.OutputDirectory = p; }
 
     [RelayCommand]
-    async Task StartServer()
+    async Task StartSimulation()
     {
         if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
         if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = _loc["Sim.ValidateDirs"]; return; }
@@ -93,34 +93,13 @@ public partial class SimulateViewModel : ViewModelBase
         IsRunning = true; Log.Clear(); Status = _loc["Sim.Starting"];
         try
         {
-            await _sim.StartServerAsync(Config, new Progress<string>(L));
-            Status = $"Server: {_sim.ServerBaseUrl}";
-            L($"Server running on {_sim.ServerBaseUrl}");
-            L($"Manual: dotnet script client.csx");
-        }
-        catch (Exception ex) { Status = $"Error: {ex.Message}"; L($"FATAL: {ex}"); }
-        finally { IsRunning = false; }
-    }
-
-    [RelayCommand]
-    async Task StopServer()
-    {
-        await _sim.StopServerAsync();
-        Status = _loc["Patch.Ready"];
-        L("Server stopped");
-    }
-
-    [RelayCommand]
-    async Task RunClient()
-    {
-        if (!Config.ServerRunning) { Status = "Server not running"; return; }
-        IsRunning = true; Status = "Running client...";
-        try
-        {
-            var result = await _sim.RunClientAsync(Config, new Progress<string>(L));
+            var progress = new Progress<string>(L);
+            var result = await _sim.RunAsync(Config, progress);
             if (result.Success)
             {
                 Status = _loc.T("Sim.Completed", result.Elapsed.TotalSeconds);
+                L($"Result: {(result.Success ? "PASS" : "FAIL")}");
+                foreach (var note in result.Notes) L($"  Note: {note}");
                 var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
                 L(_loc.T("Sim.Report", reportPath));
             }
