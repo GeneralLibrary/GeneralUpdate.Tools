@@ -36,6 +36,8 @@ public partial class SimulateViewModel : ViewModelBase
     public SimulateViewModel()
     {
         _status = _loc["Patch.Ready"];
+        Config.Platform = Platforms[0];
+        Config.AppType = AppTypes[0];
     }
 
     async Task<string?> PickFolder(string title)
