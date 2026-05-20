@@ -85,7 +85,15 @@ public class SimulationService
             // 5. Run client
             Log("STEP 5: Running Client.exe", progress);
             var clientExe = Path.Combine(config.OutputDirectory, "Client.exe");
-            var clientArgs = $"--server-url {_server.BaseUrl} --install-path \"{config.AppDirectory}\" --current-version {config.CurrentVersion} --app-secret {config.AppSecretKey} --product-id {config.ProductId} --app-name Upgrade.exe";
+            var clientArgs = new List<string>
+            {
+                "--server-url", _server.BaseUrl,
+                "--install-path", config.AppDirectory,
+                "--current-version", config.CurrentVersion,
+                "--app-secret", config.AppSecretKey,
+                "--product-id", config.ProductId,
+                "--app-name", "Upgrade.exe"
+            };
             var clientResult = await RunExe(clientExe, clientArgs, ct);
             Log(clientResult.Output, progress);
 
@@ -163,14 +171,16 @@ public class SimulationService
         catch { throw new InvalidOperationException("dotnet CLI not found"); }
     }
 
-    private async Task<(bool Success, string Output)> RunExe(string exePath, string arguments, CancellationToken ct)
+    private async Task<(bool Success, string Output)> RunExe(string exePath, List<string> arguments, CancellationToken ct)
     {
-        var psi = new ProcessStartInfo(exePath, arguments)
+        var psi = new ProcessStartInfo(exePath)
         {
             RedirectStandardOutput = true, RedirectStandardError = true,
             StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
             UseShellExecute = false, CreateNoWindow = true
         };
+        foreach (var arg in arguments)
+            psi.ArgumentList.Add(arg);
         using var p = Process.Start(psi)!;
         var output = new StringBuilder();
         var readTask = Task.Run(async () => { while (!p.StandardOutput.EndOfStream) output.AppendLine(await p.StandardOutput.ReadLineAsync(ct)); }, ct);
