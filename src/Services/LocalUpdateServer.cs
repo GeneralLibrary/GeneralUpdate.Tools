@@ -32,17 +32,45 @@ public class LocalUpdateServer : IAsyncDisposable
         // POST /Upgrade/Verification
         _app.MapPost("/Upgrade/Verification", async (HttpContext context) =>
         {
-            var q = context.Request.Query;
-            var currentVer = q["currentVersion"].ToString();
-            // Fallback: read from form body if query string is empty
+            var currentVer = context.Request.Query["currentVersion"].ToString();
+            var appTypeStr = context.Request.Query["appType"].ToString();
+
+            // Fallback 1: form body
             if (string.IsNullOrEmpty(currentVer) && context.Request.HasFormContentType)
             {
                 var form = await context.Request.ReadFormAsync();
                 currentVer = form["currentVersion"].ToString();
+                appTypeStr = form["appType"].ToString();
             }
-            _ = int.TryParse(q["appType"].ToString(), out var appType);
+
+            // Fallback 2: JSON body
+            if (string.IsNullOrEmpty(currentVer))
+            {
+                try
+                {
+                    context.Request.EnableBuffering();
+                    using var reader = new System.IO.StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true);
+                    var bodyText = await reader.ReadToEndAsync();
+                    context.Request.Body.Position = 0;
+                    if (!string.IsNullOrWhiteSpace(bodyText))
+                    {
+                        var json = System.Text.Json.JsonDocument.Parse(bodyText).RootElement;
+                        if (json.TryGetProperty("currentVersion", out var cv)) currentVer = cv.GetString() ?? "";
+                        if (json.TryGetProperty("appType", out var at)) appTypeStr = at.GetRawText();
+                    }
+                }
+                catch { }
+            }
+
+            _ = int.TryParse(appTypeStr, out var appType);
 
             var match = Updates.Find(u => u.CurrentVersion == currentVer);
+            // Fallback: match on AppType only if version doesn't match
+            if (match == default)
+                match = Updates.Find(u => u.AppType == appType);
+            // Last resort: return first registered update
+            if (match == default && Updates.Count > 0)
+                match = Updates[0];
             if (match == default)
             {
                 await context.Response.WriteAsJsonAsync(new { Code = 204, Body = Array.Empty<object>() });
