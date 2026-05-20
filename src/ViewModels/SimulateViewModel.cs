@@ -39,26 +39,6 @@ public partial class SimulateViewModel : ViewModelBase
         _status = _loc["Patch.Ready"];
     }
 
-    /// <summary>
-    /// Maps Config.Platform (int) to Platforms collection index.
-    /// 1 (Windows) → 0, 2 (Linux) → 1.
-    /// </summary>
-    public int PlatformIndex
-    {
-        get => Config.Platform == 2 ? 1 : 0;
-        set => Config.Platform = value == 1 ? 2 : 1;
-    }
-
-    /// <summary>
-    /// Maps Config.AppType (int) to AppTypes collection index.
-    /// 1 (ClientApp) → 0, 2 (UpgradeApp) → 1.
-    /// </summary>
-    public int AppTypeIndex
-    {
-        get => Config.AppType == 2 ? 1 : 0;
-        set => Config.AppType = value == 1 ? 2 : 1;
-    }
-
     async Task<string?> PickFolder(string title)
     {
         var tl = Avalonia.Controls.TopLevel.GetTopLevel(
