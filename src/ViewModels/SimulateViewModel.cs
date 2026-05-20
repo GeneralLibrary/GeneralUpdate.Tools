@@ -79,9 +79,9 @@ public partial class SimulateViewModel : ViewModelBase
         return r.Count > 0 ? r[0].Path.LocalPath : null;
     }
 
-    [RelayCommand] async Task SelectAppDir() { var p = await PickFolder("选择旧版本应用目录"); if (p != null) Config.AppDirectory = p; }
-    [RelayCommand] async Task SelectPatch() { var p = await PickFile("选择补丁包"); if (p != null) Config.PatchFilePath = p; }
-    [RelayCommand] async Task SelectOutputDir() { var p = await PickFolder("选择模拟输出目录"); if (p != null) Config.OutputDirectory = p; }
+    [RelayCommand] async Task SelectAppDir() { var p = await PickFolder(_loc["Sim.SelectAppDir"]); if (p != null) Config.AppDirectory = p; }
+    [RelayCommand] async Task SelectPatch() { var p = await PickFile(_loc["Sim.SelectPatch"]); if (p != null) Config.PatchFilePath = p; }
+    [RelayCommand] async Task SelectOutputDir() { var p = await PickFolder(_loc["Sim.SelectOutput"]); if (p != null) Config.OutputDirectory = p; }
 
     [RelayCommand]
     async Task StartSimulation()
@@ -92,7 +92,7 @@ public partial class SimulateViewModel : ViewModelBase
 
         IsRunning = true;
         Log.Clear();
-        Status = "Starting simulation...";
+        Status = _loc["Sim.Starting"];
 
         try
         {
@@ -101,17 +101,17 @@ public partial class SimulateViewModel : ViewModelBase
 
             if (result.Success)
             {
-                Status = $"Simulation completed ({result.Elapsed.TotalSeconds:F1}s)";
+                Status = _loc.T("Sim.Completed", result.Elapsed.TotalSeconds);
                 L($"Result: {(result.Success ? "PASS" : "FAIL")}");
                 foreach (var note in result.Notes)
                     L($"  Note: {note}");
 
                 var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
-                L($"Report: {reportPath}");
+                L(_loc.T("Sim.Report", reportPath));
             }
             else
             {
-                Status = $"Simulation failed: {result.ErrorMessage}";
+                Status = _loc.T("Sim.Failed", result.ErrorMessage);
             }
         }
         catch (Exception ex)

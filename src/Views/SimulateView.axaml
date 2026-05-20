@@ -3,24 +3,31 @@
              xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
              xmlns:svc="using:GeneralUpdate.Tools.Services"
              x:Class="GeneralUpdate.Tools.Views.SimulateView"
+             x:Name="SimRoot"
              x:DataType="vm:SimulateViewModel">
     <ScrollViewer>
         <StackPanel Margin="28,24" Spacing="14">
-            <TextBlock Text="🧪 Simulate Update" FontSize="20" FontWeight="Bold"/>
+            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Title]}"
+                       FontSize="20" FontWeight="Bold"/>
 
             <!-- Test target -->
             <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="Test Target" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.TestTarget]}"
+                               FontSize="14" FontWeight="SemiBold"/>
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="Old App Dir" VerticalAlignment="Center" Width="110"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.OldAppDir]}"
+                                   VerticalAlignment="Center" Width="100"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.AppDirectory}" IsReadOnly="True" Margin="8,0"/>
-                        <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectAppDirCommand}" MinWidth="80"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Select]}"
+                                Command="{Binding SelectAppDirCommand}" MinWidth="80"/>
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="Patch Package" VerticalAlignment="Center" Width="110"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.PatchFile]}"
+                                   VerticalAlignment="Center" Width="100"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.PatchFilePath}" IsReadOnly="True" Margin="8,0"/>
-                        <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectPatchCommand}" MinWidth="80"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Select]}"
+                                Command="{Binding SelectPatchCommand}" MinWidth="80"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -28,25 +35,32 @@
             <!-- Config -->
             <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="Update Config" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.UpdateConfig]}"
+                               FontSize="14" FontWeight="SemiBold"/>
                     <Grid ColumnDefinitions="Auto,*,Auto,*">
-                        <TextBlock Grid.Column="0" Text="Current Ver" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.CurrentVer]}"
+                                   VerticalAlignment="Center"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.CurrentVersion}" Margin="8,0,16,0"/>
-                        <TextBlock Grid.Column="2" Text="Target Ver" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.TargetVer]}"
+                                   VerticalAlignment="Center"/>
                         <TextBox Grid.Column="3" Text="{Binding Config.TargetVersion}" Margin="8,0"/>
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*,Auto,*">
-                        <TextBlock Grid.Column="0" Text="Platform" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding Platforms}"
-                                  SelectedIndex="{Binding PlatformIndex}" Margin="8,0,16,0"/>
-                        <TextBlock Grid.Column="2" Text="AppType" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="3" ItemsSource="{Binding AppTypes}"
-                                  SelectedIndex="{Binding AppTypeIndex}" Margin="8,0"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Platform]}"
+                                   VerticalAlignment="Center"/>
+                        <ComboBox x:Name="PlatformCombo" Grid.Column="1" ItemsSource="{Binding Platforms}"
+                                  SelectedIndex="0" Margin="8,0,16,0"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.AppType]}"
+                                   VerticalAlignment="Center"/>
+                        <ComboBox x:Name="AppTypeCombo" Grid.Column="3" ItemsSource="{Binding AppTypes}"
+                                  SelectedIndex="0" Margin="8,0"/>
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*,Auto,*">
-                        <TextBlock Grid.Column="0" Text="AppSecret" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.AppSecret]}"
+                                   VerticalAlignment="Center"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.AppSecretKey}" Margin="8,0,16,0"/>
-                        <TextBlock Grid.Column="2" Text="Product ID" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.ProductId]}"
+                                   VerticalAlignment="Center"/>
                         <TextBox Grid.Column="3" Text="{Binding Config.ProductId}" Margin="8,0"/>
                     </Grid>
                 </StackPanel>
@@ -55,17 +69,21 @@
             <!-- Output -->
             <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="Output" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Output]}"
+                               FontSize="14" FontWeight="SemiBold"/>
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="Simulate Dir" VerticalAlignment="Center" Width="110"/>
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.OutputDir]}"
+                                   VerticalAlignment="Center" Width="100"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.OutputDirectory}" IsReadOnly="True" Margin="8,0"/>
-                        <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectOutputDirCommand}" MinWidth="80"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Select]}"
+                                Command="{Binding SelectOutputDirCommand}" MinWidth="80"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Run -->
-            <Button Content="🚀 Start Simulation" Command="{Binding StartSimulationCommand}"
+            <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Start]}"
+                    Command="{Binding StartSimulationCommand}"
                     IsEnabled="{Binding !IsRunning}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
             <TextBlock Text="{Binding Status}" FontSize="13"/>
 

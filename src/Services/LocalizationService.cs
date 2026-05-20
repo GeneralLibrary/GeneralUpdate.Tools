@@ -136,6 +136,10 @@ public class LocalizationService : INotifyPropertyChanged
             ["Sim.SelectOutput"] = "选择模拟输出目录",
             ["Sim.ValidateDirs"] = "请填写所有必填项",
             ["Sim.DotnetCheck"] = "需要 .NET 10.0 SDK，请先安装",
+            ["Sim.Starting"] = "正在启动模拟...",
+            ["Sim.Completed"] = "模拟完成 ({0:F1}s)",
+            ["Sim.Failed"] = "模拟失败: {0}",
+            ["Sim.Report"] = "报告: {0}",
         },
         ["en-US"] = new()
         {
@@ -229,6 +233,10 @@ public class LocalizationService : INotifyPropertyChanged
             ["Sim.SelectOutput"] = "Select simulation output directory",
             ["Sim.ValidateDirs"] = "Please fill in all required fields",
             ["Sim.DotnetCheck"] = ".NET 10.0 SDK is required. Please install it first.",
+            ["Sim.Starting"] = "Starting simulation...",
+            ["Sim.Completed"] = "Simulation completed ({0:F1}s)",
+            ["Sim.Failed"] = "Simulation failed: {0}",
+            ["Sim.Report"] = "Report: {0}",
         }
     };
 
