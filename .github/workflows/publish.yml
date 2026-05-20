@@ -18,7 +18,9 @@ jobs:
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
           -c Release -r win-x64
-          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
+          -p:PublishSingleFile=true --self-contained
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:IncludeAllContentForSelfExtract=true
           -o publish/win-x64
 
       - name: Upload
@@ -41,7 +43,9 @@ jobs:
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
           -c Release -r linux-x64
-          -p:PublishSingleFile=true -p:PublishTrimmed=true --self-contained
+          -p:PublishSingleFile=true --self-contained
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:IncludeAllContentForSelfExtract=true
           -o publish/linux-x64
 
       - name: Upload
