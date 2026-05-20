@@ -17,5 +17,4 @@ public partial class SimulateConfigModel : ObservableObject
     [ObservableProperty] private string _productId = "2d974e2a-31e6-4887-9bb1-b4689e98c77a";
     [ObservableProperty] private string _outputDirectory = string.Empty;
     public int ServerPort { get; set; } = 5000;
-    public bool ServerRunning { get; set; }
 }
