@@ -4,11 +4,9 @@
              xmlns:local="using:GeneralUpdate.Tools"
              xmlns:semi="https://irihi.tech/semi"
              RequestedThemeVariant="Default">
-
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
-
     <Application.Styles>
         <FluentTheme />
         <semi:SemiTheme Locale="zh-CN" />

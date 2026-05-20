@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
         x:Class="GeneralUpdate.Tools.Views.MainWindow"
-        x:Name="MainWin"
         x:DataType="vm:MainWindowViewModel"
         Title="GeneralUpdate Tools v12" Width="960" Height="640" MinWidth="780" MinHeight="540"
         WindowStartupLocation="CenterScreen">
@@ -12,22 +11,15 @@
                 <Border Grid.Row="0" Padding="18,20,18,12">
                     <TextBlock Text="GeneralUpdate Tools" FontSize="16" FontWeight="Bold"/>
                 </Border>
-                <ItemsControl Grid.Row="1" ItemsSource="{Binding NavItems}">
-                    <ItemsControl.ItemTemplate>
+                <ListBox Grid.Row="1" ItemsSource="{Binding NavItems}" Background="Transparent" BorderThickness="0">
+                    <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:NavItem">
-                            <Button Content="{Binding Title}"
-                                    Command="{Binding ElementName=MainWin, Path=DataContext.NavigateCommand}"
-                                    CommandParameter="{Binding}"
-                                    HorizontalAlignment="Stretch"
-                                    HorizontalContentAlignment="Left"
-                                    Padding="18,10"
-                                    Margin="0"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    FontSize="13"/>
+                            <Border Padding="18,10" Background="Transparent" CornerRadius="0,8,8,0">
+                                <TextBlock Text="{Binding Title}" FontSize="13"/>
+                            </Border>
                         </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </Grid>
         </Border>
         <ContentControl Content="{Binding CurrentPage}"/>

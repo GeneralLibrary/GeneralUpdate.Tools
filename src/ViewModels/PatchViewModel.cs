@@ -28,21 +28,21 @@ public partial class PatchViewModel : ViewModelBase
     [RelayCommand] async Task Build()
     {
         if (string.IsNullOrWhiteSpace(Config.OldDirectory) || string.IsNullOrWhiteSpace(Config.NewDirectory)) { Status = "请选择新旧版本目录"; return; }
-        IsBuilding = true; Log.Clear(); Progress = 0; Status = "正在生成差分补丁...";
+        IsBuilding = true; Log.Clear(); Progress<> = 0; Status = "正在生成差分补丁...";
         try
         {
             var tmp = Path.Combine(Path.GetTempPath(), $"gupatch_{DateTime.Now:yyyyMMddHHmmss}"); Directory.CreateDirectory(tmp);
-            L($"临时目录: {tmp}"); Progress = 20;
+            L($"临时目录: {tmp}"); Progress<> = 20;
             L("对比目录差异 + 生成 BSDiff40 补丁...");
             await _diff.GeneratePatchAsync(Config.OldDirectory, Config.NewDirectory, tmp);
-            Progress = 70; L("补丁生成完成");
+            Progress<> = 70; L("补丁生成完成");
             var outDir = string.IsNullOrWhiteSpace(Config.OutputPath) ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Config.OutputPath;
             var name = string.IsNullOrWhiteSpace(Config.PackageName) ? $"patch_{DateTime.Now:yyyyMMddHHmmss}" : Config.PackageName;
             var zip = Path.Combine(outDir, $"{name}.zip");
             L($"打包: {Path.GetFileName(zip)}");
             await _pkg.CompressDirectoryAsync(tmp, zip);
             Directory.Delete(tmp, true);
-            Progress = 100; Config.OutputPath = zip;
+            Progress<> = 100; Config.OutputPath = zip;
             Status = $"成功: {Path.GetFileName(zip)} ({new FileInfo(zip).Length/1024.0:F1} KB)";
             L(Status);
         }
