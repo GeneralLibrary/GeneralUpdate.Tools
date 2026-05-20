@@ -2,6 +2,9 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace GeneralUpdate.Tools.Models;
 
+public record PlatformItem(int Value, string DisplayName) { public override string ToString() => DisplayName; }
+public record AppTypeItem(int Value, string DisplayName) { public override string ToString() => DisplayName; }
+
 /// <summary>
 /// Configuration for the simulate-update module.
 /// </summary>
@@ -19,11 +22,11 @@ public partial class SimulateConfigModel : ObservableObject
     /// <summary>The target version the patch upgrades to.</summary>
     [ObservableProperty] private string _targetVersion = "2.0.0.0";
 
-    /// <summary>Platform selector (1=Windows, 2=Linux).</summary>
-    [ObservableProperty] private int _platform = 1;
+    /// <summary>Platform selector.</summary>
+    [ObservableProperty] private PlatformItem _platform = new(1, "Windows");
 
-    /// <summary>AppType sent to the server (1=ClientApp, 2=UpgradeApp).</summary>
-    [ObservableProperty] private int _appType = 1;
+    /// <summary>AppType selector.</summary>
+    [ObservableProperty] private AppTypeItem _appType = new(1, "ClientApp");
 
     /// <summary>Application secret key for the update API.</summary>
     [ObservableProperty] private string _appSecretKey = "dfeb5833-975e-4afb-88f1-6278ee9aeff6";

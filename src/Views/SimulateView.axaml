@@ -13,12 +13,12 @@
                 <StackPanel Spacing="10">
                     <TextBlock Text="Test Target" FontSize="14" FontWeight="SemiBold"/>
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="Old App Dir" VerticalAlignment="Center" Width="100"/>
+                        <TextBlock Grid.Column="0" Text="Old App Dir" VerticalAlignment="Center" Width="110"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.AppDirectory}" IsReadOnly="True" Margin="8,0"/>
                         <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectAppDirCommand}" MinWidth="80"/>
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="Patch Package" VerticalAlignment="Center" Width="100"/>
+                        <TextBlock Grid.Column="0" Text="Patch Package" VerticalAlignment="Center" Width="110"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.PatchFilePath}" IsReadOnly="True" Margin="8,0"/>
                         <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectPatchCommand}" MinWidth="80"/>
                     </Grid>
@@ -38,18 +38,18 @@
                     <Grid ColumnDefinitions="Auto,*,Auto,*">
                         <TextBlock Grid.Column="0" Text="Platform" VerticalAlignment="Center"/>
                         <ComboBox Grid.Column="1" ItemsSource="{Binding Platforms}"
-                                  SelectedItem="{Binding Config.Platform}" Margin="8,0,16,0"/>
+                                  SelectedItem="{Binding Config.Platform}" Margin="8,0,16,0"
+                                  SelectedIndex="0"/>
                         <TextBlock Grid.Column="2" Text="AppType" VerticalAlignment="Center"/>
                         <ComboBox Grid.Column="3" ItemsSource="{Binding AppTypes}"
-                                  SelectedItem="{Binding Config.AppType}" Margin="8,0"/>
+                                  SelectedItem="{Binding Config.AppType}" Margin="8,0"
+                                  SelectedIndex="0"/>
                     </Grid>
-                    <Grid ColumnDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="Auto,*,Auto,*">
                         <TextBlock Grid.Column="0" Text="AppSecret" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding Config.AppSecretKey}" Margin="8,0"/>
-                    </Grid>
-                    <Grid ColumnDefinitions="Auto,*">
-                        <TextBlock Grid.Column="0" Text="Product ID" VerticalAlignment="Center"/>
-                        <TextBox Grid.Column="1" Text="{Binding Config.ProductId}" Margin="8,0"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.AppSecretKey}" Margin="8,0,16,0"/>
+                        <TextBlock Grid.Column="2" Text="Product ID" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="3" Text="{Binding Config.ProductId}" Margin="8,0"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -59,7 +59,7 @@
                 <StackPanel Spacing="10">
                     <TextBlock Text="Output" FontSize="14" FontWeight="SemiBold"/>
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="Simulate Dir" VerticalAlignment="Center" Width="100"/>
+                        <TextBlock Grid.Column="0" Text="Simulate Dir" VerticalAlignment="Center" Width="110"/>
                         <TextBox Grid.Column="1" Text="{Binding Config.OutputDirectory}" IsReadOnly="True" Margin="8,0"/>
                         <Button Grid.Column="2" Content="📁 Select" Command="{Binding SelectOutputDirCommand}" MinWidth="80"/>
                     </Grid>
