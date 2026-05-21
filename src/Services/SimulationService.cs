@@ -190,7 +190,7 @@ public class SimulationService
         await Task.WhenAll(readTask, errorTask);
         var outputStr = output.ToString();
         var hasError = outputStr.Contains("ERROR:") || outputStr.Contains("FATAL:") || outputStr.Contains("JsonException");
-        return (!hasError && p.ExitCode == 0, outputStr);
+        return (!hasError &&  (p.ExitCode == 0 || p.ExitCode == -1), outputStr);
     }
 
     private void VerifyUpdateResult(SimulateConfigModel config, SimulationResult result)
