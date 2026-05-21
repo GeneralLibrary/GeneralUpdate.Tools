@@ -83,14 +83,12 @@ public partial class SimulateViewModel : ViewModelBase
 
     [RelayCommand] async Task SelectAppDir() { var p = await PickFolder(_loc["Sim.SelectAppDir"]); if (p != null) Config.AppDirectory = p; }
     [RelayCommand] async Task SelectPatch() { var p = await PickFile(_loc["Sim.SelectPatch"]); if (p != null) Config.PatchFilePath = p; }
-    [RelayCommand] async Task SelectOutputDir() { var p = await PickFolder(_loc["Sim.SelectOutput"]); if (p != null) Config.OutputDirectory = p; }
 
     [RelayCommand]
     async Task StartSimulation()
     {
         if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
         if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = _loc["Sim.ValidateDirs"]; return; }
-        if (string.IsNullOrWhiteSpace(Config.OutputDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
 
         IsRunning = true; StartButtonText = "⏳ Running..."; Log.Clear(); Status = _loc["Sim.Starting"];
         try
@@ -107,7 +105,7 @@ public partial class SimulateViewModel : ViewModelBase
             }
             L($"Result: {(result.Success ? "PASS" : "FAIL")}");
             foreach (var note in result.Notes) L($"  Note: {note}");
-            var reportPath = await _report.GenerateAsync(Config, result, Config.OutputDirectory);
+            var reportPath = await _report.GenerateAsync(Config, result, Config.AppDirectory);
             L(_loc.T("Sim.Report", reportPath));
         }
         catch (Exception ex)
@@ -115,7 +113,7 @@ public partial class SimulateViewModel : ViewModelBase
             Status = $"Error: {ex.Message}";
             L($"FATAL: {ex}");
             var failResult = new SimulationResult { Success = false, ErrorMessage = ex.Message };
-            var reportPath = await _report.GenerateAsync(Config, failResult, Config.OutputDirectory);
+            var reportPath = await _report.GenerateAsync(Config, failResult, Config.AppDirectory);
             L(_loc.T("Sim.Report", reportPath));
         }
         finally { IsRunning = false; StartButtonText = _loc["Sim.Start"]; }
