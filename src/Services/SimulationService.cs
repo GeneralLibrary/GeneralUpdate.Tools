@@ -34,39 +34,55 @@ public class SimulationService
             Log($"STEP 2: Preparing {config.AppDirectory}", progress);
             Directory.CreateDirectory(config.AppDirectory);
 
-            // 3. Compile test apps to .exe
-            Log("STEP 3: Compiling test apps", progress);
+            // 3. Ensure test apps are available
+            Log("STEP 3: Preparing test apps", progress);
             var toolsDir = AppDomain.CurrentDomain.BaseDirectory;
-            var clientProj = Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Client", "ClientSample.csproj");
-            var upgradeProj = Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Upgrade", "UpgradeSample.csproj");
-
-            // Normalize paths
-            clientProj = Path.GetFullPath(clientProj);
-            upgradeProj = Path.GetFullPath(upgradeProj);
-
-            if (!File.Exists(clientProj))
-                throw new FileNotFoundException($"Client project not found at {clientProj}");
-            if (!File.Exists(upgradeProj))
-                throw new FileNotFoundException($"Upgrade project not found at {upgradeProj}");
-
-            var exeDir = Path.Combine(toolsDir, "test_app");
-            Directory.CreateDirectory(exeDir);
-
-            Log("  Compiling Client.exe...", progress);
-            await DotNetPublishAsync(clientProj, exeDir);
-            Log($"  Client.exe → {exeDir}", progress);
-
-            Log("  Compiling Upgrade.exe...", progress);
-            await DotNetPublishAsync(upgradeProj, exeDir);
-            Log($"  Upgrade.exe → {exeDir}", progress);
-
-            // Copy compiled apps into app directory (where the update will run)
             var clientDest = Path.Combine(config.AppDirectory, "Client.exe");
-            File.Copy(Path.Combine(exeDir, "ClientSample.exe"), clientDest, true);
+            var upgradeDest = Path.Combine(config.AppDirectory, "Upgrade.exe");
 
-            var upgradeExe = Path.Combine(exeDir, "UpgradeSample.exe");
-            File.Copy(upgradeExe, Path.Combine(config.AppDirectory, "Upgrade.exe"), true);
-            Log($"  Upgrade.exe → {config.AppDirectory}", progress);
+            if (File.Exists(clientDest) && File.Exists(upgradeDest))
+            {
+                Log("  Test apps already cached, skipping", progress);
+            }
+            else
+            {
+                // Strategy 1: bundled exes (release package)
+                var bundledDir = Path.Combine(toolsDir, "test_app_exe");
+                if (Directory.Exists(bundledDir) &&
+                    File.Exists(Path.Combine(bundledDir, "ClientSample.exe")) &&
+                    File.Exists(Path.Combine(bundledDir, "UpgradeSample.exe")))
+                {
+                    Log("  Copying bundled test apps...", progress);
+                    File.Copy(Path.Combine(bundledDir, "ClientSample.exe"), clientDest, true);
+                    File.Copy(Path.Combine(bundledDir, "UpgradeSample.exe"), upgradeDest, true);
+                    Log($"  Client.exe → {config.AppDirectory}", progress);
+                    Log($"  Upgrade.exe → {config.AppDirectory}", progress);
+                }
+                else
+                {
+                    // Strategy 2: compile from source (dev environment)
+                    var clientProj = Path.GetFullPath(Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Client", "ClientSample.csproj"));
+                    var upgradeProj = Path.GetFullPath(Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Upgrade", "UpgradeSample.csproj"));
+
+                    if (!File.Exists(clientProj) || !File.Exists(upgradeProj))
+                        throw new FileNotFoundException("Test apps not found. Run in dev environment or use a release build that includes test_app_exe.");
+
+                    var exeDir = Path.Combine(toolsDir, "test_app");
+                    Directory.CreateDirectory(exeDir);
+
+                    Log("  Compiling Client.exe...", progress);
+                    await DotNetPublishAsync(clientProj, exeDir);
+                    Log($"  Client.exe → {exeDir}", progress);
+
+                    Log("  Compiling Upgrade.exe...", progress);
+                    await DotNetPublishAsync(upgradeProj, exeDir);
+                    Log($"  Upgrade.exe → {exeDir}", progress);
+
+                    File.Copy(Path.Combine(exeDir, "ClientSample.exe"), clientDest, true);
+                    File.Copy(Path.Combine(exeDir, "UpgradeSample.exe"), upgradeDest, true);
+                    Log($"  Copied to {config.AppDirectory}", progress);
+                }
+            }
 
             // 4. Start server
             Log("STEP 4: Starting local server", progress);
@@ -190,7 +206,9 @@ public class SimulationService
         await Task.WhenAll(readTask, errorTask);
         var outputStr = output.ToString();
         var hasError = outputStr.Contains("ERROR:") || outputStr.Contains("FATAL:") || outputStr.Contains("JsonException");
-        return (!hasError && p.ExitCode == 0, outputStr);
+        // ExitCode -1 is normal: Client self-terminates after launching Upgrade.exe
+        var exitedCleanly = p.ExitCode == 0 || p.ExitCode == -1;
+        return (!hasError && exitedCleanly, outputStr);
     }
 
     private void VerifyUpdateResult(SimulateConfigModel config, SimulationResult result)
