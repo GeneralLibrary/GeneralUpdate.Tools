@@ -88,7 +88,7 @@ public class SimulationService
             var clientArgs = new List<string>
             {
                 "--server-url", _server.BaseUrl,
-                "--install-path", config.AppDirectory,
+                "--install-path", config.OutputDirectory,
                 "--current-version", config.CurrentVersion,
                 "--app-secret", config.AppSecretKey,
                 "--product-id", config.ProductId,
