@@ -66,21 +66,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- Output -->
-            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Output]}"
-                               FontSize="14" FontWeight="SemiBold"/>
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.OutputDir]}"
-                                   VerticalAlignment="Center" Width="100"/>
-                        <TextBox Grid.Column="1" Text="{Binding Config.OutputDirectory}" IsReadOnly="True" Margin="8,0"/>
-                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.Select]}"
-                                Command="{Binding SelectOutputDirCommand}" MinWidth="80"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-
             <!-- Run -->
             <Button Content="{Binding StartButtonText}"
                     Command="{Binding StartSimulationCommand}"

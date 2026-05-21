@@ -30,9 +30,9 @@ public class SimulationService
             Log("STEP 1: Validating inputs", progress);
             Validate(config);
 
-            // 2. Prepare output
-            Log($"STEP 2: Preparing {config.OutputDirectory}", progress);
-            Directory.CreateDirectory(config.OutputDirectory);
+            // 2. Prepare app directory
+            Log($"STEP 2: Preparing {config.AppDirectory}", progress);
+            Directory.CreateDirectory(config.AppDirectory);
 
             // 3. Compile test apps to .exe
             Log("STEP 3: Compiling test apps", progress);
@@ -60,18 +60,17 @@ public class SimulationService
             await DotNetPublishAsync(upgradeProj, exeDir);
             Log($"  Upgrade.exe → {exeDir}", progress);
 
-            // Copy to simulation output AND install path (GeneralUpdate StartApp looks here)
-            var clientDest = Path.Combine(config.OutputDirectory, "Client.exe");
+            // Copy compiled apps into app directory (where the update will run)
+            var clientDest = Path.Combine(config.AppDirectory, "Client.exe");
             File.Copy(Path.Combine(exeDir, "ClientSample.exe"), clientDest, true);
 
             var upgradeExe = Path.Combine(exeDir, "UpgradeSample.exe");
-            File.Copy(upgradeExe, Path.Combine(config.OutputDirectory, "Upgrade.exe"), true);
             File.Copy(upgradeExe, Path.Combine(config.AppDirectory, "Upgrade.exe"), true);
             Log($"  Upgrade.exe → {config.AppDirectory}", progress);
 
             // 4. Start server
             Log("STEP 4: Starting local server", progress);
-            var serverPatchDir = Path.Combine(config.OutputDirectory, ".server");
+            var serverPatchDir = Path.Combine(config.AppDirectory, ".server");
             Directory.CreateDirectory(serverPatchDir);
             var patchName = Path.GetFileName(config.PatchFilePath);
             var patchDest = Path.Combine(serverPatchDir, patchName);
@@ -87,11 +86,11 @@ public class SimulationService
 
             // 5. Run client
             Log("STEP 5: Running Client.exe", progress);
-            var clientExe = Path.Combine(config.OutputDirectory, "Client.exe");
+            var clientExe = Path.Combine(config.AppDirectory, "Client.exe");
             var clientArgs = new List<string>
             {
                 "--server-url", _server.BaseUrl,
-                "--install-path", config.OutputDirectory,
+                "--install-path", config.AppDirectory,
                 "--current-version", config.CurrentVersion,
                 "--app-secret", config.AppSecretKey,
                 "--product-id", config.ProductId,
@@ -160,8 +159,6 @@ public class SimulationService
             throw new DirectoryNotFoundException($"App directory not found: {config.AppDirectory}");
         if (!File.Exists(config.PatchFilePath))
             throw new FileNotFoundException($"Patch file not found: {config.PatchFilePath}");
-        if (string.IsNullOrWhiteSpace(config.OutputDirectory))
-            throw new ArgumentException("Output directory is required");
         try
         {
             var psi = new ProcessStartInfo("dotnet", "--version") { RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true };

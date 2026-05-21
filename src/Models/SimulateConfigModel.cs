@@ -15,6 +15,5 @@ public partial class SimulateConfigModel : ObservableObject
     [ObservableProperty] private int _appType = 1;
     [ObservableProperty] private string _appSecretKey = "dfeb5833-975e-4afb-88f1-6278ee9aeff6";
     [ObservableProperty] private string _productId = "2d974e2a-31e6-4887-9bb1-b4689e98c77a";
-    [ObservableProperty] private string _outputDirectory = string.Empty;
     public int ServerPort { get; set; } = 5000;
 }
