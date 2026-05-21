@@ -47,7 +47,9 @@ public class SimulationService
             else
             {
                 // Strategy 1: bundled exes (release package)
-                var bundledDir = Path.Combine(toolsDir, "test_app_exe");
+                // Use ProcessPath not BaseDirectory — single-file publish extracts to a temp dir
+                var appRoot = Path.GetDirectoryName(Environment.ProcessPath)!;
+                var bundledDir = Path.Combine(appRoot, "test_app_exe");
                 if (Directory.Exists(bundledDir) &&
                     File.Exists(Path.Combine(bundledDir, "ClientSample.exe")) &&
                     File.Exists(Path.Combine(bundledDir, "UpgradeSample.exe")))
