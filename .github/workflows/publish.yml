@@ -14,6 +14,11 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Build test apps (Client + Upgrade)
+        run: |
+          dotnet publish test_app/Client/ClientSample.csproj -c Release -r win-x64 -p:PublishSingleFile=true --self-contained -o prebuilt
+          dotnet publish test_app/Upgrade/UpgradeSample.csproj -c Release -r win-x64 -p:PublishSingleFile=true --self-contained -o prebuilt
+
       - name: Publish Tools
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
@@ -22,6 +27,9 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:IncludeAllContentForSelfExtract=true
           -o publish/win-x64
+
+      - name: Copy test apps into publish output
+        run: xcopy prebuilt\* publish\win-x64\test_app_exe\ /Y /I
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -39,6 +47,11 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Build test apps (Client + Upgrade)
+        run: |
+          dotnet publish test_app/Client/ClientSample.csproj -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained -o prebuilt
+          dotnet publish test_app/Upgrade/UpgradeSample.csproj -c Release -r linux-x64 -p:PublishSingleFile=true --self-contained -o prebuilt
+
       - name: Publish Tools
         run: >
           dotnet publish src/GeneralUpdate.Tools.csproj
@@ -47,6 +60,9 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:IncludeAllContentForSelfExtract=true
           -o publish/linux-x64
+
+      - name: Copy test apps into publish output
+        run: mkdir -p publish/linux-x64/test_app_exe && cp prebuilt/* publish/linux-x64/test_app_exe/
 
       - name: Upload
         uses: actions/upload-artifact@v4
