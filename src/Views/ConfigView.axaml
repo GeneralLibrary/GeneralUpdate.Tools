@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+             xmlns:svc="using:GeneralUpdate.Tools.Services"
+             x:Class="GeneralUpdate.Tools.Views.ConfigView"
+             x:DataType="vm:ConfigViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="28,24" Spacing="14">
+
+            <!-- Title -->
+            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Title]}"
+                       FontSize="20" FontWeight="Bold"/>
+
+            <!-- Client .csproj -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.ClientPath]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" Text="{Binding Model.ClientPath}" PlaceholderText=".csproj path..."
+                                 IsReadOnly="False"/>
+                        <Button Grid.Column="1" Margin="8,0,0,0" MinWidth="80"
+                                Command="{Binding BrowseClientCommand}"
+                                Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Browse]}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Upgrade .csproj -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.UpgradePath]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0" Text="{Binding Model.UpgradePath}" PlaceholderText=".csproj path... (optional)"
+                                 IsReadOnly="False"/>
+                        <Button Grid.Column="1" Margin="8,0,0,0" MinWidth="80"
+                                Command="{Binding BrowseUpgradeCommand}"
+                                Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Browse]}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Analyze button -->
+            <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Analyze]}"
+                    Command="{Binding AnalyzeCommand}"
+                    IsEnabled="{Binding Model.IsAnalyzing, Converter={x:Static BoolConverters.Not}}"
+                    HorizontalAlignment="Right" MinWidth="120"/>
+
+            <!-- Editable form -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Fields]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+
+                    <!-- Auto-analyzed fields -->
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.AutoAnalyzed]}"
+                               FontSize="12" Opacity="0.7"/>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.MainAppName]}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.MainAppName}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.UpdateAppName]}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.UpdateAppName}" Margin="8,0"/>
+                    </Grid>
+
+                    <!-- Manual input fields -->
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.ManualInput]}"
+                               FontSize="12" Opacity="0.7" Margin="0,4,0,0"/>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.ClientVersion]}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ClientVersion}" Margin="8,0"
+                                 PlaceholderText="1.0.0 (semver)"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.UpgradeClientVersion]}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.UpgradeClientVersion}" Margin="8,0"
+                                 PlaceholderText="1.0.0 (semver)"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.AppType]}"/>
+                        <ComboBox Grid.Column="1" Margin="8,0" ItemsSource="{Binding AppTypes}"
+                                  SelectedItem="{Binding Model.AppType}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.ProductId]}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ProductId}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center" Width="130"
+                                   Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.UpdatePath]}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.UpdatePath}" Margin="8,0"
+                                 PlaceholderText="update/"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Toggles -->
+            <StackPanel Spacing="6">
+                <CheckBox IsChecked="{Binding Model.OpenManifestDir}"
+                          Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.OpenManifestDir]}"/>
+                <CheckBox IsChecked="{Binding Model.OpenSampleDir}"
+                          Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.OpenSampleDir]}"/>
+            </StackPanel>
+
+            <!-- Action buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Generate]}"
+                        Command="{Binding GenerateCommand}" MinWidth="140"/>
+                <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.GenerateSample]}"
+                        Command="{Binding GenerateSampleCommand}" MinWidth="160"/>
+            </StackPanel>
+
+            <!-- Preview -->
+            <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.Preview]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding Model.PreviewJson}" IsReadOnly="True" FontFamily="Courier New"
+                             MinHeight="180" AcceptsReturn="True" TextWrapping="NoWrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Status / hint -->
+            <TextBlock Text="{Binding Model.StatusText}" TextWrapping="Wrap" FontSize="12" Opacity="0.8"/>
+            <Border Padding="14" CornerRadius="6" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
+                <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.CodeHint]}"
+                           FontFamily="Courier New" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

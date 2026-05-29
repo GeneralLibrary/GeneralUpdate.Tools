@@ -55,7 +55,9 @@ public class LocalUpdateServer : IAsyncDisposable
                     if (!string.IsNullOrWhiteSpace(bodyText))
                     {
                         var json = System.Text.Json.JsonDocument.Parse(bodyText).RootElement;
-                        if (json.TryGetProperty("currentVersion", out var cv)) currentVer = cv.GetString() ?? "";
+                        // Framework sends "version", not "currentVersion"
+                        if (json.TryGetProperty("version", out var cv)) currentVer = cv.GetString() ?? "";
+                        if (json.TryGetProperty("currentVersion", out var cv2)) currentVer = cv2.GetString() ?? "";
                         if (json.TryGetProperty("appType", out var at)) appTypeStr = at.GetRawText();
                     }
                 }

@@ -75,6 +75,12 @@ public partial class PatchViewModel : ViewModelBase
             return;
         }
 
+        if (!SemverValidator.IsValid(Config.Version))
+        {
+            Status = _loc.T("Patch.InvalidVersion", Config.Version);
+            return;
+        }
+
         IsBuilding = true;
         Log.Clear();
         Progress = 0;

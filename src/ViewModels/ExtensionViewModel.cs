@@ -88,6 +88,12 @@ public partial class ExtensionViewModel : ViewModelBase
             return;
         }
 
+        if (!SemverValidator.IsValid(Config.Version))
+        {
+            Status = _loc.T("Ext.InvalidVersion", Config.Version);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(Config.ExtensionDirectory) || !Directory.Exists(Config.ExtensionDirectory))
         {
             Status = _loc["Ext.ValidateDir"];

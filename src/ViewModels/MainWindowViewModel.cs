@@ -36,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase
         NavItems.Add(new("Extension", _loc["Nav.Extension"], typeof(ExtensionViewModel), false));
         NavItems.Add(new("OSS", _loc["Nav.OSS"], typeof(OSSViewModel), false));
         NavItems.Add(new("Simulate", _loc["Nav.Simulate"], typeof(SimulateViewModel), false));
+        NavItems.Add(new("Config", _loc["Nav.Config"], typeof(ConfigViewModel), false));
     }
 
     [RelayCommand]
@@ -48,6 +49,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Patch" => new PatchViewModel(),
             "Extension" => new ExtensionViewModel(),
             "OSS" => new OSSViewModel(),
+            "Config" => new ConfigViewModel(),
             _ => new SimulateViewModel()
         };
     }

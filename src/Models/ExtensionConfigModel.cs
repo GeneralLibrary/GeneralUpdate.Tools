@@ -5,7 +5,7 @@ namespace GeneralUpdate.Tools.Models;
 public partial class ExtensionConfigModel : ObservableObject
 {
     [ObservableProperty] private string _name = "";
-    [ObservableProperty] private string _version = "1.0.0.0";
+    [ObservableProperty] private string _version = "1.0.0";
     [ObservableProperty] private string _description = "";
     [ObservableProperty] private string _extensionDirectory = "";
     [ObservableProperty] private string _exportPath = "";
