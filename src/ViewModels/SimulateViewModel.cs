@@ -89,6 +89,16 @@ public partial class SimulateViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
         if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = _loc["Sim.ValidateDirs"]; return; }
+        if (!SemverValidator.IsValid(Config.CurrentVersion))
+        {
+            Status = _loc.T("Sim.InvalidVersion", Config.CurrentVersion);
+            return;
+        }
+        if (!SemverValidator.IsValid(Config.TargetVersion))
+        {
+            Status = _loc.T("Sim.InvalidVersion", Config.TargetVersion);
+            return;
+        }
 
         IsRunning = true; StartButtonText = "⏳ Running..."; Log.Clear(); Status = _loc["Sim.Starting"];
         try

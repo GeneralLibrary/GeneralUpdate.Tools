@@ -9,8 +9,8 @@ public partial class SimulateConfigModel : ObservableObject
 {
     [ObservableProperty] private string _appDirectory = string.Empty;
     [ObservableProperty] private string _patchFilePath = string.Empty;
-    [ObservableProperty] private string _currentVersion = "1.0.0.0";
-    [ObservableProperty] private string _targetVersion = "2.0.0.0";
+    [ObservableProperty] private string _currentVersion = "1.0.0";
+    [ObservableProperty] private string _targetVersion = "2.0.0";
     [ObservableProperty] private int _platform = 1;
     [ObservableProperty] private int _appType = 1;
     [ObservableProperty] private string _appSecretKey = "dfeb5833-975e-4afb-88f1-6278ee9aeff6";

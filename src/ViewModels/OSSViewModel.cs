@@ -54,6 +54,11 @@ public partial class OSSViewModel : ViewModelBase
     [RelayCommand]
     void Append()
     {
+        if (!SemverValidator.IsValid(Current.Version))
+        {
+            Status = _loc.T("OSS.InvalidVersion", Current.Version);
+            return;
+        }
         Configs.Add(new()
         {
             PacketName = Current.PacketName, Hash = Current.Hash, Version = Current.Version, Url = Current.Url,
