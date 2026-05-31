@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
-using GeneralUpdate.Differential;
+using GeneralUpdate.Core.Pipeline;
 
 namespace GeneralUpdate.Tools.Services;
 
@@ -12,6 +12,8 @@ public class DiffService
         if (!Directory.Exists(oldDir)) throw new DirectoryNotFoundException("Old: " + oldDir);
         if (!Directory.Exists(newDir)) throw new DirectoryNotFoundException("New: " + newDir);
         Directory.CreateDirectory(patchDir);
-        await Task.Run(() => DifferentialCore.Clean(oldDir, newDir, patchDir).GetAwaiter().GetResult());
+
+        var pipeline = new DiffPipeline();
+        await pipeline.CleanAsync(oldDir, newDir, patchDir);
     }
 }

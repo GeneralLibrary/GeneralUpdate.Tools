@@ -34,57 +34,53 @@ public class SimulationService
             Log($"STEP 2: Preparing {config.AppDirectory}", progress);
             Directory.CreateDirectory(config.AppDirectory);
 
-            // 3. Ensure test apps are available
-            Log("STEP 3: Preparing test apps", progress);
+            // 3. Publish test apps — same pattern as Config Generator's "Generate Sample"
+            Log("STEP 3: Publishing test apps", progress);
             var toolsDir = AppDomain.CurrentDomain.BaseDirectory;
-            var clientDest = Path.Combine(config.AppDirectory, "Client.exe");
-            var upgradeDest = Path.Combine(config.AppDirectory, "Upgrade.exe");
+            var updatePath = (config.UpdatePath ?? "update/").Trim('/').Trim('\\');
+            var upgradeSubDir = Path.Combine(config.AppDirectory, updatePath);
+            Directory.CreateDirectory(upgradeSubDir);
 
-            if (File.Exists(clientDest) && File.Exists(upgradeDest))
+            var clientExeName = "ClientSample.exe";
+            var upgradeExeName = "UpgradeSample.exe";
+
+            var clientProj = Path.GetFullPath(Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Client", "ClientSample.csproj"));
+            var upgradeProj = Path.GetFullPath(Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Upgrade", "UpgradeSample.csproj"));
+
+            if (!File.Exists(clientProj) || !File.Exists(upgradeProj))
+                throw new FileNotFoundException("Test apps not found.");
+
+            // Always publish fresh — matches Config Generator's SamplePublisherService pattern
+            Log($"  Publishing ClientSample → {config.AppDirectory}", progress);
+            await DotNetPublishAsync(clientProj, config.AppDirectory);
+            Log($"  Publishing UpgradeSample → {upgradeSubDir}", progress);
+            await DotNetPublishAsync(upgradeProj, upgradeSubDir);
+            Log("  Test apps published successfully", progress);
+
+            // Verify the executables were actually produced
+            var clientExePath = Path.Combine(config.AppDirectory, clientExeName);
+            var upgradeExePath = Path.Combine(upgradeSubDir, upgradeExeName);
+            if (!File.Exists(clientExePath))
+                throw new FileNotFoundException($"Publish did not produce {clientExePath}");
+            if (!File.Exists(upgradeExePath))
+                throw new FileNotFoundException($"Publish did not produce {upgradeExePath}");
+
+            // 3.5 Generate generalupdate.manifest.json — names match published output exactly
+            Log("STEP 3.5: Generating manifest", progress);
+            var manifest = new ManifestModel
             {
-                Log("  Test apps already cached, skipping", progress);
-            }
-            else
-            {
-                // Strategy 1: bundled exes (release package)
-                // Use ProcessPath not BaseDirectory — single-file publish extracts to a temp dir
-                var appRoot = Path.GetDirectoryName(Environment.ProcessPath)!;
-                var bundledDir = Path.Combine(appRoot, "test_app_exe");
-                if (Directory.Exists(bundledDir) &&
-                    File.Exists(Path.Combine(bundledDir, "ClientSample.exe")) &&
-                    File.Exists(Path.Combine(bundledDir, "UpgradeSample.exe")))
-                {
-                    Log("  Copying bundled test apps...", progress);
-                    File.Copy(Path.Combine(bundledDir, "ClientSample.exe"), clientDest, true);
-                    File.Copy(Path.Combine(bundledDir, "UpgradeSample.exe"), upgradeDest, true);
-                    Log($"  Client.exe → {config.AppDirectory}", progress);
-                    Log($"  Upgrade.exe → {config.AppDirectory}", progress);
-                }
-                else
-                {
-                    // Strategy 2: compile from source (dev environment)
-                    var clientProj = Path.GetFullPath(Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Client", "ClientSample.csproj"));
-                    var upgradeProj = Path.GetFullPath(Path.Combine(toolsDir, "..", "..", "..", "..", "test_app", "Upgrade", "UpgradeSample.csproj"));
-
-                    if (!File.Exists(clientProj) || !File.Exists(upgradeProj))
-                        throw new FileNotFoundException("Test apps not found. Run in dev environment or use a release build that includes test_app_exe.");
-
-                    var exeDir = Path.Combine(toolsDir, "test_app");
-                    Directory.CreateDirectory(exeDir);
-
-                    Log("  Compiling Client.exe...", progress);
-                    await DotNetPublishAsync(clientProj, exeDir);
-                    Log($"  Client.exe → {exeDir}", progress);
-
-                    Log("  Compiling Upgrade.exe...", progress);
-                    await DotNetPublishAsync(upgradeProj, exeDir);
-                    Log($"  Upgrade.exe → {exeDir}", progress);
-
-                    File.Copy(Path.Combine(exeDir, "ClientSample.exe"), clientDest, true);
-                    File.Copy(Path.Combine(exeDir, "UpgradeSample.exe"), upgradeDest, true);
-                    Log($"  Copied to {config.AppDirectory}", progress);
-                }
-            }
+                MainAppName = clientExeName,
+                ClientVersion = config.CurrentVersion,
+                AppType = config.AppType switch { 1 => "Client", 2 => "Upgrade", _ => "Client" },
+                UpdateAppName = upgradeExeName,
+                UpgradeClientVersion = "1.0.0.0",
+                ProductId = config.ProductId,
+                UpdatePath = config.UpdatePath ?? "update/"
+            };
+            var manifestJson = ManifestGeneratorService.GenerateJson(manifest);
+            var manifestPath = Path.Combine(config.AppDirectory, "generalupdate.manifest.json");
+            await File.WriteAllTextAsync(manifestPath, manifestJson);
+            Log($"  Manifest → {manifestPath}", progress);
 
             // 4. Start server
             Log("STEP 4: Starting local server", progress);
@@ -96,26 +92,38 @@ public class SimulationService
 
             var hash = ComputeQuickHash(patchDest);
             LocalUpdateServerFiles.Register(patchName, patchDest);
-            _server.Updates.Add((config.CurrentVersion, config.TargetVersion, hash, patchDest, config.AppType));
+            _server.Versions.Add(new VersionRecord
+            {
+                CurrentVersion = config.CurrentVersion,
+                TargetVersion = config.TargetVersion,
+                Hash = hash,
+                ZipPath = patchDest,
+                AppType = config.AppType,
+                Platform = config.Platform,
+                ProductId = config.ProductId
+            });
 
             await _server.StartAsync(config.ServerPort);
             Log($"  Server running on {_server.BaseUrl}", progress);
             config.ServerPort = _server.Port;
 
             // 5. Run client
-            Log("STEP 5: Running Client.exe", progress);
-            var clientExe = Path.Combine(config.AppDirectory, "Client.exe");
+            Log("STEP 5: Running Client", progress);
+            var clientExe = Path.Combine(config.AppDirectory, "ClientSample.exe");
             var clientArgs = new List<string>
             {
                 "--server-url", _server.BaseUrl,
-                "--install-path", config.AppDirectory,
-                "--current-version", config.CurrentVersion,
                 "--app-secret", config.AppSecretKey,
-                "--product-id", config.ProductId,
-                "--app-name", "Upgrade.exe"
+                "--client-version", config.CurrentVersion
             };
             var clientResult = await RunExe(clientExe, clientArgs, ct);
             Log(clientResult.Output, progress);
+
+            // 5.5 Stop server IMMEDIATELY — prevents the new ClientSample.exe
+            // instance launched by Upgrade from reconnecting and looping.
+            Log("STEP 5.5: Stopping server", progress);
+            try { await _server.DisposeAsync(); } catch (Exception ex) { Log($"  Server shutdown warning: {ex.Message}", progress); }
+            LocalUpdateServerFiles.Clear();
 
             if (!clientResult.Success)
             {
@@ -143,7 +151,7 @@ public class SimulationService
         }
         finally
         {
-            try { await _server.DisposeAsync(); } catch { }
+            try { await _server.DisposeAsync(); } catch (Exception ex) { _fullLog.AppendLine($"Server shutdown warning: {ex.Message}"); }
             LocalUpdateServerFiles.Clear();
             result.FullLog = _fullLog.ToString();
         }
@@ -153,7 +161,10 @@ public class SimulationService
 
     private static async Task DotNetPublishAsync(string projectPath, string outputDir)
     {
-        var psi = new ProcessStartInfo("dotnet", $"publish \"{projectPath}\" -c Release -r win-x64 -p:PublishSingleFile=true --self-contained -p:PublishTrimmed=true -o \"{outputDir}\"")
+        // Trim trailing backslash — otherwise the \" in the command line gets escaped
+        outputDir = outputDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        // Same pattern as SamplePublisherService.RunDotnetPublishAsync
+        var psi = new ProcessStartInfo("dotnet", $"publish \"{projectPath}\" -c Release -o \"{outputDir}\" --nologo")
         {
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -164,10 +175,13 @@ public class SimulationService
         var outTask = p.StandardOutput.ReadToEndAsync();
         var errTask = p.StandardError.ReadToEndAsync();
         await p.WaitForExitAsync();
+        var stdout = await outTask;
+        var stderr = await errTask;
         if (p.ExitCode != 0)
         {
-            var err = await errTask;
-            throw new InvalidOperationException($"dotnet publish failed (exit {p.ExitCode}):\n{err}");
+            var message = (stderr?.Trim()?.Length > 0 ? stderr + "\n" : "")
+                        + (stdout?.Trim()?.Length > 0 ? stdout : "");
+            throw new InvalidOperationException($"dotnet publish failed (exit {p.ExitCode}):\n{message}");
         }
     }
 
@@ -207,7 +221,7 @@ public class SimulationService
         if (!completed) { p.Kill(true); return (false, output + "\n[TIMEOUT]"); }
         await Task.WhenAll(readTask, errorTask);
         var outputStr = output.ToString();
-        var hasError = outputStr.Contains("ERROR:") || outputStr.Contains("FATAL:") || outputStr.Contains("JsonException");
+        var hasError = outputStr.Contains("ERROR:") || outputStr.Contains("FATAL:") || outputStr.Contains("[Error]") || outputStr.Contains("JsonException");
         return (!hasError &&  (p.ExitCode == 0 || p.ExitCode == -1), outputStr);
     }
 

@@ -28,7 +28,7 @@
     <PackageReference Include="Irihi.Ursa" Version="2.0.0" />
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
-    <PackageReference Include="GeneralUpdate.Core" Version="10.4.6" />
+    <ProjectReference Include="..\..\..\GeneralUpdate\src\c#\GeneralUpdate.Core\GeneralUpdate.Core.csproj" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 

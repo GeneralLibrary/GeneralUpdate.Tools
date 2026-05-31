@@ -2,104 +2,128 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace GeneralUpdate.Tools.Services;
 
+/// <summary>
+/// Local mock update server — modelled after GeneralUpdate-Samples/src/Server.
+/// Serves version verification, status reporting, and package download endpoints.
+/// </summary>
 public class LocalUpdateServer : IAsyncDisposable
 {
     private WebApplication? _app;
     private int _port;
     private Task? _runTask;
+    private int _nextRecordId = 1;
 
     public int Port => _port;
     public string BaseUrl => $"http://127.0.0.1:{_port}";
 
-    public List<(string CurrentVersion, string TargetVersion, string Hash, string ZipPath, int AppType)> Updates { get; } = new();
+    /// <summary>Registered updates: (CurrentVersion, TargetVersion, Hash, ZipPath, AppType, Platform, ProductId).</summary>
+    public List<VersionRecord> Versions { get; } = new();
 
     public async Task StartAsync(int port = 5000)
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls($"http://127.0.0.1:{port}");
-
         _app = builder.Build();
 
-        // POST /Upgrade/Verification
+        // ── POST /Upgrade/Verification ──────────────────────────
+        // Matches the sample server: receives VerifyDTO, returns only
+        // versions HIGHER than the client's current version.
         _app.MapPost("/Upgrade/Verification", async (HttpContext context) =>
         {
-            var currentVer = context.Request.Query["currentVersion"].ToString();
-            var appTypeStr = context.Request.Query["appType"].ToString();
-
-            // Fallback 1: form body
-            if (string.IsNullOrEmpty(currentVer) && context.Request.HasFormContentType)
+            VerifyDTO? request;
+            try
             {
-                var form = await context.Request.ReadFormAsync();
-                currentVer = form["currentVersion"].ToString();
-                appTypeStr = form["appType"].ToString();
+                request = await JsonSerializer.DeserializeAsync<VerifyDTO>(
+                    context.Request.Body,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch
+            {
+                request = null;
             }
 
-            // Fallback 2: JSON body
-            if (string.IsNullOrEmpty(currentVer))
+            if (request == null || string.IsNullOrWhiteSpace(request.Version))
             {
-                try
-                {
-                    context.Request.EnableBuffering();
-                    using var reader = new System.IO.StreamReader(context.Request.Body, System.Text.Encoding.UTF8, leaveOpen: true);
-                    var bodyText = await reader.ReadToEndAsync();
-                    context.Request.Body.Position = 0;
-                    if (!string.IsNullOrWhiteSpace(bodyText))
-                    {
-                        var json = System.Text.Json.JsonDocument.Parse(bodyText).RootElement;
-                        // Framework sends "version", not "currentVersion"
-                        if (json.TryGetProperty("version", out var cv)) currentVer = cv.GetString() ?? "";
-                        if (json.TryGetProperty("currentVersion", out var cv2)) currentVer = cv2.GetString() ?? "";
-                        if (json.TryGetProperty("appType", out var at)) appTypeStr = at.GetRawText();
-                    }
-                }
-                catch { }
-            }
-
-            _ = int.TryParse(appTypeStr, out var appType);
-
-            var match = Updates.Find(u => u.CurrentVersion == currentVer);
-            // Fallback: match on AppType only if version doesn't match
-            if (match == default)
-                match = Updates.Find(u => u.AppType == appType);
-            // Last resort: return first registered update
-            if (match == default && Updates.Count > 0)
-                match = Updates[0];
-            if (match == default)
-            {
-                await context.Response.WriteAsJsonAsync(new { Code = 204, Body = Array.Empty<object>() });
+                await WriteJsonAsync(context, 204, Array.Empty<VerificationResultDTO>());
                 return;
             }
 
-            var body = new[]
-            {
-                new
+            var clientVersion = request.Version;
+            var appType = request.AppType;
+            var platform = request.Platform;
+            var productId = request.ProductId;
+
+            // Filter: only return versions higher than client's current version.
+            // This naturally breaks the update loop — once the client is at the
+            // latest version, no updates are returned.
+            var matches = Versions
+                .Where(v =>
                 {
-                    Name = Path.GetFileName(match.ZipPath),
-                    Version = match.TargetVersion,
-                    Hash = match.Hash,
-                    Url = $"{BaseUrl}/patch/{Uri.EscapeDataString(Path.GetFileName(match.ZipPath))}",
-                    AppType = match.AppType,
-                    ReleaseDate = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    IsForcibly = false
-                }
-            };
-            await context.Response.WriteAsJsonAsync(new { Code = 200, Body = body });
+                    // AppType filter
+                    if (appType.HasValue && v.AppType != appType.Value) return false;
+                    // Platform filter
+                    if (platform.HasValue && v.Platform != platform.Value) return false;
+                    // ProductId filter
+                    if (!string.IsNullOrWhiteSpace(productId) &&
+                        !string.IsNullOrWhiteSpace(v.ProductId) &&
+                        !string.Equals(v.ProductId, productId, StringComparison.OrdinalIgnoreCase))
+                        return false;
+                    // Version filter: only return versions higher than client's.
+                    // Exclude unparseable versions — silently including them
+                    // would defeat the update-loop guard.
+                    if (!Version.TryParse(v.TargetVersion, out var itemVer)) return false;
+                    if (!Version.TryParse(clientVersion, out var clientVer)) return false;
+                    return itemVer > clientVer;
+                })
+                .OrderByDescending(v => Version.TryParse(v.TargetVersion, out var ver) ? ver : new Version(0, 0))
+                .ToList();
+
+            if (matches.Count == 0)
+            {
+                await WriteJsonAsync(context, 200, Array.Empty<VerificationResultDTO>());
+                return;
+            }
+
+            var results = matches.Select(m =>
+            {
+                var zipName = Path.GetFileName(m.ZipPath);
+                var fileInfo = new FileInfo(m.ZipPath);
+                return new VerificationResultDTO
+                {
+                    RecordId = _nextRecordId++,
+                    Name = Path.GetFileNameWithoutExtension(zipName),
+                    Version = m.TargetVersion,
+                    Hash = m.Hash,
+                    Url = $"{BaseUrl}/patch/{Uri.EscapeDataString(zipName)}",
+                    AppType = m.AppType,
+                    Platform = m.Platform,
+                    ProductId = m.ProductId,
+                    ReleaseDate = fileInfo.LastWriteTimeUtc,
+                    IsForcibly = false,
+                    Format = ".zip",
+                    Size = fileInfo.Length,
+                    IsFreeze = false,
+                    UpgradeMode = 1
+                };
+            }).ToList();
+
+            await WriteJsonAsync(context, 200, results);
         });
 
-        // POST /Upgrade/Report
+        // ── POST /Upgrade/Report ─────────────────────────────────
         _app.MapPost("/Upgrade/Report", () => Results.Ok(new { Code = 200 }));
 
-        // GET /patch/{filename}
-        _app.MapGet("/patch/{filename}", async (string filename) =>
+        // ── GET /patch/{filename} ────────────────────────────────
+        _app.MapGet("/patch/{filename}", (string filename) =>
         {
             var filePath = LocalUpdateServerFiles.TryGet(filename);
             if (filePath == null || !File.Exists(filePath))
@@ -108,9 +132,8 @@ public class LocalUpdateServer : IAsyncDisposable
         });
 
         _runTask = _app.RunAsync();
-        // Give Kestrel a moment to bind
         await Task.Delay(500);
-        // Read actual port from addresses
+
         var urls = _app.Urls;
         if (urls.Count > 0)
         {
@@ -129,6 +152,58 @@ public class LocalUpdateServer : IAsyncDisposable
         if (_runTask != null)
             await _runTask;
     }
+
+    private static async Task WriteJsonAsync<T>(HttpContext context, int code, T body)
+    {
+        // Always HTTP 200 — the JSON body's "Code" field carries the semantic status.
+        // HTTP 204 forbids a response body, which would break JSON deserialization on the client.
+        await context.Response.WriteAsJsonAsync(new { Code = code, Body = body });
+    }
+}
+
+// ── DTOs (matching GeneralUpdate-Samples/src/Server/DTOs) ──────────
+
+public class VerifyDTO
+{
+    public string? Version { get; set; }
+    public int? AppType { get; set; }
+    public string? AppKey { get; set; }
+    public int? Platform { get; set; }
+    public string? ProductId { get; set; }
+    public int? UpgradeMode { get; set; }
+}
+
+public class VerificationResultDTO
+{
+    public int RecordId { get; set; }
+    public string? Name { get; set; }
+    public string? Hash { get; set; }
+    public DateTime? ReleaseDate { get; set; }
+    public string? Url { get; set; }
+    public DateTime? UrlExpireTimeUtc { get; set; }
+    public string? Version { get; set; }
+    public int? AppType { get; set; }
+    public int? Platform { get; set; }
+    public string? ProductId { get; set; }
+    public bool? IsForcibly { get; set; }
+    public string? Format { get; set; }
+    public long? Size { get; set; }
+    public bool? IsFreeze { get; set; }
+    public int? UpgradeMode { get; set; }
+    public bool? IsCrossVersion { get; set; }
+    public string? FromVersion { get; set; }
+    public string? ToVersion { get; set; }
+}
+
+public class VersionRecord
+{
+    public string CurrentVersion { get; set; } = "";
+    public string TargetVersion { get; set; } = "";
+    public string Hash { get; set; } = "";
+    public string ZipPath { get; set; } = "";
+    public int AppType { get; set; } = 1;
+    public int Platform { get; set; } = 1;
+    public string? ProductId { get; set; }
 }
 
 internal static class LocalUpdateServerFiles

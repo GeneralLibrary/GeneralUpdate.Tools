@@ -1,60 +1,60 @@
-﻿using GeneralUpdate.Common.Download;
-using GeneralUpdate.Common.Internal;
-using GeneralUpdate.Common.Shared.Object;
 using GeneralUpdate.Core;
+using GeneralUpdate.Core.Configuration;
+using GeneralUpdate.Core.Download;
+using GeneralUpdate.Core.Event;
 
 try
 {
-    Console.WriteLine($"升级程序初始化，{DateTime.Now}！");
-    Console.WriteLine("当前运行目录：" + Thread.GetDomain().BaseDirectory);
-    _ = await new GeneralUpdateBootstrap()
-        //单个或多个更新包下载速度、剩余下载事件、当前下载版本信息通知事件
-        .AddListenerMultiDownloadStatistics(OnMultiDownloadStatistics)
-        //单个或多个更新包下载完成
-        .AddListenerMultiDownloadCompleted(OnMultiDownloadCompleted)
-        //完成所有的下载任务通知
-        .AddListenerMultiAllDownloadCompleted(OnMultiAllDownloadCompleted)
-        //下载过程出现的异常通知
-        .AddListenerMultiDownloadError(OnMultiDownloadError)
-        //整个更新过程出现的任何问题都会通过这个事件通知
+    Console.WriteLine($"=== GeneralUpdate Simulation Upgrade ===");
+    Console.WriteLine($"Started: {DateTime.Now}");
+    Console.WriteLine($"Running from: {AppDomain.CurrentDomain.BaseDirectory}");
+
+    // Config comes from the encrypted IPC file written by the Client process.
+    // The Client's generalupdate.manifest.json flows through IPC,
+    // so the Upgrade never needs to load a manifest directly.
+    await new GeneralUpdateBootstrap()
+        .SetOption(Option.AppType, AppType.Upgrade)
+        .AddListenerMultiDownloadStatistics(OnDownloadStatistics)
+        .AddListenerMultiDownloadCompleted(OnDownloadCompleted)
+        .AddListenerMultiAllDownloadCompleted(OnAllDownloadCompleted)
+        .AddListenerMultiDownloadError(OnDownloadError)
         .AddListenerException(OnException)
-        //设置字段映射表，用于解析所有驱动包的信息的字符串
-        //.SetFieldMappings(fieldMappingsCN)
-        //是否开启驱动更新
-        //.Option(UpdateOption.Drive, true)
         .LaunchAsync();
-    Console.WriteLine($"升级程序已启动，{DateTime.Now}！");
-    await Task.Delay(2000);
+
+    Console.WriteLine("Upgrade test completed.");
 }
-catch (Exception e)
+catch (Exception ex)
 {
-    Console.WriteLine(e.Message + "\n" + e.StackTrace);
+    Console.WriteLine($"FATAL: {ex}");
+    Environment.Exit(1);
 }
 
-void OnMultiDownloadError(object arg1, MultiDownloadErrorEventArgs arg2)
+static void OnDownloadStatistics(object sender, MultiDownloadStatisticsEventArgs e)
 {
-    var version = arg2.Version as VersionInfo;
-    Console.WriteLine($"{version?.Version} {arg2.Exception}");
+    var v = e.Version as VersionEntry;
+    Console.WriteLine($"[Apply] {v?.Version}: {e.ProgressPercentage}%");
 }
 
-void OnMultiAllDownloadCompleted(object arg1, MultiAllDownloadCompletedEventArgs arg2)
+static void OnDownloadCompleted(object sender, MultiDownloadCompletedEventArgs e)
 {
-    Console.WriteLine(arg2.IsAllDownloadCompleted ? "所有的下载任务已完成！" : $"下载任务已失败！{arg2.FailedVersions.Count}");
+    var v = e.Version as VersionEntry;
+    Console.WriteLine($"[Apply] {v?.Version}: {(e.IsCompleted ? "SUCCESS" : "FAILED")}");
 }
 
-void OnMultiDownloadCompleted(object arg1, MultiDownloadCompletedEventArgs arg2)
+static void OnAllDownloadCompleted(object sender, MultiAllDownloadCompletedEventArgs e)
 {
-    var version = arg2.Version as VersionInfo;
-    Console.WriteLine(arg2.IsComplated ? $"当前下载版本：{version?.Version}, 下载完成！" : $"当前下载版本：{version?.Version}, 下载失败！");
+    Console.WriteLine(e.IsAllDownloadCompleted
+        ? "[Apply] All patches applied."
+        : $"[Apply] Patches finished with {e.FailedVersions.Count} failure(s).");
 }
 
-void OnMultiDownloadStatistics(object arg1, MultiDownloadStatisticsEventArgs arg2)
+static void OnDownloadError(object sender, MultiDownloadErrorEventArgs e)
 {
-    var version = arg2.Version as VersionInfo;
-    Console.WriteLine($"当前下载版本：{version?.Version}，下载速度：{arg2.Speed}，剩余下载时间：{arg2.Remaining}，已下载大小：{arg2.BytesReceived}，总大小：{arg2.TotalBytesToReceive}, 进度百分比：{arg2.ProgressPercentage}%");
+    var v = e.Version as VersionEntry;
+    Console.WriteLine($"[Apply] Error @ {v?.Version}: {e.Exception.Message}");
 }
 
-void OnException(object arg1, ExceptionEventArgs arg2)
+static void OnException(object sender, ExceptionEventArgs e)
 {
-    Console.WriteLine($"{arg2.Exception}");
+    Console.WriteLine($"[Error] {e.Exception}");
 }
