@@ -20,6 +20,7 @@ public class LocalUpdateServer : IAsyncDisposable
     private WebApplication? _app;
     private int _port;
     private Task? _runTask;
+    private int _nextRecordId = 1;
 
     public int Port => _port;
     public string BaseUrl => $"http://127.0.0.1:{_port}";
@@ -76,9 +77,11 @@ public class LocalUpdateServer : IAsyncDisposable
                         !string.IsNullOrWhiteSpace(v.ProductId) &&
                         !string.Equals(v.ProductId, productId, StringComparison.OrdinalIgnoreCase))
                         return false;
-                    // Version filter: only return versions higher than client's
-                    if (!Version.TryParse(v.TargetVersion, out var itemVer)) return true;
-                    if (!Version.TryParse(clientVersion, out var clientVer)) return true;
+                    // Version filter: only return versions higher than client's.
+                    // Exclude unparseable versions — silently including them
+                    // would defeat the update-loop guard.
+                    if (!Version.TryParse(v.TargetVersion, out var itemVer)) return false;
+                    if (!Version.TryParse(clientVersion, out var clientVer)) return false;
                     return itemVer > clientVer;
                 })
                 .OrderByDescending(v => Version.TryParse(v.TargetVersion, out var ver) ? ver : new Version(0, 0))
@@ -96,7 +99,7 @@ public class LocalUpdateServer : IAsyncDisposable
                 var fileInfo = new FileInfo(m.ZipPath);
                 return new VerificationResultDTO
                 {
-                    RecordId = m.GetHashCode() & 0x7FFFFFFF,
+                    RecordId = _nextRecordId++,
                     Name = Path.GetFileNameWithoutExtension(zipName),
                     Version = m.TargetVersion,
                     Hash = m.Hash,

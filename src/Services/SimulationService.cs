@@ -71,7 +71,7 @@ public class SimulationService
             {
                 MainAppName = clientExeName,
                 ClientVersion = config.CurrentVersion,
-                AppType = config.AppType == 1 ? "Client" : config.AppType == 2 ? "Upgrade" : "Client",
+                AppType = config.AppType switch { 1 => "Client", 2 => "Upgrade", _ => "Client" },
                 UpdateAppName = upgradeExeName,
                 UpgradeClientVersion = "1.0.0.0",
                 ProductId = config.ProductId,
@@ -119,10 +119,10 @@ public class SimulationService
             var clientResult = await RunExe(clientExe, clientArgs, ct);
             Log(clientResult.Output, progress);
 
-            // 5.5 Stop server IMMEDIATELY — prevents the new Client.exe instance
-            // launched by Upgrade from reconnecting and creating an update loop.
+            // 5.5 Stop server IMMEDIATELY — prevents the new ClientSample.exe
+            // instance launched by Upgrade from reconnecting and looping.
             Log("STEP 5.5: Stopping server", progress);
-            try { await _server.DisposeAsync(); } catch { }
+            try { await _server.DisposeAsync(); } catch (Exception ex) { Log($"  Server shutdown warning: {ex.Message}", progress); }
             LocalUpdateServerFiles.Clear();
 
             if (!clientResult.Success)
@@ -151,7 +151,7 @@ public class SimulationService
         }
         finally
         {
-            try { await _server.DisposeAsync(); } catch { }
+            try { await _server.DisposeAsync(); } catch (Exception ex) { _fullLog.AppendLine($"Server shutdown warning: {ex.Message}"); }
             LocalUpdateServerFiles.Clear();
             result.FullLog = _fullLog.ToString();
         }
