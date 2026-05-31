@@ -225,7 +225,20 @@ public partial class ConfigViewModel : ViewModelBase
                 return;
             }
 
-            var output = await SamplePublisherService.PublishAsync(client, upgrade, Model.UpdatePath);
+            // Build manifest from current UI fields, falling back to parsed csproj data
+            var manifest = ManifestGeneratorService.FromCsprojInfo(client, upgrade,
+                new ManifestModel
+                {
+                    MainAppName = Model.MainAppName,
+                    ClientVersion = Model.ClientVersion,
+                    AppType = Model.AppType,
+                    UpdateAppName = Model.UpdateAppName,
+                    UpgradeClientVersion = Model.UpgradeClientVersion,
+                    ProductId = Model.ProductId,
+                    UpdatePath = Model.UpdatePath
+                });
+
+            var output = await SamplePublisherService.PublishAsync(client, upgrade, Model.UpdatePath, manifest: manifest);
             Model.StatusText = $"{_loc["Config.SampleGenerated"]}: {output}";
 
             await DialogHelper.ShowInfoAsync(_loc["Config.Title"],
