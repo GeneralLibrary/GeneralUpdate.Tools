@@ -21,17 +21,31 @@ public static class ManifestGeneratorService
         return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
     }
 
+    /// <summary>
+    ///     Builds a <see cref="ManifestModel"/> from parsed csproj data,
+    ///     with user input overriding where a non-blank value was supplied.
+    ///     Uses <see cref="string.IsNullOrWhiteSpace"/> so that empty strings
+    ///     (the default for unedited UI fields) still fall back to csproj data.
+    /// </summary>
     public static ManifestModel FromCsprojInfo(CsprojInfo client, CsprojInfo? upgrade, ManifestModel? userInput = null)
     {
         return new ManifestModel
         {
-            MainAppName = userInput?.MainAppName ?? client.AssemblyName,
+            MainAppName = !string.IsNullOrWhiteSpace(userInput?.MainAppName)
+                ? userInput.MainAppName
+                : client.AssemblyName,
             ClientVersion = userInput?.ClientVersion ?? "",
-            AppType = userInput?.AppType ?? "Client",
-            UpdateAppName = userInput?.UpdateAppName ?? upgrade?.AssemblyName ?? "Update.exe",
+            AppType = !string.IsNullOrWhiteSpace(userInput?.AppType)
+                ? userInput.AppType
+                : "Client",
+            UpdateAppName = !string.IsNullOrWhiteSpace(userInput?.UpdateAppName)
+                ? userInput.UpdateAppName
+                : upgrade?.AssemblyName ?? "Update.exe",
             UpgradeClientVersion = userInput?.UpgradeClientVersion ?? "",
             ProductId = userInput?.ProductId ?? "",
-            UpdatePath = userInput?.UpdatePath ?? "update/"
+            UpdatePath = !string.IsNullOrWhiteSpace(userInput?.UpdatePath)
+                ? userInput.UpdatePath
+                : "update/"
         };
     }
 }

@@ -238,6 +238,16 @@ public partial class ConfigViewModel : ViewModelBase
                     UpdatePath = Model.UpdatePath
                 });
 
+            // Validate semver before writing manifest (same check as the Generate pipeline)
+            var validateCtx = new PipelineContext();
+            SemverValidateStep.Validate(manifest.ClientVersion, nameof(manifest.ClientVersion), validateCtx);
+            SemverValidateStep.Validate(manifest.UpgradeClientVersion, nameof(manifest.UpgradeClientVersion), validateCtx);
+            if (validateCtx.Errors.Count > 0)
+            {
+                Model.StatusText = string.Join("; ", validateCtx.Errors);
+                return;
+            }
+
             var output = await SamplePublisherService.PublishAsync(client, upgrade, Model.UpdatePath, manifest: manifest);
             Model.StatusText = $"{_loc["Config.SampleGenerated"]}: {output}";
 
