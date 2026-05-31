@@ -11,8 +11,15 @@ public static class SamplePublisherService
     /// <summary>
     ///     Runs <c>dotnet publish</c> for the client and upgrade projects,
     ///     then assembles the output into the Tools running directory.
+    ///     When <paramref name="manifest"/> is provided, also writes
+    ///     <c>generalupdate.manifest.json</c> into the output root.
     /// </summary>
-    public static async Task<string> PublishAsync(CsprojInfo client, CsprojInfo? upgrade, string updatePath, string? baseOutput = null)
+    public static async Task<string> PublishAsync(
+        CsprojInfo client,
+        CsprojInfo? upgrade,
+        string updatePath,
+        string? baseOutput = null,
+        ManifestModel? manifest = null)
     {
         var outputRoot = baseOutput ?? Path.Combine(AppContext.BaseDirectory, "sample_output");
         if (Directory.Exists(outputRoot))
@@ -31,6 +38,14 @@ public static class SamplePublisherService
             var updateDir = Path.Combine(outputRoot, updatePath.Trim('/').Trim('\\'));
             Directory.CreateDirectory(updateDir);
             await RunDotnetPublishAsync(upgrade.CsprojPath, updateDir);
+        }
+
+        // Write manifest.json into the output root if provided
+        if (manifest != null)
+        {
+            var json = ManifestGeneratorService.GenerateJson(manifest);
+            var manifestPath = Path.Combine(outputRoot, "generalupdate.manifest.json");
+            await File.WriteAllTextAsync(manifestPath, json);
         }
 
         return outputRoot;
