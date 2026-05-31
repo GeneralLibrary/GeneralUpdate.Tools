@@ -63,6 +63,11 @@
                                    VerticalAlignment="Center"/>
                         <TextBox Grid.Column="3" Text="{Binding Config.ProductId}" Margin="8,0"/>
                     </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Sim.UpdatePath]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Config.UpdatePath}" Margin="8,0"/>
+                    </Grid>
                 </StackPanel>
             </Border>
 
