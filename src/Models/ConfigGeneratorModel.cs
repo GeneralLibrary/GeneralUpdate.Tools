@@ -11,12 +11,13 @@ public partial class ConfigGeneratorModel : ObservableObject
     // ── Analysis state ──
     [ObservableProperty] private bool _isAnalyzed;
     [ObservableProperty] private bool _isAnalyzing;
+    [ObservableProperty] private bool _isPublishing;
 
     // ── Editable fields (auto-filled + user input) ──
     [ObservableProperty] private string _mainAppName = "";
-    [ObservableProperty] private string _clientVersion = "";
+    [ObservableProperty] private string _clientVersion = "1.0.0";
     [ObservableProperty] private string _updateAppName = "Update.exe";
-    [ObservableProperty] private string _upgradeClientVersion = "";
+    [ObservableProperty] private string _upgradeClientVersion = "1.0.0";
     [ObservableProperty] private string _appType = "Client";
     [ObservableProperty] private string _productId = "";
     [ObservableProperty] private string _updatePath = "update/";

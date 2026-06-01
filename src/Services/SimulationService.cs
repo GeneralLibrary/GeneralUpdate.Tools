@@ -73,7 +73,7 @@ public class SimulationService
                 ClientVersion = config.CurrentVersion,
                 AppType = config.AppType switch { 1 => "Client", 2 => "Upgrade", _ => "Client" },
                 UpdateAppName = upgradeExeName,
-                UpgradeClientVersion = "1.0.0.0",
+                UpgradeClientVersion = "1.0.0",
                 ProductId = config.ProductId,
                 UpdatePath = config.UpdatePath ?? "update/"
             };

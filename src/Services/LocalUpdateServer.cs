@@ -78,13 +78,12 @@ public class LocalUpdateServer : IAsyncDisposable
                         !string.Equals(v.ProductId, productId, StringComparison.OrdinalIgnoreCase))
                         return false;
                     // Version filter: only return versions higher than client's.
-                    // Exclude unparseable versions — silently including them
-                    // would defeat the update-loop guard.
-                    if (!Version.TryParse(v.TargetVersion, out var itemVer)) return false;
-                    if (!Version.TryParse(clientVersion, out var clientVer)) return false;
-                    return itemVer > clientVer;
+                    // Uses SemVer 2.0 comparison — unparseable versions are silently skipped.
+                    if (!SemverValidator.IsValid(v.TargetVersion)) return false;
+                    if (!SemverValidator.IsValid(clientVersion)) return false;
+                    return SemverValidator.Compare(v.TargetVersion, clientVersion) > 0;
                 })
-                .OrderByDescending(v => Version.TryParse(v.TargetVersion, out var ver) ? ver : new Version(0, 0))
+                .OrderByDescending(v => SemverValidator.IsValid(v.TargetVersion) ? SemverValidator.ParseCore(v.TargetVersion) : (0, 0, 0))
                 .ToList();
 
             if (matches.Count == 0)

@@ -19,9 +19,16 @@ public partial class ConfigViewModel : ViewModelBase
     public ConfigGeneratorModel Model { get; } = new();
     public List<string> AppTypes { get; } = new() { "Client", "Upgrade", "OssClient", "OssUpgrade" };
 
+    public bool IsBusy => Model.IsAnalyzing || Model.IsPublishing;
+
     public ConfigViewModel()
     {
-        Model.PropertyChanged += (_, _) => UpdatePreview();
+        Model.PropertyChanged += (_, e) =>
+        {
+            UpdatePreview();
+            if (e.PropertyName is nameof(ConfigGeneratorModel.IsAnalyzing) or nameof(ConfigGeneratorModel.IsPublishing))
+                OnPropertyChanged(nameof(IsBusy));
+        };
     }
 
     private static Avalonia.Controls.TopLevel? GetTopLevel()
@@ -209,7 +216,7 @@ public partial class ConfigViewModel : ViewModelBase
             return;
         }
 
-        Model.IsAnalyzing = true;
+        Model.IsPublishing = true;
         Model.StatusText = _loc["Config.Publishing"];
 
         try
@@ -263,7 +270,7 @@ public partial class ConfigViewModel : ViewModelBase
         }
         finally
         {
-            Model.IsAnalyzing = false;
+            Model.IsPublishing = false;
         }
     }
 
