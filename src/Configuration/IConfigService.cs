@@ -16,6 +16,9 @@ public interface IConfigService
     /// <summary>Load configuration from disk. Called once at startup.</summary>
     Task LoadAsync();
 
+    /// <summary>Persist current configuration to disk synchronously. Safe for shutdown.</summary>
+    void Save();
+
     /// <summary>Persist current configuration to disk (with automatic backup).</summary>
     Task SaveAsync();
 

@@ -54,7 +54,7 @@ public partial class App : Application
             if (config.WindowMaximized)
                 mainWindow.WindowState = WindowState.Maximized;
 
-            // Save window state on close
+            // Save window state on close (synchronous to guarantee completion before exit)
             var configService = ConfigServiceSingleton.Instance;
             mainWindow.Closing += (_, _) =>
             {
@@ -69,8 +69,15 @@ public partial class App : Application
                     config.WindowHeight = mainWindow.Height;
                 }
 
-                // Fire-and-forget save (exceptions logged to Trace, not lost)
-                ConfigService.SafeFireAndForgetSave(configService);
+                // Synchronous save: config is tiny (<2KB), completes in <1ms.
+                // Must NOT be fire-and-forget — the process exits after Close and
+                // a Task.Run might not complete in time.
+                try { configService.Save(); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine(
+                        $"[GeneralUpdate.Tools] Config save on close failed: {ex.Message}");
+                }
             };
 
             desktop.MainWindow = mainWindow;
