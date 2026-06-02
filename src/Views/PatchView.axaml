@@ -52,6 +52,26 @@
                         <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.Select]}"
                                 Command="{Binding SelectOutCommand}" MinWidth="70"/>
                     </Grid>
+
+                    <!-- Encryption scan toggle -->
+                    <Border Padding="8,6" CornerRadius="4"
+                            Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <ToggleSwitch Grid.Column="0" IsChecked="{Binding Config.EnableEncryptionCheck}"
+                                          IsEnabled="{Binding !IsBuilding}"
+                                          VerticalAlignment="Center">
+                                <ToggleSwitch.OnContent>
+                                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.EncryptionCheck]}"/>
+                                </ToggleSwitch.OnContent>
+                                <ToggleSwitch.OffContent>
+                                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.EncryptionCheck]}"/>
+                                </ToggleSwitch.OffContent>
+                            </ToggleSwitch>
+                            <TextBlock Grid.Column="2" FontSize="11" VerticalAlignment="Center"
+                                       Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.EncryptionCheckTip]}"
+                                       Foreground="{DynamicResource SystemControlForegroundChromeDisabledBrush}"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 
