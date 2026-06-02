@@ -190,13 +190,6 @@ public class HttpUploadService : IHttpUploadService
         return true;
     }
 
-    [Obsolete("Use TryBuildUrl for validation.")]
-    private static string BuildUrl(UploadConfig config)
-    {
-        TryBuildUrl(config, out var url, out _);
-        return url;
-    }
-
     private static void ApplyAuth(HttpRequestMessage request, UploadConfig config)
     {
         var plain = AuthCredentialEncryptor.Decrypt(config.Auth);

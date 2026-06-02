@@ -25,7 +25,7 @@ namespace Irihi.Lingua;
 [LinguaManager("./Resources/Locales")]
 public sealed class AppLanguageManager : LanguageManager
 {
-    public static new AppLanguageManager Instance { get; } = new();
+    public static AppLanguageManager Instance { get; } = new();
 
     private AppLanguageManager() : base("zh-CN")
     {

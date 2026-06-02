@@ -141,6 +141,7 @@ public class ConfigService : IConfigService
                 {
                     var backupJson = await File.ReadAllTextAsync(_backupPath);
                     Config = JsonConvert.DeserializeObject<AppConfig>(backupJson, JsonSettings) ?? new AppConfig();
+                    Config.Sanitize();
                     await SaveAsync(); // Restore main file from backup
                     return;
                 }
@@ -160,6 +161,7 @@ public class ConfigService : IConfigService
         {
             var json = await File.ReadAllTextAsync(_configPath);
             Config = JsonConvert.DeserializeObject<AppConfig>(json, JsonSettings) ?? new AppConfig();
+            Config.Sanitize();
 
             // Run schema migrations
             Migrate();
