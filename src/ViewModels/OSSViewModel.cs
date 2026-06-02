@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Tools.Configuration;
 using GeneralUpdate.Tools.Models;
 using GeneralUpdate.Tools.Services;
 using Newtonsoft.Json;
@@ -14,13 +15,15 @@ public partial class OSSViewModel : ViewModelBase
 {
     private readonly HashService _hash = new();
     private readonly LocalizationService _loc = LocalizationService.Instance;
+    private readonly AppConfig _config;
 
     public ObservableCollection<OSSConfigModel> Configs { get; } = new();
     [ObservableProperty] private OSSConfigModel _current = new();
     [ObservableProperty] private string _status;
 
-    public OSSViewModel()
+    public OSSViewModel(AppConfig config)
     {
+        _config = config;
         _status = _loc["Patch.Ready"];
     }
 
@@ -28,10 +31,7 @@ public partial class OSSViewModel : ViewModelBase
     {
         var title = _loc["Patch.SelectFile"];
         if (string.IsNullOrWhiteSpace(title) || title == "Patch.SelectFile" || title == _loc["Patch.Select"])
-        {
             return "选择文件";
-        }
-
         return title;
     }
 
