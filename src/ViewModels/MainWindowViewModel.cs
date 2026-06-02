@@ -86,10 +86,17 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void ToggleLocale()
     {
-        _loc.Locale = _loc.Locale == "zh-CN" ? "en-US" : "zh-CN";
+        var newLocale = _loc.Locale == "zh-CN" ? "en-US" : "zh-CN";
+
+        // Update legacy localization (triggers PropertyChanged → Lingua syncs via listener)
+        _loc.Locale = newLocale;
+
+        // Also update Lingua directly for reactive observable subscribers
+        Irihi.Lingua.AppLanguageManager.Instance.UpdateCulture(
+            new System.Globalization.CultureInfo(newLocale));
 
         // Persist
-        _config.Language = _loc.Locale;
+        _config.Language = newLocale;
         _ = ConfigServiceSingleton.Instance.SaveAsync();
     }
 

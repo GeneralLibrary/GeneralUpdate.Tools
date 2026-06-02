@@ -79,6 +79,27 @@ public class LocalizationService : INotifyPropertyChanged
     public string T(string key, params object[] args) => string.Format(this[key], args);
 
     /// <summary>
+    /// Return a copy of all strings for a given locale.
+    /// Used by <see cref="Irihi.Lingua.AppLanguageManager"/> to seed the Lingua resource store.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> GetAllStrings(string locale)
+    {
+        var result = new Dictionary<string, string>();
+
+        // Prefer cached (loaded from JSON), then fall back to built-in
+        if (_cache.TryGetValue(locale, out var cached))
+        {
+            foreach (var kvp in cached) result[kvp.Key] = kvp.Value;
+        }
+        else if (FallbackStrings.TryGetValue(locale, out var fb))
+        {
+            foreach (var kvp in fb) result[kvp.Key] = kvp.Value;
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Load translations from embedded JSON files bundled as Avalonia resources.
     /// Called once at startup; idempotent.
     /// </summary>
