@@ -45,6 +45,13 @@ public partial class PatchViewModel : ViewModelBase
         _status = _loc["Patch.Ready"];
     }
 
+    /// <summary>Persist auto-upload toggle changes immediately.</summary>
+    partial void OnAutoUploadEnabledChanged(bool value)
+    {
+        _config.AutoUploadEnabled = value;
+        _ = ConfigServiceSingleton.Instance.SaveAsync();
+    }
+
     async Task<string?> Pick()
     {
         var tl = Avalonia.Controls.TopLevel.GetTopLevel(
@@ -206,7 +213,7 @@ public partial class PatchViewModel : ViewModelBase
     /// <summary>Upload the generated patch to the configured server.</summary>
     private async Task UploadPatchAsync(string zipPath)
     {
-        UploadStatus = "Uploading...";
+        UploadStatus = _loc["Upload.Uploading"];
         UploadProgress = 0;
 
         try

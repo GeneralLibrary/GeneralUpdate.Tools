@@ -40,8 +40,11 @@ public class HttpUploadService : IHttpUploadService
         if (!File.Exists(filePath))
             return UploadResult.Fail($"File not found: {filePath}");
 
+        // Validate URL early
+        if (!TryBuildUrl(config, out var fullUrl, out var urlError))
+            return UploadResult.Fail(urlError ?? "Invalid upload URL.");
+
         var fileInfo = new FileInfo(filePath);
-        var fullUrl = BuildUrl(config);
 
         Report(progress, 0, fileInfo.Length, UploadPhase.Connecting, "Connecting...");
 
@@ -138,9 +141,10 @@ public class HttpUploadService : IHttpUploadService
     {
         try
         {
-            var fullUrl = BuildUrl(config);
+            if (!TryBuildUrl(config, out var fullUrl, out _))
+                return false;
 
-            // Issue a lightweight HEAD or GET to the base URL
+            // Issue a GET to validate connectivity
             using var request = new HttpRequestMessage(HttpMethod.Get, fullUrl);
             ApplyAuth(request, config);
 
@@ -149,8 +153,8 @@ public class HttpUploadService : IHttpUploadService
 
             using var response = await _http.SendAsync(request, linkedCts.Token);
 
-            // Any response (even 401/403) means the server is reachable
-            return true;
+            // Only treat 2xx/3xx as success; 401 means auth failed, 404 means wrong endpoint
+            return response.IsSuccessStatusCode;
         }
         catch
         {
@@ -160,13 +164,37 @@ public class HttpUploadService : IHttpUploadService
 
     // ── Helpers ──────────────────────────────────────────────
 
-    private static string BuildUrl(UploadConfig config)
+    /// <summary>Build and validate the upload URL. Returns false if the URL is invalid.</summary>
+    private static bool TryBuildUrl(UploadConfig config, out string fullUrl, out string? error)
     {
+        fullUrl = string.Empty;
+        error = null;
+
+        if (string.IsNullOrWhiteSpace(config.ServerUrl))
+        {
+            error = "Server URL is not configured.";
+            return false;
+        }
+
+        if (!Uri.TryCreate(config.ServerUrl, UriKind.Absolute, out _))
+        {
+            error = $"Server URL is not a valid absolute URI: {config.ServerUrl}";
+            return false;
+        }
+
         var server = config.ServerUrl.TrimEnd('/');
         var endpoint = config.UploadEndpoint.StartsWith('/')
             ? config.UploadEndpoint
             : "/" + config.UploadEndpoint;
-        return server + endpoint;
+        fullUrl = server + endpoint;
+        return true;
+    }
+
+    [Obsolete("Use TryBuildUrl for validation.")]
+    private static string BuildUrl(UploadConfig config)
+    {
+        TryBuildUrl(config, out var url, out _);
+        return url;
     }
 
     private static void ApplyAuth(HttpRequestMessage request, UploadConfig config)

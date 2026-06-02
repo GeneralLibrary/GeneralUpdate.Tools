@@ -80,7 +80,7 @@
                     Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                     IsVisible="{Binding AutoUploadEnabled}">
                 <StackPanel Spacing="10">
-                    <TextBlock Text="📤 Upload" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.Upload]}" FontSize="14" FontWeight="SemiBold"/>
                     <ProgressBar IsVisible="{Binding IsBuilding}" Value="{Binding UploadProgress}" Height="4"/>
                     <TextBlock Text="{Binding UploadStatus}" FontSize="12"/>
                 </StackPanel>

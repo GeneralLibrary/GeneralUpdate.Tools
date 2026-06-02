@@ -38,6 +38,24 @@ public partial class SettingsViewModel : ViewModelBase
         new(AuthScheme.ApiKey, "API Key"),
     };
 
+    // ── Auth field visibility (computed from SelectedAuthScheme, not fragile index magic) ──
+
+    [ObservableProperty] private bool _isBasicAuthVisible;
+    [ObservableProperty] private bool _isBearerTokenVisible;
+    [ObservableProperty] private bool _isApiKeyVisible;
+
+    private void RefreshAuthVisibility()
+    {
+        var scheme = SelectedAuthScheme >= 0 && SelectedAuthScheme < AuthSchemes.Count
+            ? AuthSchemes[SelectedAuthScheme].Scheme
+            : AuthScheme.None;
+        IsBasicAuthVisible = scheme == AuthScheme.Basic;
+        IsBearerTokenVisible = scheme == AuthScheme.BearerToken;
+        IsApiKeyVisible = scheme == AuthScheme.ApiKey;
+    }
+
+    partial void OnSelectedAuthSchemeChanged(int value) => RefreshAuthVisibility();
+
     // ── Simulation Settings ─────────────────────────────────
 
     [ObservableProperty] private string _simulationPort = "5000";
@@ -88,6 +106,8 @@ public partial class SettingsViewModel : ViewModelBase
         EncryptionScanEnabled = _config.EncryptionScanEnabled;
         AutoValidateSemver = _config.AutoValidateSemver;
         ShowJsonPreview = _config.ShowJsonPreview;
+
+        RefreshAuthVisibility();
     }
 
     /// <summary>Persist VM fields back to AppConfig and save.</summary>

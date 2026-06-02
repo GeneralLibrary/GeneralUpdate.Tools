@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -17,6 +18,7 @@ public class ConfigService : IConfigService
         NullValueHandling = NullValueHandling.Ignore,
     };
 
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly string _configDir;
     private readonly string _configPath;
     private readonly string _backupPath;
@@ -97,29 +99,37 @@ public class ConfigService : IConfigService
     /// <inheritdoc />
     public async Task SaveAsync()
     {
-        Directory.CreateDirectory(_configDir);
-
-        // Create backup of existing config before overwriting
-        if (File.Exists(_configPath))
+        await _saveLock.WaitAsync();
+        try
         {
-            try
+            Directory.CreateDirectory(_configDir);
+
+            // Create backup of existing config before overwriting
+            if (File.Exists(_configPath))
             {
-                File.Copy(_configPath, _backupPath, overwrite: true);
+                try
+                {
+                    File.Copy(_configPath, _backupPath, overwrite: true);
+                }
+                catch
+                {
+                    // Non-critical: backup failed, proceed with save
+                }
             }
-            catch
-            {
-                // Non-critical: backup failed, proceed with save
-            }
+
+            var json = JsonConvert.SerializeObject(Config, JsonSettings);
+
+            // Atomic write: write to temp file, then move
+            var tempPath = _configPath + ".tmp";
+            await File.WriteAllTextAsync(tempPath, json);
+
+            // On Windows, File.Move with overwrite is atomic within the same volume
+            File.Move(tempPath, _configPath, overwrite: true);
         }
-
-        var json = JsonConvert.SerializeObject(Config, JsonSettings);
-
-        // Atomic write: write to temp file, then move
-        var tempPath = _configPath + ".tmp";
-        await File.WriteAllTextAsync(tempPath, json);
-
-        // On Windows, File.Move with overwrite is atomic within the same volume
-        File.Move(tempPath, _configPath, overwrite: true);
+        finally
+        {
+            _saveLock.Release();
+        }
     }
 
     /// <inheritdoc />

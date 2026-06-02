@@ -55,8 +55,9 @@ public static class AuthCredentialEncryptor
         }
         catch (CryptographicException)
         {
-            // Data was encrypted under a different user context
-            return cipherText;
+            // Data was encrypted under a different user context — cannot decrypt.
+            // Return empty to avoid leaking ciphertext into UI.
+            return string.Empty;
         }
     }
 

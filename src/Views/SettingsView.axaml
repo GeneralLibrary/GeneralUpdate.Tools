@@ -2,12 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
              xmlns:svc="using:GeneralUpdate.Tools.Services"
-             xmlns:cnv="using:GeneralUpdate.Tools.Converters"
              x:Class="GeneralUpdate.Tools.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
     <UserControl.Resources>
-        <cnv:IntEqualsConverter x:Key="IntEquals" />
+        <!-- Resources available if needed -->
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -84,7 +83,7 @@
                     </StackPanel>
 
                     <!-- Basic Auth fields (visible when SelectedAuthScheme == 1) -->
-                    <StackPanel Spacing="8" IsVisible="{Binding SelectedAuthScheme, Converter={StaticResource IntEquals}, ConverterParameter=1}">
+                    <StackPanel Spacing="8" IsVisible="{Binding IsBasicAuthVisible}">
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Username]}"
                                        FontSize="12"/>
@@ -98,7 +97,7 @@
                     </StackPanel>
 
                     <!-- Bearer Token fields (visible when SelectedAuthScheme == 2) -->
-                    <StackPanel Spacing="8" IsVisible="{Binding SelectedAuthScheme, Converter={StaticResource IntEquals}, ConverterParameter=2}">
+                    <StackPanel Spacing="8" IsVisible="{Binding IsBearerTokenVisible}">
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Token]}"
                                        FontSize="12"/>
@@ -112,7 +111,7 @@
                     </StackPanel>
 
                     <!-- API Key fields (visible when SelectedAuthScheme == 3) -->
-                    <StackPanel Spacing="8" IsVisible="{Binding SelectedAuthScheme, Converter={StaticResource IntEquals}, ConverterParameter=3}">
+                    <StackPanel Spacing="8" IsVisible="{Binding IsApiKeyVisible}">
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.ApiKeyHeader]}"
                                        FontSize="12"/>

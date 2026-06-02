@@ -178,6 +178,8 @@
   "Settings.Saved": "✓ Settings saved",
   "Settings.Reset": "Reset to Defaults",
   "Settings.ResetDone": "Settings reset to defaults",
+  "Patch.Upload": "📤 Upload",
   "Upload.Success": "Upload successful",
-  "Upload.Failed": "Upload failed: {0}"
+  "Upload.Failed": "Upload failed: {0}",
+  "Upload.Uploading": "Uploading..."
 }

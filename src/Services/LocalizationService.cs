@@ -56,11 +56,11 @@ public class LocalizationService : INotifyPropertyChanged
                 fallback.TryGetValue(key, out var fb))
                 return fb;
 
-            // Try built-in as last resort
-            if (_cache.Count == 0 && FallbackStrings.TryGetValue(_locale, out var fbDict) &&
+            // Try built-in fallback regardless of whether JSON resources loaded
+            if (FallbackStrings.TryGetValue(_locale, out var fbDict) &&
                 fbDict.TryGetValue(key, out var fbVal))
                 return fbVal;
-            if (_cache.Count == 0 && _locale != "zh-CN" &&
+            if (_locale != "zh-CN" &&
                 FallbackStrings.TryGetValue("zh-CN", out var fbZh) && fbZh.TryGetValue(key, out var fbZhVal))
                 return fbZhVal;
 
@@ -236,7 +236,9 @@ public class LocalizationService : INotifyPropertyChanged
         ["Settings.AutoSemver"] = "自动校验 SemVer 版本号", ["Settings.JsonPreview"] = "显示 JSON 预览",
         ["Settings.Save"] = "保存设置", ["Settings.Saved"] = "✓ 设置已保存",
         ["Settings.Reset"] = "恢复默认", ["Settings.ResetDone"] = "已恢复默认设置",
+        ["Patch.Upload"] = "📤 上传",
         ["Upload.Success"] = "上传成功", ["Upload.Failed"] = "上传失败: {0}",
+        ["Upload.Uploading"] = "正在上传...",
     };
 
     private static Dictionary<string, string> BuildEnUS() => new()
@@ -357,6 +359,8 @@ public class LocalizationService : INotifyPropertyChanged
         ["Settings.JsonPreview"] = "Show JSON preview",
         ["Settings.Save"] = "Save Settings", ["Settings.Saved"] = "✓ Settings saved",
         ["Settings.Reset"] = "Reset to Defaults", ["Settings.ResetDone"] = "Settings reset to defaults",
+        ["Patch.Upload"] = "📤 Upload",
         ["Upload.Success"] = "Upload successful", ["Upload.Failed"] = "Upload failed: {0}",
+        ["Upload.Uploading"] = "Uploading...",
     };
 }

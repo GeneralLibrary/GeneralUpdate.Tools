@@ -178,6 +178,8 @@
   "Settings.Saved": "✓ 设置已保存",
   "Settings.Reset": "恢复默认",
   "Settings.ResetDone": "已恢复默认设置",
+  "Patch.Upload": "📤 上传",
   "Upload.Success": "上传成功",
-  "Upload.Failed": "上传失败: {0}"
+  "Upload.Failed": "上传失败: {0}",
+  "Upload.Uploading": "正在上传..."
 }
