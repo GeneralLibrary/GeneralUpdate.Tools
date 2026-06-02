@@ -10,6 +10,9 @@ public interface IConfigService
     /// <summary>Current in-memory configuration. Save to persist changes.</summary>
     AppConfig Config { get; }
 
+    /// <summary>Load configuration from disk synchronously. Called once at startup.</summary>
+    void Load();
+
     /// <summary>Load configuration from disk. Called once at startup.</summary>
     Task LoadAsync();
 

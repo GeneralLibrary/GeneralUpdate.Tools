@@ -32,7 +32,6 @@
     <ProjectReference Include="..\..\..\GeneralUpdate\src\c#\GeneralUpdate.Core\GeneralUpdate.Core.csproj" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
-    <PackageReference Include="Irihi.Lingua" Version="0.2.0" />
   </ItemGroup>
 
   <ItemGroup>

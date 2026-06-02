@@ -37,6 +37,91 @@ public class ConfigService : IConfigService
     }
 
     /// <inheritdoc />
+    public void Load()
+    {
+        Directory.CreateDirectory(_configDir);
+
+        if (!File.Exists(_configPath))
+        {
+            // Try to recover from backup
+            if (File.Exists(_backupPath))
+            {
+                try
+                {
+                    var backupJson = File.ReadAllText(_backupPath);
+                    Config = JsonConvert.DeserializeObject<AppConfig>(backupJson, JsonSettings) ?? new AppConfig();
+                    Save(); // Restore main file from backup
+                    return;
+                }
+                catch
+                {
+                    // Backup is corrupted; fall through to defaults
+                }
+            }
+
+            // First run: save defaults so the file exists
+            Config = new AppConfig();
+            Save();
+            return;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(_configPath);
+            Config = JsonConvert.DeserializeObject<AppConfig>(json, JsonSettings) ?? new AppConfig();
+
+            // Run schema migrations
+            Migrate();
+        }
+        catch (JsonException)
+        {
+            // Config file is corrupted; try backup
+            if (File.Exists(_backupPath))
+            {
+                try
+                {
+                    var backupJson = File.ReadAllText(_backupPath);
+                    Config = JsonConvert.DeserializeObject<AppConfig>(backupJson, JsonSettings) ?? new AppConfig();
+                    Save();
+                    return;
+                }
+                catch
+                {
+                    // Backup also corrupted; reset
+                }
+            }
+
+            Config = new AppConfig();
+            Save();
+        }
+    }
+
+    /// <summary>Synchronous save for internal use during Load().</summary>
+    private void Save()
+    {
+        _saveLock.Wait();
+        try
+        {
+            Directory.CreateDirectory(_configDir);
+
+            if (File.Exists(_configPath))
+            {
+                try { File.Copy(_configPath, _backupPath, overwrite: true); }
+                catch { /* Non-critical */ }
+            }
+
+            var json = JsonConvert.SerializeObject(Config, JsonSettings);
+            var tempPath = _configPath + ".tmp";
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, _configPath, overwrite: true);
+        }
+        finally
+        {
+            _saveLock.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task LoadAsync()
     {
         Directory.CreateDirectory(_configDir);
