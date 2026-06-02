@@ -1,3 +1,5 @@
+using System;
+
 namespace GeneralUpdate.Tools.Configuration;
 
 /// <summary>
@@ -35,4 +37,14 @@ public class AuthCredential
 
     /// <summary>DPAPI-encrypted API key value.</summary>
     public string EncryptedApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Repair invalid enum values that may result from manual JSON editing
+    /// or unknown future scheme values.
+    /// </summary>
+    internal void Sanitize()
+    {
+        if (!Enum.IsDefined(typeof(AuthScheme), Scheme))
+            Scheme = AuthScheme.None;
+    }
 }

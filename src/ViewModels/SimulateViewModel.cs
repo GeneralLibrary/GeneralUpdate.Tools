@@ -94,7 +94,7 @@ public partial class SimulateViewModel : ViewModelBase
         {
             Config.AppDirectory = p;
             _config.LastSimulateAppDir = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 
@@ -106,7 +106,7 @@ public partial class SimulateViewModel : ViewModelBase
         {
             Config.PatchFilePath = p;
             _config.LastSimulatePatchFile = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 
@@ -130,7 +130,7 @@ public partial class SimulateViewModel : ViewModelBase
         _config.SimulationServerPort = Config.ServerPort.ToString();
         _config.SimulationPlatformType = Config.Platform == 2 ? "Linux" : "Windows";
         _config.SimulationAppType = Config.AppType == 2 ? "UpgradeApp" : "ClientApp";
-        _ = ConfigServiceSingleton.Instance.SaveAsync();
+        ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
 
         IsRunning = true; StartButtonText = "⏳ Running..."; Log.Clear(); Status = _loc["Sim.Starting"];
         try

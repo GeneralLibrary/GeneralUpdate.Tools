@@ -69,8 +69,8 @@ public partial class App : Application
                     config.WindowHeight = mainWindow.Height;
                 }
 
-                // Fire-and-forget save
-                _ = configService.SaveAsync();
+                // Fire-and-forget save (exceptions logged to Trace, not lost)
+                ConfigService.SafeFireAndForgetSave(configService);
             };
 
             desktop.MainWindow = mainWindow;

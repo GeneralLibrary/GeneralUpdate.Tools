@@ -65,7 +65,7 @@ public partial class ConfigViewModel : ViewModelBase
         {
             Model.ClientPath = files[0].Path.LocalPath;
             _config.LastConfigClientPath = files[0].Path.LocalPath;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 
@@ -88,7 +88,7 @@ public partial class ConfigViewModel : ViewModelBase
         {
             Model.UpgradePath = files[0].Path.LocalPath;
             _config.LastConfigUpgradePath = files[0].Path.LocalPath;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 
