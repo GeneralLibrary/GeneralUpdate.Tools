@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Tools.Configuration;
 using GeneralUpdate.Tools.Models;
 using GeneralUpdate.Tools.Services;
 
@@ -17,6 +18,7 @@ public partial class PatchViewModel : ViewModelBase
     private readonly PackageService _pkg = new();
     private readonly EncryptionDetectionService _encScanner = new();
     private readonly LocalizationService _loc = LocalizationService.Instance;
+    private readonly AppConfig _config;
 
     public PatchConfigModel Config { get; } = new();
     [ObservableProperty] private bool _isBuilding;
@@ -24,8 +26,22 @@ public partial class PatchViewModel : ViewModelBase
     [ObservableProperty] private string _status;
     [ObservableProperty] private ObservableCollection<string> _log = new();
 
-    public PatchViewModel()
+    // Upload-related properties
+    [ObservableProperty] private bool _autoUploadEnabled;
+    [ObservableProperty] private string _uploadStatus = string.Empty;
+    [ObservableProperty] private double _uploadProgress;
+
+    public PatchViewModel(AppConfig config)
     {
+        _config = config;
+
+        // Restore path memory
+        Config.OldDirectory = config.LastPatchOldDir;
+        Config.NewDirectory = config.LastPatchNewDir;
+        Config.OutputPath = config.LastPatchOutputDir;
+        Config.EnableEncryptionCheck = config.EncryptionScanEnabled;
+        AutoUploadEnabled = config.AutoUploadEnabled;
+
         _status = _loc["Patch.Ready"];
     }
 
@@ -47,6 +63,8 @@ public partial class PatchViewModel : ViewModelBase
         if (p != null)
         {
             Config.OldDirectory = p;
+            _config.LastPatchOldDir = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
             L(_loc.T("Patch.OldSelected", p));
         }
     }
@@ -58,6 +76,8 @@ public partial class PatchViewModel : ViewModelBase
         if (p != null)
         {
             Config.NewDirectory = p;
+            _config.LastPatchNewDir = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
             L(_loc.T("Patch.NewSelected", p));
         }
     }
@@ -66,7 +86,12 @@ public partial class PatchViewModel : ViewModelBase
     async Task SelectOut()
     {
         var p = await Pick();
-        if (p != null) Config.OutputPath = p;
+        if (p != null)
+        {
+            Config.OutputPath = p;
+            _config.LastPatchOutputDir = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
     }
 
     [RelayCommand]
@@ -84,9 +109,15 @@ public partial class PatchViewModel : ViewModelBase
             return;
         }
 
+        // Persist encryption scan preference
+        _config.EncryptionScanEnabled = Config.EnableEncryptionCheck;
+        _ = ConfigServiceSingleton.Instance.SaveAsync();
+
         IsBuilding = true;
         Log.Clear();
         Progress = 0;
+        UploadProgress = 0;
+        UploadStatus = string.Empty;
         Status = _loc["Patch.Building"];
         try
         {
@@ -127,7 +158,6 @@ public partial class PatchViewModel : ViewModelBase
                             L(_loc.T("Patch.ScanSkipped", scanResult.SuspiciousFiles.Count));
                             break;
                         case EncryptionDialogChoice.IncludeAll:
-                            // Continue without modification
                             break;
                     }
                 }
@@ -155,6 +185,12 @@ public partial class PatchViewModel : ViewModelBase
             Progress = 100;
             Status = _loc.T("Patch.Success", Path.GetFileName(zip), new FileInfo(zip).Length / 1024.0);
             L(Status);
+
+            // ── Auto-upload ──────────────────────────────────
+            if (AutoUploadEnabled)
+            {
+                await UploadPatchAsync(zip);
+            }
         }
         catch (Exception ex)
         {
@@ -164,6 +200,54 @@ public partial class PatchViewModel : ViewModelBase
         finally
         {
             IsBuilding = false;
+        }
+    }
+
+    /// <summary>Upload the generated patch to the configured server.</summary>
+    private async Task UploadPatchAsync(string zipPath)
+    {
+        UploadStatus = "Uploading...";
+        UploadProgress = 0;
+
+        try
+        {
+            var uploadConfig = new UploadConfig
+            {
+                ServerUrl = _config.UploadServerUrl,
+                UploadEndpoint = _config.UploadEndpoint,
+                TimeoutSeconds = _config.UploadTimeoutSeconds,
+                RetryCount = _config.UploadRetryCount,
+                Auth = _config.UploadAuth,
+                AutoUploadEnabled = true
+            };
+
+            var uploadSvc = new HttpUploadService();
+            var progress = new Progress<UploadProgressEventArgs>(e =>
+            {
+                UploadProgress = e.Percentage;
+                UploadStatus = $"{e.Phase}: {e.Percentage:F0}%";
+                if (e.Phase == UploadPhase.Completed)
+                    L(_loc["Upload.Success"]);
+                else if (e.Phase == UploadPhase.Failed)
+                    L(_loc.T("Upload.Failed", "Upload error"));
+            });
+
+            var result = await uploadSvc.UploadAsync(zipPath, uploadConfig, progress);
+            if (result.Success)
+            {
+                UploadStatus = _loc["Upload.Success"];
+                L(UploadStatus);
+            }
+            else
+            {
+                UploadStatus = _loc.T("Upload.Failed", result.ErrorMessage ?? "Unknown error");
+                L(UploadStatus);
+            }
+        }
+        catch (Exception ex)
+        {
+            UploadStatus = _loc.T("Upload.Failed", ex.Message);
+            L(UploadStatus);
         }
     }
 
@@ -198,7 +282,6 @@ public partial class PatchViewModel : ViewModelBase
             Spacing = 10
         };
 
-        // Header text
         rootPanel.Children.Add(new Avalonia.Controls.TextBlock
         {
             Text = loc["Patch.ScanDialogHeader"],
@@ -206,14 +289,11 @@ public partial class PatchViewModel : ViewModelBase
             FontSize = 13
         });
 
-        // Group by risk level
         var highRisk = result.SuspiciousFiles.Where(f => f.Level == RiskLevel.High).ToList();
         var mediumRisk = result.SuspiciousFiles.Where(f => f.Level == RiskLevel.Medium).ToList();
         var lowRisk = result.SuspiciousFiles.Where(f => f.Level == RiskLevel.Low).ToList();
 
-        // Scrollable list
         var listPanel = new Avalonia.Controls.StackPanel { Spacing = 4 };
-
         AddRiskGroup(listPanel, loc["Patch.ScanHighRisk"], highRisk, true);
         AddRiskGroup(listPanel, loc["Patch.ScanMediumRisk"], mediumRisk, false);
         AddRiskGroup(listPanel, loc["Patch.ScanLowRisk"], lowRisk, false);
@@ -226,7 +306,6 @@ public partial class PatchViewModel : ViewModelBase
         };
         rootPanel.Children.Add(scrollViewer);
 
-        // Summary
         rootPanel.Children.Add(new Avalonia.Controls.TextBlock
         {
             Text = loc.T("Patch.ScanFilesScanned", result.TotalFilesScanned),
@@ -234,7 +313,6 @@ public partial class PatchViewModel : ViewModelBase
             Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.Gray)
         });
 
-        // Buttons
         var btnPanel = new Avalonia.Controls.StackPanel
         {
             Orientation = Avalonia.Layout.Orientation.Horizontal,
@@ -243,28 +321,13 @@ public partial class PatchViewModel : ViewModelBase
             Margin = new Avalonia.Thickness(0, 8, 0, 0)
         };
 
-        var btnSkip = new Avalonia.Controls.Button
-        {
-            Content = loc["Patch.ScanBtnSkip"],
-            MinWidth = 170
-        };
-        var btnInclude = new Avalonia.Controls.Button
-        {
-            Content = loc["Patch.ScanBtnInclude"],
-            MinWidth = 130
-        };
-        var btnCancel = new Avalonia.Controls.Button
-        {
-            Content = loc["Patch.ScanBtnCancel"],
-            MinWidth = 70
-        };
+        var btnSkip = new Avalonia.Controls.Button { Content = loc["Patch.ScanBtnSkip"], MinWidth = 170 };
+        var btnInclude = new Avalonia.Controls.Button { Content = loc["Patch.ScanBtnInclude"], MinWidth = 130 };
+        var btnCancel = new Avalonia.Controls.Button { Content = loc["Patch.ScanBtnCancel"], MinWidth = 70 };
 
-        // Set result *before* Close so the Closed handler doesn't override it
         btnSkip.Click += (_, _) => { tcs.TrySetResult(EncryptionDialogChoice.SkipSuspicious); dialog.Close(); };
         btnInclude.Click += (_, _) => { tcs.TrySetResult(EncryptionDialogChoice.IncludeAll); dialog.Close(); };
         btnCancel.Click += (_, _) => { tcs.TrySetResult(EncryptionDialogChoice.Cancel); dialog.Close(); };
-
-        // If user closes the window via X button or Alt+F4, treat as Cancel
         dialog.Closed += (_, _) => tcs.TrySetResult(EncryptionDialogChoice.Cancel);
 
         btnPanel.Children.Add(btnSkip);
@@ -286,7 +349,6 @@ public partial class PatchViewModel : ViewModelBase
         List<SuspiciousFile> files, bool isHighRisk)
     {
         if (files.Count == 0) return;
-
         var header = new Avalonia.Controls.TextBlock
         {
             Text = $"{title} ({files.Count})",
@@ -295,7 +357,6 @@ public partial class PatchViewModel : ViewModelBase
             Margin = new Avalonia.Thickness(0, 4, 0, 2)
         };
         parent.Children.Add(header);
-
         foreach (var f in files)
         {
             var line = new Avalonia.Controls.TextBlock
@@ -307,9 +368,7 @@ public partial class PatchViewModel : ViewModelBase
                 Margin = new Avalonia.Thickness(12, 1, 0, 1)
             };
             if (isHighRisk)
-            {
                 line.Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Colors.DarkRed);
-            }
             parent.Children.Add(line);
         }
     }

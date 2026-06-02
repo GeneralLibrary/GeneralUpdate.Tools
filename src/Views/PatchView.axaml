@@ -75,6 +75,34 @@
                 </StackPanel>
             </Border>
 
+            <!-- Upload Section -->
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    IsVisible="{Binding AutoUploadEnabled}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="📤 Upload" FontSize="14" FontWeight="SemiBold"/>
+                    <ProgressBar IsVisible="{Binding IsBuilding}" Value="{Binding UploadProgress}" Height="4"/>
+                    <TextBlock Text="{Binding UploadStatus}" FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Auto-upload Toggle -->
+            <Border Padding="8,6" CornerRadius="4"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <ToggleSwitch Grid.Column="0" IsChecked="{Binding AutoUploadEnabled}"
+                                  IsEnabled="{Binding !IsBuilding}"
+                                  VerticalAlignment="Center">
+                        <ToggleSwitch.OnContent>
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.AutoUpload]}"/>
+                        </ToggleSwitch.OnContent>
+                        <ToggleSwitch.OffContent>
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.AutoUpload]}"/>
+                        </ToggleSwitch.OffContent>
+                    </ToggleSwitch>
+                </Grid>
+            </Border>
+
             <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.Build]}"
                     Command="{Binding BuildCommand}" IsEnabled="{Binding !IsBuilding}"
                     Height="40" FontSize="14" HorizontalAlignment="Stretch"/>

@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+             xmlns:svc="using:GeneralUpdate.Tools.Services"
+             xmlns:cnv="using:GeneralUpdate.Tools.Converters"
+             x:Class="GeneralUpdate.Tools.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <UserControl.Resources>
+        <cnv:IntEqualsConverter x:Key="IntEquals" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="16" Margin="24,20">
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- Upload Settings                                  -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.UploadSection]}"
+                               FontSize="15" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.UploadDesc]}"
+                               FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+
+                    <!-- Server URL -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.ServerUrl]}"
+                                   FontSize="12"/>
+                        <TextBox Text="{Binding ServerUrl}" PlaceholderText="https://update.example.com"/>
+                    </StackPanel>
+
+                    <!-- Upload Endpoint -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.UploadEndpoint]}"
+                                   FontSize="12"/>
+                        <TextBox Text="{Binding UploadEndpoint}" PlaceholderText="/api/v1/packages/upload"/>
+                    </StackPanel>
+
+                    <!-- Timeout + Retry in a row -->
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <StackPanel Spacing="4" Width="160">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Timeout]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding TimeoutSeconds}" Width="120"/>
+                        </StackPanel>
+                        <StackPanel Spacing="4" Width="160">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.RetryCount]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding RetryCount}" Width="80"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <CheckBox IsChecked="{Binding AutoUploadEnabled}"
+                              Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.AutoUpload]}"/>
+
+                    <!-- Test Connection -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{Binding TestConnectionCommand}"
+                                Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.TestConnection]}"
+                                IsEnabled="{Binding !IsTesting}" MinWidth="140"/>
+                        <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- Authentication Settings                         -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.AuthSection]}"
+                               FontSize="15" FontWeight="SemiBold"/>
+
+                    <!-- Auth Scheme -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.AuthScheme]}"
+                                   FontSize="12"/>
+                        <ComboBox ItemsSource="{Binding AuthSchemes}"
+                                  SelectedIndex="{Binding SelectedAuthScheme}"
+                                  MinWidth="200" HorizontalAlignment="Left"/>
+                    </StackPanel>
+
+                    <!-- Basic Auth fields (visible when SelectedAuthScheme == 1) -->
+                    <StackPanel Spacing="8" IsVisible="{Binding SelectedAuthScheme, Converter={StaticResource IntEquals}, ConverterParameter=1}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Username]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding AuthUsername}" Width="300" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Password]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding AuthPassword}" PasswordChar="*" Width="300" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Bearer Token fields (visible when SelectedAuthScheme == 2) -->
+                    <StackPanel Spacing="8" IsVisible="{Binding SelectedAuthScheme, Converter={StaticResource IntEquals}, ConverterParameter=2}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Token]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding AuthToken}" Width="400" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.LoginUrl]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding LoginUrl}" PlaceholderText="https://auth.example.com/login" Width="400" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- API Key fields (visible when SelectedAuthScheme == 3) -->
+                    <StackPanel Spacing="8" IsVisible="{Binding SelectedAuthScheme, Converter={StaticResource IntEquals}, ConverterParameter=3}">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.ApiKeyHeader]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding ApiKeyHeaderName}" Width="200" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.ApiKey]}"
+                                       FontSize="12"/>
+                            <TextBox Text="{Binding ApiKey}" PasswordChar="*" Width="400" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- Simulation Settings                             -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.SimSection]}"
+                               FontSize="15" FontWeight="SemiBold"/>
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.SimPort]}"
+                                   FontSize="12"/>
+                        <TextBox Text="{Binding SimulationPort}" Width="120" HorizontalAlignment="Left"/>
+                    </StackPanel>
+
+                    <CheckBox IsChecked="{Binding SimulationRequireAuth}"
+                              Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.SimRequireAuth]}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- Feature Switches                                -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    CornerRadius="8" Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.FeatureSection]}"
+                               FontSize="15" FontWeight="SemiBold"/>
+
+                    <CheckBox IsChecked="{Binding EncryptionScanEnabled}"
+                              Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.EncryptionScan]}"/>
+                    <CheckBox IsChecked="{Binding AutoValidateSemver}"
+                              Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.AutoSemver]}"/>
+                    <CheckBox IsChecked="{Binding ShowJsonPreview}"
+                              Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.JsonPreview]}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════ -->
+            <!-- Actions                                         -->
+            <!-- ═══════════════════════════════════════════════ -->
+            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                <Button Command="{Binding ResetToDefaultsCommand}"
+                        Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Reset]}"/>
+                <Button Command="{Binding SaveCommand}"
+                        Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Settings.Save]}"
+                        MinWidth="100"/>
+            </StackPanel>
+
+            <!-- Status -->
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" Opacity="0.7"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

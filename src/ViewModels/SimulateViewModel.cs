@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Tools.Configuration;
 using GeneralUpdate.Tools.Models;
 using GeneralUpdate.Tools.Services;
 
@@ -15,6 +16,7 @@ public partial class SimulateViewModel : ViewModelBase
     private readonly LocalizationService _loc = LocalizationService.Instance;
     private readonly SimulationService _sim = new();
     private readonly ReportGeneratorService _report = new();
+    private readonly AppConfig _config;
 
     public SimulateConfigModel Config { get; } = new();
 
@@ -35,26 +37,29 @@ public partial class SimulateViewModel : ViewModelBase
         new(2, "UpgradeApp")
     };
 
-    public SimulateViewModel()
+    public SimulateViewModel(AppConfig config)
     {
+        _config = config;
+
+        // Restore path memory
+        Config.AppDirectory = config.LastSimulateAppDir;
+        Config.PatchFilePath = config.LastSimulatePatchFile;
+
+        // Restore simulation config
+        Config.ServerPort = int.TryParse(config.SimulationServerPort, out var port) ? port : 5000;
+        Config.Platform = config.SimulationPlatformType == "Linux" ? 2 : 1;
+        Config.AppType = config.SimulationAppType == "UpgradeApp" ? 2 : 1;
+
         _status = _loc["Patch.Ready"];
         _startButtonText = _loc["Sim.Start"];
     }
 
-    /// <summary>
-    /// Maps Config.Platform (int) to Platforms collection index.
-    /// 1 (Windows) → 0, 2 (Linux) → 1.
-    /// </summary>
     public int PlatformIndex
     {
         get => Config.Platform == 2 ? 1 : 0;
         set => Config.Platform = value == 1 ? 2 : 1;
     }
 
-    /// <summary>
-    /// Maps Config.AppType (int) to AppTypes collection index.
-    /// 1 (ClientApp) → 0, 2 (UpgradeApp) → 1.
-    /// </summary>
     public int AppTypeIndex
     {
         get => Config.AppType == 2 ? 1 : 0;
@@ -81,8 +86,29 @@ public partial class SimulateViewModel : ViewModelBase
         return r.Count > 0 ? r[0].Path.LocalPath : null;
     }
 
-    [RelayCommand] async Task SelectAppDir() { var p = await PickFolder(_loc["Sim.SelectAppDir"]); if (p != null) Config.AppDirectory = p; }
-    [RelayCommand] async Task SelectPatch() { var p = await PickFile(_loc["Sim.SelectPatch"]); if (p != null) Config.PatchFilePath = p; }
+    [RelayCommand]
+    async Task SelectAppDir()
+    {
+        var p = await PickFolder(_loc["Sim.SelectAppDir"]);
+        if (p != null)
+        {
+            Config.AppDirectory = p;
+            _config.LastSimulateAppDir = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
+    }
+
+    [RelayCommand]
+    async Task SelectPatch()
+    {
+        var p = await PickFile(_loc["Sim.SelectPatch"]);
+        if (p != null)
+        {
+            Config.PatchFilePath = p;
+            _config.LastSimulatePatchFile = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
+    }
 
     [RelayCommand]
     async Task StartSimulation()
@@ -100,19 +126,21 @@ public partial class SimulateViewModel : ViewModelBase
             return;
         }
 
+        // Persist simulation settings
+        _config.SimulationServerPort = Config.ServerPort.ToString();
+        _config.SimulationPlatformType = Config.Platform == 2 ? "Linux" : "Windows";
+        _config.SimulationAppType = Config.AppType == 2 ? "UpgradeApp" : "ClientApp";
+        _ = ConfigServiceSingleton.Instance.SaveAsync();
+
         IsRunning = true; StartButtonText = "⏳ Running..."; Log.Clear(); Status = _loc["Sim.Starting"];
         try
         {
             var progress = new Progress<string>(L);
             var result = await _sim.RunAsync(Config, progress);
             if (result.Success)
-            {
                 Status = _loc.T("Sim.Completed", result.Elapsed.TotalSeconds);
-            }
             else
-            {
                 Status = _loc.T("Sim.Failed", result.ErrorMessage ?? "unknown");
-            }
             L($"Result: {(result.Success ? "PASS" : "FAIL")}");
             foreach (var note in result.Notes) L($"  Note: {note}");
             var reportPath = await _report.GenerateAsync(Config, result, Config.AppDirectory);

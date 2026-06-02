@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Tools.Configuration;
 using GeneralUpdate.Tools.Models;
 using GeneralUpdate.Tools.Pipeline;
 using GeneralUpdate.Tools.Pipeline.Steps;
@@ -15,14 +16,21 @@ namespace GeneralUpdate.Tools.ViewModels;
 public partial class ConfigViewModel : ViewModelBase
 {
     private readonly LocalizationService _loc = LocalizationService.Instance;
+    private readonly AppConfig _config;
 
     public ConfigGeneratorModel Model { get; } = new();
     public List<string> AppTypes { get; } = new() { "Client", "Upgrade", "OssClient", "OssUpgrade" };
 
     public bool IsBusy => Model.IsAnalyzing || Model.IsPublishing;
 
-    public ConfigViewModel()
+    public ConfigViewModel(AppConfig config)
     {
+        _config = config;
+
+        // Restore path memory
+        Model.ClientPath = config.LastConfigClientPath;
+        Model.UpgradePath = config.LastConfigUpgradePath;
+
         Model.PropertyChanged += (_, e) =>
         {
             UpdatePreview();
@@ -37,10 +45,6 @@ public partial class ConfigViewModel : ViewModelBase
             (Avalonia.Application.Current?.ApplicationLifetime as
                 Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow);
     }
-
-    // ════════════════════════════════════════════════════════
-    // File pickers
-    // ════════════════════════════════════════════════════════
 
     [RelayCommand]
     private async Task BrowseClient()
@@ -58,7 +62,11 @@ public partial class ConfigViewModel : ViewModelBase
             FileTypeFilter = filter
         });
         if (files.Count > 0)
+        {
             Model.ClientPath = files[0].Path.LocalPath;
+            _config.LastConfigClientPath = files[0].Path.LocalPath;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
     }
 
     [RelayCommand]
@@ -77,12 +85,12 @@ public partial class ConfigViewModel : ViewModelBase
             FileTypeFilter = filter
         });
         if (files.Count > 0)
+        {
             Model.UpgradePath = files[0].Path.LocalPath;
+            _config.LastConfigUpgradePath = files[0].Path.LocalPath;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
     }
-
-    // ════════════════════════════════════════════════════════
-    // Analyze
-    // ════════════════════════════════════════════════════════
 
     [RelayCommand]
     private async Task Analyze()
@@ -136,14 +144,9 @@ public partial class ConfigViewModel : ViewModelBase
         }
     }
 
-    // ════════════════════════════════════════════════════════
-    // Generate
-    // ════════════════════════════════════════════════════════
-
     [RelayCommand]
     private async Task Generate()
     {
-        // Validate semver
         var manifest = new ManifestModel
         {
             MainAppName = Model.MainAppName,
@@ -162,7 +165,6 @@ public partial class ConfigViewModel : ViewModelBase
             Manifest = manifest
         };
 
-        // Run pipeline: parse → validate semver → build → emit
         var orchestrator = new PipelineOrchestrator()
             .AddStep(new CsprojParseStep())
             .AddStep(new SemverValidateStep())
@@ -203,10 +205,6 @@ public partial class ConfigViewModel : ViewModelBase
         }
     }
 
-    // ════════════════════════════════════════════════════════
-    // Generate sample project structure
-    // ════════════════════════════════════════════════════════
-
     [RelayCommand]
     private async Task GenerateSample()
     {
@@ -232,7 +230,6 @@ public partial class ConfigViewModel : ViewModelBase
                 return;
             }
 
-            // Build manifest from current UI fields, falling back to parsed csproj data
             var manifest = ManifestGeneratorService.FromCsprojInfo(client, upgrade,
                 new ManifestModel
                 {
@@ -245,7 +242,6 @@ public partial class ConfigViewModel : ViewModelBase
                     UpdatePath = Model.UpdatePath
                 });
 
-            // Validate semver before writing manifest (same check as the Generate pipeline)
             var validateCtx = new PipelineContext();
             SemverValidateStep.Validate(manifest.ClientVersion, nameof(manifest.ClientVersion), validateCtx);
             SemverValidateStep.Validate(manifest.UpgradeClientVersion, nameof(manifest.UpgradeClientVersion), validateCtx);
@@ -273,10 +269,6 @@ public partial class ConfigViewModel : ViewModelBase
             Model.IsPublishing = false;
         }
     }
-
-    // ════════════════════════════════════════════════════════
-    // Preview
-    // ════════════════════════════════════════════════════════
 
     private void UpdatePreview()
     {

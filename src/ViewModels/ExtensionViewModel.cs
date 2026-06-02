@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using GeneralUpdate.Tools.Configuration;
 using GeneralUpdate.Tools.Models;
 using GeneralUpdate.Tools.Services;
 
@@ -14,6 +15,7 @@ public partial class ExtensionViewModel : ViewModelBase
 {
     private readonly PackageService _pkg = new();
     private readonly LocalizationService _loc = LocalizationService.Instance;
+    private readonly AppConfig _config;
 
     public ExtensionConfigModel Config { get; } = new();
     [ObservableProperty] private bool _isBuilding;
@@ -22,8 +24,14 @@ public partial class ExtensionViewModel : ViewModelBase
     [ObservableProperty] private string _newPropValue = "";
     public ObservableCollection<CustomPropModel> CustomProps { get; } = new();
 
-    public ExtensionViewModel()
+    public ExtensionViewModel(AppConfig config)
     {
+        _config = config;
+
+        // Restore path memory
+        Config.ExtensionDirectory = config.LastExtensionDir;
+        Config.ExportPath = config.LastExtensionOutputDir;
+
         _status = _loc["Patch.Ready"];
     }
 
@@ -52,14 +60,24 @@ public partial class ExtensionViewModel : ViewModelBase
     async Task SelectExt()
     {
         var p = await Pick();
-        if (p != null) Config.ExtensionDirectory = p;
+        if (p != null)
+        {
+            Config.ExtensionDirectory = p;
+            _config.LastExtensionDir = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
     }
 
     [RelayCommand]
     async Task SelectExport()
     {
         var p = await Pick();
-        if (p != null) Config.ExportPath = p;
+        if (p != null)
+        {
+            Config.ExportPath = p;
+            _config.LastExtensionOutputDir = p;
+            _ = ConfigServiceSingleton.Instance.SaveAsync();
+        }
     }
 
     [RelayCommand]
