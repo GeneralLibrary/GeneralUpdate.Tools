@@ -102,7 +102,7 @@ public class EncryptionDetectionService
         foreach (var filePath in files)
         {
             var relativePath = Path.GetRelativePath(directoryPath, filePath);
-            var suspicious = await Task.Run(() => ScanFile(filePath, relativePath));
+            var suspicious = await Task.Run(() => ScanFile(filePath, relativePath)).ConfigureAwait(false);
 
             if (suspicious != null)
                 result.SuspiciousFiles.Add(suspicious);

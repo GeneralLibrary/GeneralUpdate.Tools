@@ -114,8 +114,8 @@ public partial class PatchViewModel : ViewModelBase
                     switch (choice)
                     {
                         case EncryptionDialogChoice.Cancel:
-                            L(_loc.T("Patch.Failed", "cancelled by user"));
-                            Status = _loc.T("Patch.Failed", "cancelled by user");
+                            L(_loc["Patch.ScanCancelled"]);
+                            Status = _loc["Patch.ScanCancelled"];
                             Directory.Delete(tmp, true);
                             return;
                         case EncryptionDialogChoice.SkipSuspicious:
@@ -259,9 +259,13 @@ public partial class PatchViewModel : ViewModelBase
             MinWidth = 70
         };
 
-        btnSkip.Click += (_, _) => { dialog.Close(); tcs.TrySetResult(EncryptionDialogChoice.SkipSuspicious); };
-        btnInclude.Click += (_, _) => { dialog.Close(); tcs.TrySetResult(EncryptionDialogChoice.IncludeAll); };
-        btnCancel.Click += (_, _) => { dialog.Close(); tcs.TrySetResult(EncryptionDialogChoice.Cancel); };
+        // Set result *before* Close so the Closed handler doesn't override it
+        btnSkip.Click += (_, _) => { tcs.TrySetResult(EncryptionDialogChoice.SkipSuspicious); dialog.Close(); };
+        btnInclude.Click += (_, _) => { tcs.TrySetResult(EncryptionDialogChoice.IncludeAll); dialog.Close(); };
+        btnCancel.Click += (_, _) => { tcs.TrySetResult(EncryptionDialogChoice.Cancel); dialog.Close(); };
+
+        // If user closes the window via X button or Alt+F4, treat as Cancel
+        dialog.Closed += (_, _) => tcs.TrySetResult(EncryptionDialogChoice.Cancel);
 
         btnPanel.Children.Add(btnSkip);
         btnPanel.Children.Add(btnInclude);
@@ -275,12 +279,7 @@ public partial class PatchViewModel : ViewModelBase
         else
             dialog.Show();
 
-        // If user closes the window, treat as cancel
-        await tcs.Task;
-        if (!tcs.Task.IsCompleted)
-            tcs.TrySetResult(EncryptionDialogChoice.Cancel);
-
-        return tcs.Task.Result;
+        return await tcs.Task;
     }
 
     private static void AddRiskGroup(Avalonia.Controls.StackPanel parent, string title,
