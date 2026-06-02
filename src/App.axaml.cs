@@ -4,9 +4,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Metadata;
 using GeneralUpdate.Tools.Configuration;
 using GeneralUpdate.Tools.ViewModels;
 using GeneralUpdate.Tools.Views;
+
+// Register Lingua markup extensions under Avalonia's default XAML namespace
+// so that {Translate} and {FormatTranslate} work without an extra xmlns import.
+[assembly: XmlnsDefinition("https://github.com/avaloniaui", "Irihi.Lingua")]
 
 namespace GeneralUpdate.Tools;
 
@@ -23,6 +28,9 @@ public partial class App : Application
         {
             // Load translations from embedded JSON files (must be after platform init)
             Services.LocalizationService.Instance.LoadFromResources();
+
+            // Initialize Lingua — must be after LocalizationService is loaded
+            _ = Irihi.Lingua.AppLanguageManager.Instance;
 
             // Initialize configuration (synchronous path for startup reliability)
             var config = LoadConfigSafe();

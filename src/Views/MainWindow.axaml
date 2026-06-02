@@ -2,10 +2,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
         xmlns:svc="using:GeneralUpdate.Tools.Services"
+        xmlns:lingua="using:Irihi.Lingua"
         x:Class="GeneralUpdate.Tools.Views.MainWindow"
         x:Name="MainWin"
         x:DataType="vm:MainWindowViewModel"
-        Title="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[App.Title]}"
+        Title="{Translate {x:Static lingua:AppLanguageManager+Keys.App_Title}}"
         Width="960" Height="640" MinWidth="780" MinHeight="540"
         WindowStartupLocation="CenterScreen">
 
