@@ -98,8 +98,12 @@ public class ConfigService : IConfigService
         }
     }
 
-    /// <summary>Synchronous save for internal use during Load().</summary>
-    private void Save()
+    /// <summary>
+    /// Synchronous save. Blocks the calling thread until the file is written.
+    /// Suitable for shutdown/flush scenarios where fire-and-forget would risk
+    /// the process exiting before the write completes.
+    /// </summary>
+    public void Save()
     {
         _saveLock.Wait();
         try
