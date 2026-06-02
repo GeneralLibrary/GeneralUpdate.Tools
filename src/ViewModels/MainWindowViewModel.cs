@@ -80,7 +80,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Persist
         _config.Theme = IsDarkTheme ? "Dark" : "Light";
-        _ = ConfigServiceSingleton.Instance.SaveAsync();
+        ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
     }
 
     [RelayCommand]
@@ -97,7 +97,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Persist
         _config.Language = newLocale;
-        _ = ConfigServiceSingleton.Instance.SaveAsync();
+        ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
     }
 
     private static void ApplyTheme(bool isDark)

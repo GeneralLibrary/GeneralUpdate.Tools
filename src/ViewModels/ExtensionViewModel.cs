@@ -64,7 +64,7 @@ public partial class ExtensionViewModel : ViewModelBase
         {
             Config.ExtensionDirectory = p;
             _config.LastExtensionDir = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 
@@ -76,7 +76,7 @@ public partial class ExtensionViewModel : ViewModelBase
         {
             Config.ExportPath = p;
             _config.LastExtensionOutputDir = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 

@@ -50,7 +50,8 @@ public class ConfigService : IConfigService
                 {
                     var backupJson = File.ReadAllText(_backupPath);
                     Config = JsonConvert.DeserializeObject<AppConfig>(backupJson, JsonSettings) ?? new AppConfig();
-                    Save(); // Restore main file from backup
+                    Config.Sanitize();  // repair invalid enum values etc.
+                    Save();
                     return;
                 }
                 catch
@@ -59,7 +60,6 @@ public class ConfigService : IConfigService
                 }
             }
 
-            // First run: save defaults so the file exists
             Config = new AppConfig();
             Save();
             return;
@@ -69,19 +69,21 @@ public class ConfigService : IConfigService
         {
             var json = File.ReadAllText(_configPath);
             Config = JsonConvert.DeserializeObject<AppConfig>(json, JsonSettings) ?? new AppConfig();
+            Config.Sanitize();
 
             // Run schema migrations
             Migrate();
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            // Config file is corrupted; try backup
+            // Config file is corrupted or inaccessible; try backup
             if (File.Exists(_backupPath))
             {
                 try
                 {
                     var backupJson = File.ReadAllText(_backupPath);
                     Config = JsonConvert.DeserializeObject<AppConfig>(backupJson, JsonSettings) ?? new AppConfig();
+                    Config.Sanitize();
                     Save();
                     return;
                 }
@@ -158,15 +160,16 @@ public class ConfigService : IConfigService
             // Run schema migrations
             Migrate();
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            // Config file is corrupted; try backup
+            // Config file is corrupted or inaccessible; try backup
             if (File.Exists(_backupPath))
             {
                 try
                 {
                     var backupJson = await File.ReadAllTextAsync(_backupPath);
                     Config = JsonConvert.DeserializeObject<AppConfig>(backupJson, JsonSettings) ?? new AppConfig();
+                    Config.Sanitize();
                     await SaveAsync();
                     return;
                 }
@@ -179,6 +182,26 @@ public class ConfigService : IConfigService
             Config = new AppConfig();
             await SaveAsync();
         }
+    }
+
+    /// <summary>
+    /// Fire-and-forget safe save. Logs exceptions via System.Diagnostics.Trace
+    /// rather than losing them silently — no crash, no dialog, just a trace log.
+    /// </summary>
+    public static void SafeFireAndForgetSave(ConfigService service)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await service.SaveAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(
+                    $"[GeneralUpdate.Tools] Config save failed: {ex.Message}");
+            }
+        });
     }
 
     /// <inheritdoc />

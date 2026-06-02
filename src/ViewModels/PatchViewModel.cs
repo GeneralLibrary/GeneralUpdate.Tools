@@ -43,13 +43,17 @@ public partial class PatchViewModel : ViewModelBase
         AutoUploadEnabled = config.AutoUploadEnabled;
 
         _status = _loc["Patch.Ready"];
+        _initialized = true;
     }
 
-    /// <summary>Persist auto-upload toggle changes immediately.</summary>
+    private bool _initialized;
+
+    /// <summary>Persist auto-upload toggle changes immediately (skip during construction).</summary>
     partial void OnAutoUploadEnabledChanged(bool value)
     {
+        if (!_initialized) return;
         _config.AutoUploadEnabled = value;
-        _ = ConfigServiceSingleton.Instance.SaveAsync();
+        ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
     }
 
     async Task<string?> Pick()
@@ -71,7 +75,7 @@ public partial class PatchViewModel : ViewModelBase
         {
             Config.OldDirectory = p;
             _config.LastPatchOldDir = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
             L(_loc.T("Patch.OldSelected", p));
         }
     }
@@ -84,7 +88,7 @@ public partial class PatchViewModel : ViewModelBase
         {
             Config.NewDirectory = p;
             _config.LastPatchNewDir = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
             L(_loc.T("Patch.NewSelected", p));
         }
     }
@@ -97,7 +101,7 @@ public partial class PatchViewModel : ViewModelBase
         {
             Config.OutputPath = p;
             _config.LastPatchOutputDir = p;
-            _ = ConfigServiceSingleton.Instance.SaveAsync();
+            ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
         }
     }
 
@@ -118,7 +122,7 @@ public partial class PatchViewModel : ViewModelBase
 
         // Persist encryption scan preference
         _config.EncryptionScanEnabled = Config.EnableEncryptionCheck;
-        _ = ConfigServiceSingleton.Instance.SaveAsync();
+        ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
 
         IsBuilding = true;
         Log.Clear();

@@ -112,4 +112,28 @@ public class AppConfig
 
     [JsonProperty("showJsonPreview")]
     public bool ShowJsonPreview { get; set; } = true;
+
+    // ── Sanitization ───────────────────────────────────────────
+
+    /// <summary>
+    /// Repair invalid values that may have been introduced by manual JSON editing
+    /// or deserialization of an unknown/invalid enum value.
+    /// Called automatically by <see cref="ConfigService.Load"/> after deserialization.
+    /// </summary>
+    internal void Sanitize()
+    {
+        // Repair null nested objects (should never be null, but guard against manual JSON edits)
+        UploadAuth ??= new AuthCredential();
+        SimulationAuth ??= new AuthCredential();
+
+        // Validate numeric ranges
+        if (UploadTimeoutSeconds < 10)
+            UploadTimeoutSeconds = 300;
+        if (UploadRetryCount is < 0 or > 10)
+            UploadRetryCount = 3;
+
+        // Repair invalid enum values in auth credentials
+        UploadAuth.Sanitize();
+        SimulationAuth.Sanitize();
+    }
 }
