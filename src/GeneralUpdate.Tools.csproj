@@ -29,7 +29,7 @@
     <PackageReference Include="Irihi.Ursa" Version="2.0.0" />
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
-    <ProjectReference Include="..\..\..\GeneralUpdate\src\c#\GeneralUpdate.Core\GeneralUpdate.Core.csproj" />
+    <PackageReference Include="GeneralUpdate.Core" Version="10.5.0-beta.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
   </ItemGroup>
