@@ -92,11 +92,64 @@ jobs:
           chmod +x *
           zip ../GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip -r *
 
+      - name: Checkout for changelog
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            LOG=$(git log --oneline --no-decorate -100)
+          else
+            LOG=$(git log "${PREVIOUS_TAG}..HEAD" --oneline --no-decorate)
+          fi
+
+          FEATURES=""; FIXES=""; REFACTORS=""; TESTS=""; DOCS=""; CHORES=""; OTHERS=""
+
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            # Remove commit hash prefix
+            msg=$(echo "$line" | sed -E 's/^[a-f0-9]+ //')
+            case "$msg" in
+              feat:*|feature:*) FEATURES="${FEATURES}- ${msg}"$'\n' ;;
+              fix:*)            FIXES="${FIXES}- ${msg}"$'\n' ;;
+              refactor:*)       REFACTORS="${REFACTORS}- ${msg}"$'\n' ;;
+              test:*)           TESTS="${TESTS}- ${msg}"$'\n' ;;
+              docs:*)           DOCS="${DOCS}- ${msg}"$'\n' ;;
+              chore:*|cleanup:*|ci:*|build:*) CHORES="${CHORES}- ${msg}"$'\n' ;;
+              *)                OTHERS="${OTHERS}- ${msg}"$'\n' ;;
+            esac
+          done <<< "$LOG"
+
+          BODY=""
+          append_section() {
+            if [ -n "$2" ]; then
+              BODY="${BODY}## $1"$'\n\n'"$2"$'\n'
+            fi
+          }
+
+          append_section "🚀 Features"        "$FEATURES"
+          append_section "🐛 Bug Fixes"        "$FIXES"
+          append_section "♻️ Refactoring"      "$REFACTORS"
+          append_section "✅ Tests"            "$TESTS"
+          append_section "📝 Documentation"    "$DOCS"
+          append_section "🔧 Chores"           "$CHORES"
+          append_section "📦 Other Changes"    "$OTHERS"
+
+          [ -z "$BODY" ] && BODY="_No changes detected between tags._"
+
+          echo "$BODY" > changelog.md
+          echo "=== Generated changelog ==="
+          cat changelog.md
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ts.outputs.timestamp }}
           name: GeneralUpdate.Tools ${{ steps.ts.outputs.timestamp }}
+          body_path: changelog.md
           files: |
             GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_win-x64.zip
             GeneralUpdate.Tools_${{ steps.ts.outputs.timestamp }}_linux-x64.zip
