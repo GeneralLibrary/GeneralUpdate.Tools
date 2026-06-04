@@ -1,48 +1,30 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
-        xmlns:svc="using:GeneralUpdate.Tools.Services"
-        xmlns:lingua="using:Irihi.Lingua"
-        x:Class="GeneralUpdate.Tools.Views.MainWindow"
-        x:Name="MainWin"
-        x:DataType="vm:MainWindowViewModel"
-        Title="{Translate {x:Static lingua:AppLanguageManager+Keys.App_Title}}"
-        Width="960" Height="640" MinWidth="780" MinHeight="540"
-        WindowStartupLocation="CenterScreen">
+<u:UrsaWindow xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:u="https://irihi.tech/ursa"
+              xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+              xmlns:svc="using:GeneralUpdate.Tools.Services"
+              xmlns:lingua="using:Irihi.Lingua"
+              x:Class="GeneralUpdate.Tools.Views.MainWindow"
+              x:Name="MainWin"
+              x:DataType="vm:MainWindowViewModel"
+              Title="{Translate {x:Static lingua:AppLanguageManager+Keys.App_Title}}"
+              Width="960" Height="640" MinWidth="780" MinHeight="540"
+              WindowStartupLocation="CenterScreen"
+              IsTitleBarVisible="False"
+              IsMinimizeButtonVisible="False"
+              IsRestoreButtonVisible="False"
+              IsCloseButtonVisible="False">
 
-    <Window.Resources>
-        <!-- Sun icon (for dark mode → switch to light) -->
-        <PathGeometry x:Key="SunIcon">
-            M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 6a6 6 0 100 12 6 6 0 000-12z
-        </PathGeometry>
-
-        <!-- Moon icon (for light mode → switch to dark) -->
-        <PathGeometry x:Key="MoonIcon">
-            M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z
-        </PathGeometry>
-
-        <!-- Globe icon -->
-        <PathGeometry x:Key="GlobeIcon">
-            M12 2a10 10 0 100 20 10 10 0 000-20zm-2 18.41A8.04 8.04 0 015.05 13H7.1a16.1 16.1 0 002.9 7.41zM12 20a14.2 14.2 0 01-2.7-7h5.4A14.2 14.2 0 0112 20zm-4.9-9A8.04 8.04 0 0110 3.59 8.04 8.04 0 015.05 11H7.1zm9.8 0h2.05a8.04 8.04 0 00-4.95-7.41A16.1 16.1 0 0116.9 11zm2.05 2h-2.05a16.1 16.1 0 01-2.9 7.41A8.04 8.04 0 0018.95 13zm-11.85 0a8.04 8.04 0 004.95 7.41A16.1 16.1 0 017.1 13z
-        </PathGeometry>
-
-        <!-- Theme toggle button template -->
-        <ControlTemplate x:Key="IconButton">
-            <Border Background="Transparent" CornerRadius="4">
-                <Panel Width="36" Height="36">
-                    <ContentPresenter Content="{TemplateBinding Content}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Panel>
-            </Border>
-        </ControlTemplate>
-    </Window.Resources>
+    <u:UrsaWindow.Resources>
+    </u:UrsaWindow.Resources>
 
     <DockPanel>
         <!-- Left Sidebar -->
         <Border DockPanel.Dock="Left" Width="200" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
             <Grid RowDefinitions="Auto,*,Auto">
-                <!-- Title -->
-                <Border Grid.Row="0" Padding="18,20,18,12">
+                <!-- Title (also serves as a drag handle) -->
+                <Border Grid.Row="0" Padding="18,20,18,12"
+                        WindowDecorationProperties.ElementRole="TitleBar">
                     <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[App.Title]}"
                                FontSize="16" FontWeight="Bold"/>
                 </Border>
@@ -51,16 +33,20 @@
                 <ItemsControl Grid.Row="1" ItemsSource="{Binding NavItems}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:NavItem">
-                            <Button Content="{Binding Title}"
-                                    Command="{Binding ElementName=MainWin, Path=DataContext.NavigateCommand}"
+                            <Button Command="{Binding ElementName=MainWin, Path=DataContext.NavigateCommand}"
                                     CommandParameter="{Binding}"
                                     HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Left"
                                     Padding="18,10"
                                     Margin="0"
                                     Background="Transparent"
-                                    BorderThickness="0"
-                                    FontSize="13"/>
+                                    BorderThickness="0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Icon}" FontSize="16"/>
+                                    <TextBlock Text="{Binding Title}" FontSize="13"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -71,40 +57,34 @@
                     <!-- Theme toggle -->
                     <Button Command="{Binding ToggleThemeCommand}"
                             Background="Transparent" BorderThickness="0"
-                            Width="44" Height="36"
+                            MinWidth="44" Height="36" Padding="4,0"
                             ToolTip.Tip="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Theme.Toggle]}">
-                        <Panel>
-                            <Path Data="{StaticResource MoonIcon}" Stretch="Uniform"
-                                  Width="18" Height="18"
-                                  Fill="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                  IsVisible="{Binding !IsDarkTheme}"/>
-                            <Path Data="{StaticResource SunIcon}" Stretch="Uniform"
-                                  Width="18" Height="18"
-                                  Fill="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                  IsVisible="{Binding IsDarkTheme}"/>
-                        </Panel>
+                        <TextBlock Text="{Binding ThemeLabel}" FontSize="14" FontWeight="Medium"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
 
                     <!-- Locale toggle -->
                     <Button Command="{Binding ToggleLocaleCommand}"
                             Background="Transparent" BorderThickness="0"
-                            Width="44" Height="36"
-                            ToolTip.Tip="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Theme.Toggle]}">
-                        <Grid>
-                            <Path Data="{StaticResource GlobeIcon}" Stretch="Uniform"
-                                  Width="16" Height="16"
-                                  Fill="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                                  Margin="0,0,0,0"/>
-                            <TextBlock Text="{Binding LocaleText}" FontSize="9" FontWeight="Bold"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                        </Grid>
+                            MinWidth="44" Height="36" Padding="4,0"
+                            ToolTip.Tip="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Locale.Toggle]}">
+                        <TextBlock Text="{Binding LocaleLabel}" FontSize="14" FontWeight="Medium"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Content Area -->
-        <ContentControl Content="{Binding CurrentPage}"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <!-- Drag handle bar at the top of the content area -->
+            <Panel Grid.Row="0" Background="Transparent"
+                   WindowDecorationProperties.ElementRole="TitleBar"/>
+            <ContentControl Grid.Row="1" Content="{Binding CurrentPage}"/>
+        </Grid>
     </DockPanel>
-</Window>
+</u:UrsaWindow>

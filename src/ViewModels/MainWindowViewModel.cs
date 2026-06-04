@@ -15,7 +15,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty] private ViewModelBase _currentPage;
     [ObservableProperty] private bool _isDarkTheme;
-    [ObservableProperty] private string _localeText = "EN";
+    [ObservableProperty] private string _themeLabel = string.Empty;
+    [ObservableProperty] private string _localeLabel = string.Empty;
 
     public ObservableCollection<NavItem> NavItems { get; } = new();
 
@@ -28,8 +29,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ApplyTheme(IsDarkTheme);
 
         // Apply saved locale
-        LocaleText = _loc.Locale == "zh-CN" ? "EN" : "中";
-
+        SyncLabels();
         SyncNavItems();
 
         _loc.PropertyChanged += (_, e) =>
@@ -38,22 +38,42 @@ public partial class MainWindowViewModel : ViewModelBase
                 return;
 
             SyncNavItems();
-            LocaleText = _loc.Locale == "zh-CN" ? "EN" : "中";
+            SyncLabels();
         };
 
         // Default to Patch page
         CurrentPage = new PatchViewModel(config);
     }
 
+    partial void OnIsDarkThemeChanged(bool value) => SyncThemeLabel();
+
+    private void SyncLabels()
+    {
+        SyncThemeLabel();
+        SyncLocaleLabel();
+    }
+
+    private void SyncThemeLabel()
+    {
+        // Show what you'll switch TO: light → "暗", dark → "明"
+        ThemeLabel = IsDarkTheme ? _loc["Theme.Light"] : _loc["Theme.Dark"];
+    }
+
+    private void SyncLocaleLabel()
+    {
+        // Show what you'll switch TO: zh-CN → "英", en-US → "中"
+        LocaleLabel = _loc.Locale == "zh-CN" ? _loc["Locale.En"] : _loc["Locale.Zh"];
+    }
+
     private void SyncNavItems()
     {
         NavItems.Clear();
-        NavItems.Add(new("Patch", _loc["Nav.Patch"], typeof(PatchViewModel), true));
-        NavItems.Add(new("Extension", _loc["Nav.Extension"], typeof(ExtensionViewModel), false));
-        NavItems.Add(new("OSS", _loc["Nav.OSS"], typeof(OSSViewModel), false));
-        NavItems.Add(new("Simulate", _loc["Nav.Simulate"], typeof(SimulateViewModel), false));
-        NavItems.Add(new("Config", _loc["Nav.Config"], typeof(ConfigViewModel), false));
-        NavItems.Add(new("Settings", _loc["Nav.Settings"], typeof(SettingsViewModel), false));
+        NavItems.Add(new("Patch", _loc["Nav.Patch"], "\U0001FA79", typeof(PatchViewModel), true));
+        NavItems.Add(new("Extension", _loc["Nav.Extension"], "\U0001F9E9", typeof(ExtensionViewModel), false));
+        NavItems.Add(new("OSS", _loc["Nav.OSS"], "☁️", typeof(OSSViewModel), false));
+        NavItems.Add(new("Simulate", _loc["Nav.Simulate"], "\U0001F504", typeof(SimulateViewModel), false));
+        NavItems.Add(new("Config", _loc["Nav.Config"], "⚙️", typeof(ConfigViewModel), false));
+        NavItems.Add(new("Settings", _loc["Nav.Settings"], "\U0001F6E0", typeof(SettingsViewModel), false));
     }
 
     [RelayCommand]
@@ -114,13 +134,15 @@ public partial class NavItem : ObservableObject
 {
     public string Key { get; }
     public string Title { get; }
+    public string Icon { get; }
     public System.Type PageType { get; }
     [ObservableProperty] private bool _isSelected;
 
-    public NavItem(string key, string title, System.Type pageType, bool selected)
+    public NavItem(string key, string title, string icon, System.Type pageType, bool selected)
     {
         Key = key;
         Title = title;
+        Icon = icon;
         PageType = pageType;
         _isSelected = selected;
     }
