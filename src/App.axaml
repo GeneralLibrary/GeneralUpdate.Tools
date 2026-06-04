@@ -1,4 +1,4 @@
-﻿<Application xmlns="https://github.com/avaloniaui"
+<Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="GeneralUpdate.Tools.App"
              xmlns:local="using:GeneralUpdate.Tools"
@@ -10,5 +10,6 @@
     <Application.Styles>
         <FluentTheme />
         <semi:SemiTheme Locale="zh-CN" />
+        <semi:UrsaSemiTheme />
     </Application.Styles>
 </Application>
