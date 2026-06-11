@@ -14,10 +14,6 @@
               IsMinimizeButtonVisible="False"
               IsRestoreButtonVisible="False"
               IsCloseButtonVisible="False">
-
-    <u:UrsaWindow.Resources>
-    </u:UrsaWindow.Resources>
-
     <DockPanel>
         <!-- Left Sidebar -->
         <Border DockPanel.Dock="Left" Width="200" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
