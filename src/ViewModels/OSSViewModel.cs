@@ -24,7 +24,6 @@ public partial class OSSViewModel : ViewModelBase
     public OSSViewModel(AppConfig config)
     {
         _config = config;
-        _status = _loc["Patch.Ready"];
     }
 
     private string GetOpenFilePickerTitle()
@@ -91,9 +90,16 @@ public partial class OSSViewModel : ViewModelBase
             { Title = _loc["OSS.Export"], DefaultExtension = ".json", SuggestedFileName = "oss_config.json" });
         if (file != null)
         {
-            await File.WriteAllTextAsync(file.Path.LocalPath, JsonConvert.SerializeObject(Configs, Formatting.Indented),
-                System.Text.Encoding.UTF8);
-            Status = _loc.T("OSS.Exported", Configs.Count);
+            await DialogHelper.ShowResultWindowAsync(
+                _loc["OSS.Title"],
+                async progress =>
+                {
+                    progress.Report($"[{DateTime.Now:HH:mm:ss}] Exporting {Configs.Count} entries...");
+                    await File.WriteAllTextAsync(file.Path.LocalPath, JsonConvert.SerializeObject(Configs, Formatting.Indented),
+                        System.Text.Encoding.UTF8);
+                    progress.Report($"[{DateTime.Now:HH:mm:ss}] {_loc.T("OSS.Exported", Configs.Count)}");
+                },
+                Path.GetDirectoryName(file.Path.LocalPath));
         }
     }
 }

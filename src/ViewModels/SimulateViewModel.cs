@@ -113,18 +113,10 @@ public partial class SimulateViewModel : ViewModelBase
     [RelayCommand]
     async Task StartSimulation()
     {
-        if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { Status = _loc["Sim.ValidateDirs"]; return; }
-        if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { Status = _loc["Sim.ValidateDirs"]; return; }
-        if (!SemverValidator.IsValid(Config.CurrentVersion))
-        {
-            Status = _loc.T("Sim.InvalidVersion", Config.CurrentVersion);
-            return;
-        }
-        if (!SemverValidator.IsValid(Config.TargetVersion))
-        {
-            Status = _loc.T("Sim.InvalidVersion", Config.TargetVersion);
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { return; }
+        if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { return; }
+        if (!SemverValidator.IsValid(Config.CurrentVersion)) return;
+        if (!SemverValidator.IsValid(Config.TargetVersion)) return;
 
         // Persist simulation settings
         _config.SimulationServerPort = Config.ServerPort.ToString();
@@ -132,30 +124,26 @@ public partial class SimulateViewModel : ViewModelBase
         _config.SimulationAppType = Config.AppType == 2 ? "UpgradeApp" : "ClientApp";
         ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
 
-        IsRunning = true; StartButtonText = "⏳ Running..."; Log.Clear(); Status = _loc["Sim.Starting"];
+        IsRunning = true;
+        StartButtonText = "⏳ Running...";
         try
         {
-            var progress = new Progress<string>(L);
-            var result = await _sim.RunAsync(Config, progress);
-            if (result.Success)
-                Status = _loc.T("Sim.Completed", result.Elapsed.TotalSeconds);
-            else
-                Status = _loc.T("Sim.Failed", result.ErrorMessage ?? "unknown");
-            L($"Result: {(result.Success ? "PASS" : "FAIL")}");
-            foreach (var note in result.Notes) L($"  Note: {note}");
-            var reportPath = await _report.GenerateAsync(Config, result, Config.AppDirectory);
-            L(_loc.T("Sim.Report", reportPath));
-        }
-        catch (Exception ex)
-        {
-            Status = $"Error: {ex.Message}";
-            L($"FATAL: {ex}");
-            var failResult = new SimulationResult { Success = false, ErrorMessage = ex.Message };
-            var reportPath = await _report.GenerateAsync(Config, failResult, Config.AppDirectory);
-            L(_loc.T("Sim.Report", reportPath));
+            await DialogHelper.ShowResultWindowAsync(
+                _loc["Sim.Title"],
+                async progress =>
+                {
+                    var result = await _sim.RunAsync(Config, progress);
+                    if (result.Success)
+                        progress.Report(_loc.T("Sim.Completed", result.Elapsed.TotalSeconds));
+                    else
+                        progress.Report(_loc.T("Sim.Failed", result.ErrorMessage ?? "unknown"));
+                    progress.Report($"Result: {(result.Success ? "PASS" : "FAIL")}");
+                    foreach (var note in result.Notes) progress.Report($"  Note: {note}");
+                    var reportPath = await _report.GenerateAsync(Config, result, Config.AppDirectory);
+                    progress.Report(_loc.T("Sim.Report", reportPath));
+                },
+                Config.AppDirectory);
         }
         finally { IsRunning = false; StartButtonText = _loc["Sim.Start"]; }
     }
-
-    void L(string msg) => Log.Add($"[{DateTime.Now:HH:mm:ss}] {msg}");
 }

@@ -75,7 +75,6 @@
             <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Ext.Generate]}"
                     Command="{Binding GenerateCommand}" IsEnabled="{Binding !IsBuilding}"
                     Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
-            <TextBlock Text="{Binding Status}" FontSize="13"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -72,6 +72,7 @@ public partial class MainWindowViewModel : ViewModelBase
         NavItems.Add(new("Extension", _loc["Nav.Extension"], "\U0001F9E9", typeof(ExtensionViewModel), false));
         NavItems.Add(new("OSS", _loc["Nav.OSS"], "☁️", typeof(OSSViewModel), false));
         NavItems.Add(new("Simulate", _loc["Nav.Simulate"], "\U0001F504", typeof(SimulateViewModel), false));
+        NavItems.Add(new("Mobile", _loc["Nav.Mobile"], "\U0001F4F1", typeof(MobilePackagingViewModel), false));
         NavItems.Add(new("Config", _loc["Nav.Config"], "⚙️", typeof(ConfigViewModel), false));
         NavItems.Add(new("Settings", _loc["Nav.Settings"], "\U0001F6E0", typeof(SettingsViewModel), false));
     }
@@ -86,6 +87,7 @@ public partial class MainWindowViewModel : ViewModelBase
             "Patch" => new PatchViewModel(_config),
             "Extension" => new ExtensionViewModel(_config),
             "OSS" => new OSSViewModel(_config),
+            "Mobile" => new MobilePackagingViewModel(_config),
             "Config" => new ConfigViewModel(_config),
             "Settings" => new SettingsViewModel(_config),
             _ => new SimulateViewModel(_config)

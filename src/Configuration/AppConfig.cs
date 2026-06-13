@@ -65,6 +65,29 @@ public class AppConfig
     [JsonProperty("lastExtensionOutputDir")]
     public string LastExtensionOutputDir { get; set; } = string.Empty;
 
+    // ── Mobile / Android Path Memory ───────────────────────────
+
+    [JsonProperty("lastMobileFilePath")]
+    public string LastMobileFilePath { get; set; } = string.Empty;
+
+    [JsonProperty("lastMobileProjectPath")]
+    public string LastMobileProjectPath { get; set; } = string.Empty;
+
+    [JsonProperty("lastMobileOutputDir")]
+    public string LastMobileOutputDir { get; set; } = string.Empty;
+
+    [JsonProperty("lastMobileProductId")]
+    public string LastMobileProductId { get; set; } = string.Empty;
+
+    [JsonProperty("lastMobilePlatform")]
+    public int LastMobilePlatform { get; set; } = 4;
+
+    [JsonProperty("lastMobileAppType")]
+    public int LastMobileAppType { get; set; } = 1;
+
+    [JsonProperty("lastMobileUseProjectMode")]
+    public bool LastMobileUseProjectMode { get; set; } = true;
+
     // ── Upload Configuration ──────────────────────────────────
 
     [JsonProperty("uploadServerUrl")]
