@@ -82,9 +82,6 @@ public class AppConfig
     [JsonProperty("lastMobilePlatform")]
     public int LastMobilePlatform { get; set; } = 4;
 
-    [JsonProperty("lastMobileAppType")]
-    public int LastMobileAppType { get; set; } = 1;
-
     [JsonProperty("lastMobileUseProjectMode")]
     public bool LastMobileUseProjectMode { get; set; } = true;
 

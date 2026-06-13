@@ -186,6 +186,12 @@
   "Upload.Failed": "Upload failed: {0}",
   "Upload.Uploading": "Uploading...",
 
+  "Result.OpenOutput": "Open Output Directory",
+  "Result.Exit": "Exit",
+  "Result.Running": "Running...",
+  "Result.ValidationTitle": "Validation",
+  "Result.BuildFirst": "Please build the project first to locate the output package file.",
+
   "Nav.Mobile": "Mobile",
   "Mobile.Title": "📱 Mobile Package Upload",
   "Mobile.Mode": "Mode",

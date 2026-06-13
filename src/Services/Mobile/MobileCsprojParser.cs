@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -37,15 +38,42 @@ public static class MobileCsprojParser
             var projectDir = Path.GetDirectoryName(Path.GetFullPath(csprojPath)) ?? "";
             var projectName = Path.GetFileNameWithoutExtension(csprojPath);
 
-            var targetFramework = GetElementValue(doc, "TargetFramework")
-                                ?? GetElementValue(doc, "TargetFrameworks");
+            var targetFramework = GetElementValue(doc, "TargetFramework");
+            var targetFrameworks = GetElementValue(doc, "TargetFrameworks");
 
-            // Verify it's an Android project
-            if (targetFramework != null && !targetFramework.Contains("-android"))
+            if (targetFramework == null && targetFrameworks == null)
                 return new MobileCsprojInfo
                 {
                     Success = false,
-                    ErrorMessage = $"TargetFramework '{targetFramework}' is not an Android project. Must contain '-android'."
+                    ErrorMessage = "Missing <TargetFramework> or <TargetFrameworks> element in .csproj."
+                };
+
+            // Prefer single TFM; if multi-TFM, pick the one containing "-android"
+            var resolvedTfm = targetFramework;
+            if (resolvedTfm == null && targetFrameworks != null)
+            {
+                var tfms = targetFrameworks
+                    .Split(';', ',')
+                    .Select(t => t.Trim())
+                    .ToArray();
+
+                resolvedTfm = tfms.FirstOrDefault(t => t.Contains("-android", StringComparison.OrdinalIgnoreCase))
+                            ?? tfms.FirstOrDefault();
+            }
+
+            if (resolvedTfm == null)
+                return new MobileCsprojInfo
+                {
+                    Success = false,
+                    ErrorMessage = "Unable to resolve a target framework from the .csproj."
+                };
+
+            // Verify it's an Android project
+            if (!resolvedTfm.Contains("-android", StringComparison.OrdinalIgnoreCase))
+                return new MobileCsprojInfo
+                {
+                    Success = false,
+                    ErrorMessage = $"TargetFramework '{resolvedTfm}' is not an Android project. Must contain '-android'."
                 };
 
             var assemblyName = GetElementValue(doc, "AssemblyName") ?? projectName;
@@ -58,7 +86,7 @@ public static class MobileCsprojParser
                 PackageName = GetElementValue(doc, "ApplicationId"),
                 VersionName = GetElementValue(doc, "ApplicationDisplayVersion"),
                 VersionCode = GetElementValue(doc, "ApplicationVersion"),
-                TargetFramework = targetFramework,
+                TargetFramework = resolvedTfm,
                 AndroidPackageFormat = GetElementValue(doc, "AndroidPackageFormat"),
                 IsMaui = isMaui,
                 AssemblyName = assemblyName,

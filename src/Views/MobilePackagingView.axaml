@@ -126,11 +126,7 @@
                     <Grid ColumnDefinitions="Auto,*">
                         <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Platform]}"
                                    VerticalAlignment="Center" Width="100"/>
-                        <ComboBox Grid.Column="1" SelectedIndex="0" Margin="8,0">
-                            <ComboBox.Items>
-                                <ComboBoxItem Content="Android"/>
-                            </ComboBox.Items>
-                        </ComboBox>
+                        <TextBox Grid.Column="1" Text="Android" IsReadOnly="True" Margin="8,0"/>
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*">
                         <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProductId]}"

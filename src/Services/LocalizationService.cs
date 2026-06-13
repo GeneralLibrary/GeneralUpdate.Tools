@@ -261,6 +261,11 @@ public class LocalizationService : INotifyPropertyChanged
         ["Patch.Upload"] = "📤 上传",
         ["Upload.Success"] = "上传成功", ["Upload.Failed"] = "上传失败: {0}",
         ["Upload.Uploading"] = "正在上传...",
+        ["Result.OpenOutput"] = "打开输出目录",
+        ["Result.Exit"] = "退出",
+        ["Result.Running"] = "执行中...",
+        ["Result.ValidationTitle"] = "验证",
+        ["Result.BuildFirst"] = "请先构建项目以找到输出安装包文件。",
     };
 
     private static Dictionary<string, string> BuildEnUS() => new()
@@ -385,5 +390,10 @@ public class LocalizationService : INotifyPropertyChanged
         ["Patch.Upload"] = "📤 Upload",
         ["Upload.Success"] = "Upload successful", ["Upload.Failed"] = "Upload failed: {0}",
         ["Upload.Uploading"] = "Uploading...",
+        ["Result.OpenOutput"] = "Open Output Directory",
+        ["Result.Exit"] = "Exit",
+        ["Result.Running"] = "Running...",
+        ["Result.ValidationTitle"] = "Validation",
+        ["Result.BuildFirst"] = "Please build the project first to locate the output package file.",
     };
 }

@@ -35,7 +35,6 @@ public partial class MobilePackagingViewModel : ViewModelBase
         Model.OutputDirectory = config.LastMobileOutputDir;
         Model.ProductId = config.LastMobileProductId;
         Model.Platform = config.LastMobilePlatform;
-        Model.AppType = config.LastMobileAppType;
         Model.UseProjectMode = config.LastMobileUseProjectMode;
 
         Model.PropertyChanged += (_, e) =>
@@ -176,13 +175,19 @@ public partial class MobilePackagingViewModel : ViewModelBase
         if (Model.UseProjectMode)
         {
             if (string.IsNullOrWhiteSpace(Model.ProjectPath))
+            {
+                await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Mobile.SelectProjectFirst"]);
                 return;
+            }
             await SelectProject();
             return;
         }
 
         if (string.IsNullOrWhiteSpace(Model.FilePath) || !File.Exists(Model.FilePath))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Mobile.SelectFileFirst"]);
             return;
+        }
 
         IsProcessing = true;
         try
@@ -250,11 +255,18 @@ public partial class MobilePackagingViewModel : ViewModelBase
     {
         if (!Model.UseProjectMode) return;
         if (string.IsNullOrWhiteSpace(Model.ProjectPath) || !File.Exists(Model.ProjectPath))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Mobile.SelectProjectFirst"]);
             return;
+        }
 
         var csprojInfo = MobileCsprojParser.Parse(Model.ProjectPath);
         if (csprojInfo == null || !csprojInfo.Success)
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"],
+                _loc.T("Mobile.ProjectParseFailed", csprojInfo?.ErrorMessage ?? "unknown"));
             return;
+        }
 
         var publishDir = MobileCsprojParser.GetDefaultPublishDir(csprojInfo);
 
@@ -320,9 +332,22 @@ public partial class MobilePackagingViewModel : ViewModelBase
     private async Task Upload()
     {
         if (!Model.UseProjectMode && (string.IsNullOrWhiteSpace(Model.FilePath) || !File.Exists(Model.FilePath)))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Mobile.SelectFileFirst"]);
             return;
+        }
 
-        if (string.IsNullOrWhiteSpace(Model.ProductId)) return;
+        if (Model.UseProjectMode && (string.IsNullOrWhiteSpace(Model.FilePath) || !File.Exists(Model.FilePath)))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Result.BuildFirst"]);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Model.ProductId))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Mobile.ValidateProductId"]);
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(Model.Sha256Hash))
             Model.Sha256Hash = await _hashService.ComputeHashAsync(Model.FilePath);
@@ -379,7 +404,6 @@ public partial class MobilePackagingViewModel : ViewModelBase
                         L("Upload successful.");
                         _config.LastMobileProductId = Model.ProductId;
                         _config.LastMobilePlatform = Model.Platform;
-                        _config.LastMobileAppType = Model.AppType;
                         ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
 
                         await ExportRecord(result.UploadUrl);
@@ -416,7 +440,6 @@ public partial class MobilePackagingViewModel : ViewModelBase
             FileSize = Model.FileSize,
             Format = format.TrimStart('.'),
             Platform = Model.Platform,
-            AppType = Model.AppType,
             ProductId = Model.ProductId,
             IsForcibly = Model.IsForcibly,
             ReleaseDate = DateTime.UtcNow.ToString("o")
@@ -444,7 +467,10 @@ public partial class MobilePackagingViewModel : ViewModelBase
     private async Task ExportRecordOnly()
     {
         if (string.IsNullOrWhiteSpace(Model.FilePath) || !File.Exists(Model.FilePath))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Mobile.SelectFileFirst"]);
             return;
+        }
 
         if (string.IsNullOrWhiteSpace(Model.Sha256Hash))
             Model.Sha256Hash = await _hashService.ComputeHashAsync(Model.FilePath);

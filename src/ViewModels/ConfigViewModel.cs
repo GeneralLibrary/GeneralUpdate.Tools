@@ -217,6 +217,7 @@ public partial class ConfigViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Model.ClientPath))
         {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Config.NoClientPath"]);
             return;
         }
 

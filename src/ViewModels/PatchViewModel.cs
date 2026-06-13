@@ -100,10 +100,16 @@ public partial class PatchViewModel : ViewModelBase
     async Task Build()
     {
         if (string.IsNullOrWhiteSpace(Config.OldDirectory) || string.IsNullOrWhiteSpace(Config.NewDirectory))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Patch.ValidateDirs"]);
             return;
+        }
 
         if (!SemverValidator.IsValid(Config.Version))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc.T("Patch.InvalidVersion", Config.Version));
             return;
+        }
 
         _config.EncryptionScanEnabled = Config.EnableEncryptionCheck;
         ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);

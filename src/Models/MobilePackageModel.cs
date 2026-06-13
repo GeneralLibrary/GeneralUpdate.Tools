@@ -30,8 +30,6 @@ public partial class MobilePackageModel : ObservableObject
 
     // ── Upload config ──────────────────────────────────────
     [ObservableProperty] private int _platform = 4; // default Android
-    // 0-based ComboBox index → Server value = Index + 1 (1=Client, 2=Upgrade)
-    [ObservableProperty] private int _appType;      // 0=Client, 1=Upgrade
     [ObservableProperty] private string _productId = "";
     [ObservableProperty] private string _productName = "";
     [ObservableProperty] private string _releaseNotes = "";

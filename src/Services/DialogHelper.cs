@@ -49,11 +49,14 @@ public static class DialogHelper
     }
 
     /// <summary>
-    /// Show a result window that runs an operation in the background.
-    /// The window appears immediately; logs stream in real time via <see cref="IProgress{String}"/>.
+    /// Show a result window that runs an operation and streams logs in real time.
+    /// The window appears immediately; logs stream via <see cref="IProgress{String}"/>.
+    /// Note: the operation is awaited on the UI thread so it should yield appropriately
+    /// (e.g. await I/O, Process, or file operations); CPU-bound work should be offloaded
+    /// via <c>Task.Run</c> inside the operation delegate.
     /// </summary>
     /// <param name="title">Window title.</param>
-    /// <param name="operation">Background work. Call <c>progress.Report(line)</c> to stream log lines.</param>
+    /// <param name="operation">Work to perform. Call <c>progress.Report(line)</c> to stream log lines.</param>
     /// <param name="outputDirectory">Optional output directory for the "Open Output" button.</param>
     public static async Task ShowResultWindowAsync(
         string title,

@@ -12,7 +12,6 @@ public class MobileVersionRecord
     [JsonProperty("fileSize")] public long FileSize { get; set; }
     [JsonProperty("format")] public string Format { get; set; } = string.Empty;
     [JsonProperty("platform")] public int Platform { get; set; } = 4;
-    [JsonProperty("appType")] public int AppType { get; set; } = 1;
     [JsonProperty("productId")] public string ProductId { get; set; } = string.Empty;
     [JsonProperty("isForcibly")] public bool IsForcibly { get; set; }
     [JsonProperty("releaseDate")] public string ReleaseDate { get; set; } = string.Empty;

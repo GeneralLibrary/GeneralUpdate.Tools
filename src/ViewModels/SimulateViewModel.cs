@@ -113,10 +113,21 @@ public partial class SimulateViewModel : ViewModelBase
     [RelayCommand]
     async Task StartSimulation()
     {
-        if (string.IsNullOrWhiteSpace(Config.AppDirectory)) { return; }
-        if (string.IsNullOrWhiteSpace(Config.PatchFilePath)) { return; }
-        if (!SemverValidator.IsValid(Config.CurrentVersion)) return;
-        if (!SemverValidator.IsValid(Config.TargetVersion)) return;
+        if (string.IsNullOrWhiteSpace(Config.AppDirectory) || string.IsNullOrWhiteSpace(Config.PatchFilePath))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Sim.ValidateDirs"]);
+            return;
+        }
+        if (!SemverValidator.IsValid(Config.CurrentVersion))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc.T("Sim.InvalidVersion", Config.CurrentVersion));
+            return;
+        }
+        if (!SemverValidator.IsValid(Config.TargetVersion))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc.T("Sim.InvalidVersion", Config.TargetVersion));
+            return;
+        }
 
         // Persist simulation settings
         _config.SimulationServerPort = Config.ServerPort.ToString();

@@ -19,6 +19,9 @@ public partial class BuildResultWindow : UrsaWindow
         // Subscribe to log changes to auto-scroll the editor
         vm.Log.CollectionChanged += OnLogChanged;
         LogEditor.Document = vm.Document;
+
+        // Unsubscribe when the window closes to prevent handler leaks
+        Closed += (_, _) => vm.Log.CollectionChanged -= OnLogChanged;
     }
 
     private void OnLogChanged(object? sender, NotifyCollectionChangedEventArgs e)

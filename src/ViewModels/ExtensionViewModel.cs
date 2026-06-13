@@ -98,13 +98,22 @@ public partial class ExtensionViewModel : ViewModelBase
     async Task Generate()
     {
         if (string.IsNullOrWhiteSpace(Config.Name) || string.IsNullOrWhiteSpace(Config.Version))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Ext.ValidateNameVer"]);
             return;
+        }
 
         if (!SemverValidator.IsValid(Config.Version))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc.T("Ext.InvalidVersion", Config.Version));
             return;
+        }
 
         if (string.IsNullOrWhiteSpace(Config.ExtensionDirectory) || !Directory.Exists(Config.ExtensionDirectory))
+        {
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Ext.ValidateDir"]);
             return;
+        }
 
         var dir = string.IsNullOrWhiteSpace(Config.ExportPath)
             ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
