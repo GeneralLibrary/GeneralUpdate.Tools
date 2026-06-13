@@ -63,7 +63,6 @@
 
             <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[OSS.Export]}"
                     Command="{Binding ExportCommand}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
-            <TextBlock Text="{Binding Status}" FontSize="13"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -37,16 +38,67 @@ public class HttpUploadService : IHttpUploadService
         IProgress<UploadProgressEventArgs>? progress = null,
         CancellationToken ct = default)
     {
+        return await UploadCoreAsync(filePath, config, null, progress, ct);
+    }
+
+    /// <summary>
+    /// Upload a file with additional form fields (metadata).
+    /// Used by mobile (APK/AAB) and any scenario that needs DTO fields
+    /// alongside the file in a single multipart request.
+    /// </summary>
+    public async Task<UploadResult> UploadAsync(
+        string filePath,
+        UploadConfig config,
+        Dictionary<string, string> formFields,
+        IProgress<UploadProgressEventArgs>? progress = null,
+        CancellationToken ct = default)
+    {
+        return await UploadCoreAsync(filePath, config, formFields, progress, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ValidateConnectionAsync(UploadConfig config, CancellationToken ct = default)
+    {
+        try
+        {
+            if (!TryBuildUrl(config, out var fullUrl, out _))
+                return false;
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, fullUrl);
+            ApplyAuth(request, config);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, cts.Token);
+
+            using var response = await _http.SendAsync(request, linkedCts.Token);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // ── Core upload logic ──────────────────────────────────
+
+    private async Task<UploadResult> UploadCoreAsync(
+        string filePath,
+        UploadConfig config,
+        Dictionary<string, string>? formFields,
+        IProgress<UploadProgressEventArgs>? progress,
+        CancellationToken ct)
+    {
         if (!File.Exists(filePath))
             return UploadResult.Fail($"File not found: {filePath}");
 
-        // Validate URL early
         if (!TryBuildUrl(config, out var fullUrl, out var urlError))
             return UploadResult.Fail(urlError ?? "Invalid upload URL.");
 
         var fileInfo = new FileInfo(filePath);
 
         Report(progress, 0, fileInfo.Length, UploadPhase.Connecting, "Connecting...");
+
+        var mimeType = GetMimeType(filePath);
 
         var lastError = string.Empty;
         var maxRetries = Math.Max(0, config.RetryCount);
@@ -69,9 +121,17 @@ public class HttpUploadService : IHttpUploadService
                         $"Uploading... {uploaded / 1024}/{total / 1024} KB");
                 });
 
-                streamContent.Headers.ContentType =
-                    new MediaTypeHeaderValue("application/octet-stream");
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
                 content.Add(streamContent, "file", Path.GetFileName(filePath));
+
+                // Add optional form fields (metadata DTO)
+                if (formFields != null)
+                {
+                    foreach (var (key, value) in formFields)
+                    {
+                        content.Add(new StringContent(value ?? ""), key);
+                    }
+                }
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, fullUrl)
                 {
@@ -102,8 +162,8 @@ public class HttpUploadService : IHttpUploadService
                 }
 
                 // Non-retryable status codes
-                if ((int)response.StatusCode is >= 400 and < 500 && response.StatusCode !=
-                    System.Net.HttpStatusCode.RequestTimeout &&
+                if ((int)response.StatusCode is >= 400 and < 500 &&
+                    response.StatusCode != System.Net.HttpStatusCode.RequestTimeout &&
                     response.StatusCode != System.Net.HttpStatusCode.TooManyRequests)
                 {
                     return UploadResult.Fail(
@@ -136,35 +196,19 @@ public class HttpUploadService : IHttpUploadService
         return UploadResult.Fail(lastError);
     }
 
-    /// <inheritdoc />
-    public async Task<bool> ValidateConnectionAsync(UploadConfig config, CancellationToken ct = default)
+    private static string GetMimeType(string filePath)
     {
-        try
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
+        return ext switch
         {
-            if (!TryBuildUrl(config, out var fullUrl, out _))
-                return false;
-
-            // Issue a GET to validate connectivity
-            using var request = new HttpRequestMessage(HttpMethod.Get, fullUrl);
-            ApplyAuth(request, config);
-
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, cts.Token);
-
-            using var response = await _http.SendAsync(request, linkedCts.Token);
-
-            // Only treat 2xx/3xx as success; 401 means auth failed, 404 means wrong endpoint
-            return response.IsSuccessStatusCode;
-        }
-        catch
-        {
-            return false;
-        }
+            ".apk" => "application/vnd.android.package-archive",
+            ".aab" => "application/octet-stream",
+            _ => "application/octet-stream"
+        };
     }
 
-    // ── Helpers ──────────────────────────────────────────────
+    // ── URL helpers ────────────────────────────────────────
 
-    /// <summary>Build and validate the upload URL. Returns false if the URL is invalid.</summary>
     private static bool TryBuildUrl(UploadConfig config, out string fullUrl, out string? error)
     {
         fullUrl = string.Empty;
@@ -289,7 +333,6 @@ internal class ProgressStreamContent : StreamContent
         public override bool CanSeek => _inner.CanSeek;
         public override bool CanWrite => _inner.CanWrite;
         public override long Length => _inner.Length;
-
         public override long Position
         {
             get => _inner.Position;

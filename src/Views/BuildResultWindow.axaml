@@ -1,0 +1,51 @@
+<u:UrsaWindow xmlns="https://github.com/avaloniaui"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:u="https://irihi.tech/ursa"
+              xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+              xmlns:svc="using:GeneralUpdate.Tools.Services"
+              xmlns:avalonedit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+              x:Class="GeneralUpdate.Tools.Views.BuildResultWindow"
+              x:DataType="vm:BuildResultWindowViewModel"
+              Title="{Binding WindowTitle}"
+              Width="720" Height="540"
+              MinWidth="520" MinHeight="380"
+              WindowStartupLocation="CenterOwner">
+    <DockPanel LastChildFill="True" Margin="16">
+        <!-- Bottom buttons -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button x:Name="OpenOutputBtn"
+                    Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Result.OpenOutput]}"
+                    IsEnabled="{Binding CanOpenOutput}"
+                    MinWidth="120" Height="32"
+                    Click="OnOpenOutputClick"/>
+            <Button x:Name="ExitBtn"
+                    Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Result.Exit]}"
+                    MinWidth="80" Height="32"
+                    Click="OnExitClick"/>
+        </StackPanel>
+
+        <!-- Running indicator (top of editor area) -->
+        <Border DockPanel.Dock="Top" Padding="8,6" CornerRadius="4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                IsVisible="{Binding IsRunning}" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <ProgressBar IsIndeterminate="True" Width="160" Height="6" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Result.Running]}"
+                           FontSize="13" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- AvaloniaEdit log viewer -->
+        <avalonedit:TextEditor x:Name="LogEditor"
+                               IsReadOnly="True"
+                               ShowLineNumbers="True"
+                               FontFamily="Consolas,monospace"
+                               FontSize="11"
+                               WordWrap="True"
+                               HorizontalScrollBarVisibility="Auto"
+                               VerticalScrollBarVisibility="Visible"
+                               Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+    </DockPanel>
+</u:UrsaWindow>

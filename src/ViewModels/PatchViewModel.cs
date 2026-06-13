@@ -22,33 +22,26 @@ public partial class PatchViewModel : ViewModelBase
 
     public PatchConfigModel Config { get; } = new();
     [ObservableProperty] private bool _isBuilding;
-    [ObservableProperty] private double _progress;
-    [ObservableProperty] private string _status;
-    [ObservableProperty] private ObservableCollection<string> _log = new();
-
-    // Upload-related properties
     [ObservableProperty] private bool _autoUploadEnabled;
-    [ObservableProperty] private string _uploadStatus = string.Empty;
-    [ObservableProperty] private double _uploadProgress;
+
+    // Progress pipe for real-time result window
+    private IProgress<string>? _opProgress;
 
     public PatchViewModel(AppConfig config)
     {
         _config = config;
 
-        // Restore path memory
         Config.OldDirectory = config.LastPatchOldDir;
         Config.NewDirectory = config.LastPatchNewDir;
         Config.OutputPath = config.LastPatchOutputDir;
         Config.EnableEncryptionCheck = config.EncryptionScanEnabled;
         AutoUploadEnabled = config.AutoUploadEnabled;
 
-        _status = _loc["Patch.Ready"];
         _initialized = true;
     }
 
     private bool _initialized;
 
-    /// <summary>Persist auto-upload toggle changes immediately (skip during construction).</summary>
     partial void OnAutoUploadEnabledChanged(bool value)
     {
         if (!_initialized) return;
@@ -76,7 +69,6 @@ public partial class PatchViewModel : ViewModelBase
             Config.OldDirectory = p;
             _config.LastPatchOldDir = p;
             ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
-            L(_loc.T("Patch.OldSelected", p));
         }
     }
 
@@ -89,7 +81,6 @@ public partial class PatchViewModel : ViewModelBase
             Config.NewDirectory = p;
             _config.LastPatchNewDir = p;
             ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
-            L(_loc.T("Patch.NewSelected", p));
         }
     }
 
@@ -110,159 +101,119 @@ public partial class PatchViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Config.OldDirectory) || string.IsNullOrWhiteSpace(Config.NewDirectory))
         {
-            Status = _loc["Patch.ValidateDirs"];
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Patch.ValidateDirs"]);
             return;
         }
 
         if (!SemverValidator.IsValid(Config.Version))
         {
-            Status = _loc.T("Patch.InvalidVersion", Config.Version);
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc.T("Patch.InvalidVersion", Config.Version));
             return;
         }
 
-        // Persist encryption scan preference
         _config.EncryptionScanEnabled = Config.EnableEncryptionCheck;
         ConfigService.SafeFireAndForgetSave(ConfigServiceSingleton.Instance);
 
+        var outDir = string.IsNullOrWhiteSpace(Config.OutputPath)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            : Config.OutputPath;
+
         IsBuilding = true;
-        Log.Clear();
-        Progress = 0;
-        UploadProgress = 0;
-        UploadStatus = string.Empty;
-        Status = _loc["Patch.Building"];
         try
         {
-            var tmp = Path.Combine(Path.GetTempPath(), $"gupatch_{DateTime.Now:yyyyMMddHHmmss}");
-            Directory.CreateDirectory(tmp);
-            L(_loc.T("Patch.TempDir", tmp));
-            Progress = 20;
-            L(_loc["Patch.Comparing"]);
-            await _diff.GeneratePatchAsync(Config.OldDirectory, Config.NewDirectory, tmp);
-            Progress = 60;
-            L(_loc["Patch.PatchDone"]);
-
-            // ── Encryption scan (if enabled) ─────────────────
-            if (Config.EnableEncryptionCheck)
-            {
-                L(_loc["Patch.Scanning"]);
-                var scanResult = await _encScanner.ScanDirectoryAsync(tmp);
-                Progress = 70;
-
-                if (scanResult.HasSuspiciousFiles)
+            await DialogHelper.ShowResultWindowAsync(
+                _loc["Patch.Title"],
+                async progress =>
                 {
-                    L(_loc.T("Patch.ScanFound", scanResult.SuspiciousFiles.Count));
-                    var choice = await ShowEncryptionDialogAsync(scanResult);
+                    _opProgress = progress;
 
-                    switch (choice)
+                    var tmp = Path.Combine(Path.GetTempPath(), $"gupatch_{DateTime.Now:yyyyMMddHHmmss}");
+                    Directory.CreateDirectory(tmp);
+                    L(_loc.T("Patch.TempDir", tmp));
+                    L(_loc["Patch.Comparing"]);
+                    await _diff.GeneratePatchAsync(Config.OldDirectory, Config.NewDirectory, tmp);
+                    L(_loc["Patch.PatchDone"]);
+
+                    // Encryption scan
+                    if (Config.EnableEncryptionCheck)
                     {
-                        case EncryptionDialogChoice.Cancel:
-                            L(_loc["Patch.ScanCancelled"]);
-                            Status = _loc["Patch.ScanCancelled"];
-                            Directory.Delete(tmp, true);
-                            return;
-                        case EncryptionDialogChoice.SkipSuspicious:
-                            foreach (var f in scanResult.SuspiciousFiles)
+                        L(_loc["Patch.Scanning"]);
+                        var scanResult = await _encScanner.ScanDirectoryAsync(tmp);
+
+                        if (scanResult.HasSuspiciousFiles)
+                        {
+                            L(_loc.T("Patch.ScanFound", scanResult.SuspiciousFiles.Count));
+                            var choice = await ShowEncryptionDialogAsync(scanResult);
+
+                            switch (choice)
                             {
-                                if (File.Exists(f.FilePath))
-                                    File.Delete(f.FilePath);
+                                case EncryptionDialogChoice.Cancel:
+                                    L(_loc["Patch.ScanCancelled"]);
+                                    Directory.Delete(tmp, true);
+                                    return;
+                                case EncryptionDialogChoice.SkipSuspicious:
+                                    foreach (var f in scanResult.SuspiciousFiles)
+                                    {
+                                        if (File.Exists(f.FilePath))
+                                            File.Delete(f.FilePath);
+                                    }
+                                    L(_loc.T("Patch.ScanSkipped", scanResult.SuspiciousFiles.Count));
+                                    break;
+                                case EncryptionDialogChoice.IncludeAll:
+                                    break;
                             }
-                            L(_loc.T("Patch.ScanSkipped", scanResult.SuspiciousFiles.Count));
-                            break;
-                        case EncryptionDialogChoice.IncludeAll:
-                            break;
+                        }
+                        else
+                        {
+                            L(_loc["Patch.ScanClean"]);
+                        }
                     }
-                }
-                else
-                {
-                    L(_loc["Patch.ScanClean"]);
-                }
-            }
-            else
-            {
-                Progress = 70;
-            }
 
-            // ── Package ──────────────────────────────────────
-            var outDir = string.IsNullOrWhiteSpace(Config.OutputPath)
-                ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-                : Config.OutputPath;
-            var name = string.IsNullOrWhiteSpace(Config.PackageName)
-                ? $"patch_{DateTime.Now:yyyyMMddHHmmss}"
-                : Config.PackageName;
-            var zip = Path.Combine(outDir, $"{name}.zip");
-            L(_loc.T("Patch.Packing", Path.GetFileName(zip)));
-            await _pkg.CompressDirectoryAsync(tmp, zip);
-            Directory.Delete(tmp, true);
-            Progress = 100;
-            Status = _loc.T("Patch.Success", Path.GetFileName(zip), new FileInfo(zip).Length / 1024.0);
-            L(Status);
+                    // Package
+                    var name = string.IsNullOrWhiteSpace(Config.PackageName)
+                        ? $"patch_{DateTime.Now:yyyyMMddHHmmss}"
+                        : Config.PackageName;
+                    var zip = Path.Combine(outDir, $"{name}.zip");
+                    L(_loc.T("Patch.Packing", Path.GetFileName(zip)));
+                    await _pkg.CompressDirectoryAsync(tmp, zip);
+                    Directory.Delete(tmp, true);
+                    L(_loc.T("Patch.Success", Path.GetFileName(zip), new FileInfo(zip).Length / 1024.0));
 
-            // ── Auto-upload ──────────────────────────────────
-            if (AutoUploadEnabled)
-            {
-                await UploadPatchAsync(zip);
-            }
-        }
-        catch (Exception ex)
-        {
-            Status = _loc.T("Patch.Failed", ex.Message);
-            L(_loc.T("Patch.Error", ex));
+                    // Auto-upload
+                    if (AutoUploadEnabled)
+                    {
+                        L(_loc["Upload.Uploading"]);
+                        var uploadConfig = new UploadConfig
+                        {
+                            ServerUrl = _config.UploadServerUrl,
+                            UploadEndpoint = _config.UploadEndpoint,
+                            TimeoutSeconds = _config.UploadTimeoutSeconds,
+                            RetryCount = _config.UploadRetryCount,
+                            Auth = _config.UploadAuth,
+                            AutoUploadEnabled = true
+                        };
+                        var uploadSvc = new HttpUploadService();
+                        var result = await uploadSvc.UploadAsync(zip, uploadConfig);
+                        if (result.Success)
+                            L(_loc["Upload.Success"]);
+                        else
+                            L(_loc.T("Upload.Failed", result.ErrorMessage ?? "Unknown error"));
+                    }
+                },
+                outDir);
         }
         finally
         {
+            _opProgress = null;
             IsBuilding = false;
         }
     }
 
-    /// <summary>Upload the generated patch to the configured server.</summary>
-    private async Task UploadPatchAsync(string zipPath)
+    void L(string m)
     {
-        UploadStatus = _loc["Upload.Uploading"];
-        UploadProgress = 0;
-
-        try
-        {
-            var uploadConfig = new UploadConfig
-            {
-                ServerUrl = _config.UploadServerUrl,
-                UploadEndpoint = _config.UploadEndpoint,
-                TimeoutSeconds = _config.UploadTimeoutSeconds,
-                RetryCount = _config.UploadRetryCount,
-                Auth = _config.UploadAuth,
-                AutoUploadEnabled = true
-            };
-
-            var uploadSvc = new HttpUploadService();
-            var progress = new Progress<UploadProgressEventArgs>(e =>
-            {
-                UploadProgress = e.Percentage;
-                UploadStatus = $"{e.Phase}: {e.Percentage:F0}%";
-                if (e.Phase == UploadPhase.Completed)
-                    L(_loc["Upload.Success"]);
-                else if (e.Phase == UploadPhase.Failed)
-                    L(_loc.T("Upload.Failed", "Upload error"));
-            });
-
-            var result = await uploadSvc.UploadAsync(zipPath, uploadConfig, progress);
-            if (result.Success)
-            {
-                UploadStatus = _loc["Upload.Success"];
-                L(UploadStatus);
-            }
-            else
-            {
-                UploadStatus = _loc.T("Upload.Failed", result.ErrorMessage ?? "Unknown error");
-                L(UploadStatus);
-            }
-        }
-        catch (Exception ex)
-        {
-            UploadStatus = _loc.T("Upload.Failed", ex.Message);
-            L(UploadStatus);
-        }
+        var line = $"[{DateTime.Now:HH:mm:ss}] {m}";
+        _opProgress?.Report(line);
     }
-
-    void L(string m) => Log.Add($"[{DateTime.Now:HH:mm:ss}] {m}");
 
     // ── Encryption scan dialog ──────────────────────────────
 
@@ -287,11 +238,7 @@ public partial class PatchViewModel : ViewModelBase
             MinHeight = 380
         };
 
-        var rootPanel = new Avalonia.Controls.StackPanel
-        {
-            Margin = new Avalonia.Thickness(20, 16),
-            Spacing = 10
-        };
+        var rootPanel = new Avalonia.Controls.StackPanel { Margin = new Avalonia.Thickness(20, 16), Spacing = 10 };
 
         rootPanel.Children.Add(new Avalonia.Controls.TextBlock
         {
@@ -309,13 +256,12 @@ public partial class PatchViewModel : ViewModelBase
         AddRiskGroup(listPanel, loc["Patch.ScanMediumRisk"], mediumRisk, false);
         AddRiskGroup(listPanel, loc["Patch.ScanLowRisk"], lowRisk, false);
 
-        var scrollViewer = new Avalonia.Controls.ScrollViewer
+        rootPanel.Children.Add(new Avalonia.Controls.ScrollViewer
         {
             Content = listPanel,
             MaxHeight = 250,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
-        };
-        rootPanel.Children.Add(scrollViewer);
+        });
 
         rootPanel.Children.Add(new Avalonia.Controls.TextBlock
         {
@@ -360,14 +306,13 @@ public partial class PatchViewModel : ViewModelBase
         List<SuspiciousFile> files, bool isHighRisk)
     {
         if (files.Count == 0) return;
-        var header = new Avalonia.Controls.TextBlock
+        parent.Children.Add(new Avalonia.Controls.TextBlock
         {
             Text = $"{title} ({files.Count})",
             FontWeight = Avalonia.Media.FontWeight.SemiBold,
             FontSize = 13,
             Margin = new Avalonia.Thickness(0, 4, 0, 2)
-        };
-        parent.Children.Add(header);
+        });
         foreach (var f in files)
         {
             var line = new Avalonia.Controls.TextBlock

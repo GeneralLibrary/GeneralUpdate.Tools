@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -158,35 +159,41 @@ public partial class ConfigViewModel : ViewModelBase
             UpdatePath = Model.UpdatePath
         };
 
-        var ctx = new PipelineContext
-        {
-            ClientPath = Model.ClientPath,
-            UpgradePath = Model.UpgradePath,
-            Manifest = manifest
-        };
-
-        var orchestrator = new PipelineOrchestrator()
-            .AddStep(new CsprojParseStep())
-            .AddStep(new SemverValidateStep())
-            .AddStep(new ManifestBuildStep())
-            .AddStep(new FileEmitStep());
-
-        ctx = await orchestrator.RunAsync(ctx);
-
-        if (ctx.Errors.Count > 0)
-        {
-            Model.StatusText = string.Join("; ", ctx.Errors);
-            return;
-        }
-
         var outputDir = AppContext.BaseDirectory;
-        var outputPath = Path.Combine(outputDir, "generalupdate.manifest.json");
-        Model.StatusText = $"{_loc["Config.Generated"]}: {outputPath}";
 
-        await DialogHelper.ShowInfoAsync(_loc["Config.Title"], _loc["Config.Generated"] + "\n" + outputPath);
+        await DialogHelper.ShowResultWindowAsync(
+            _loc["Config.Title"],
+            async progress =>
+            {
+                var ctx = new PipelineContext
+                {
+                    ClientPath = Model.ClientPath,
+                    UpgradePath = Model.UpgradePath,
+                    Manifest = manifest
+                };
 
-        if (Model.OpenManifestDir)
-            OpenFolder(outputDir);
+                var orchestrator = new PipelineOrchestrator()
+                    .AddStep(new CsprojParseStep())
+                    .AddStep(new SemverValidateStep())
+                    .AddStep(new ManifestBuildStep())
+                    .AddStep(new FileEmitStep());
+
+                progress.Report($"[{DateTime.Now:HH:mm:ss}] Generating manifest...");
+                ctx = await orchestrator.RunAsync(ctx);
+
+                if (ctx.Errors.Count > 0)
+                {
+                    progress.Report($"[{DateTime.Now:HH:mm:ss}] Errors: {string.Join("; ", ctx.Errors)}");
+                    return;
+                }
+
+                var outputPath = Path.Combine(outputDir, "generalupdate.manifest.json");
+                progress.Report($"[{DateTime.Now:HH:mm:ss}] {_loc["Config.Generated"]}: {outputPath}");
+
+                if (Model.OpenManifestDir)
+                    OpenFolder(outputDir);
+            },
+            outputDir);
     }
 
     private static void OpenFolder(string path)
@@ -210,59 +217,58 @@ public partial class ConfigViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Model.ClientPath))
         {
-            Model.StatusText = _loc["Config.NoClientPath"];
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Config.NoClientPath"]);
             return;
         }
 
         Model.IsPublishing = true;
-        Model.StatusText = _loc["Config.Publishing"];
-
         try
         {
-            var client = CsprojParserService.Parse(Model.ClientPath);
-            CsprojInfo? upgrade = null;
-            if (!string.IsNullOrWhiteSpace(Model.UpgradePath))
-                upgrade = CsprojParserService.Parse(Model.UpgradePath);
-
-            if (client == null)
-            {
-                Model.StatusText = _loc["Config.Failed"] + ": parse client";
-                return;
-            }
-
-            var manifest = ManifestGeneratorService.FromCsprojInfo(client, upgrade,
-                new ManifestModel
+            await DialogHelper.ShowResultWindowAsync(
+                _loc["Config.Title"],
+                async progress =>
                 {
-                    MainAppName = Model.MainAppName,
-                    ClientVersion = Model.ClientVersion,
-                    AppType = Model.AppType,
-                    UpdateAppName = Model.UpdateAppName,
-                    UpgradeClientVersion = Model.UpgradeClientVersion,
-                    ProductId = Model.ProductId,
-                    UpdatePath = Model.UpdatePath
-                });
+                    progress.Report($"[{DateTime.Now:HH:mm:ss}] Publishing...");
 
-            var validateCtx = new PipelineContext();
-            SemverValidateStep.Validate(manifest.ClientVersion, nameof(manifest.ClientVersion), validateCtx);
-            SemverValidateStep.Validate(manifest.UpgradeClientVersion, nameof(manifest.UpgradeClientVersion), validateCtx);
-            if (validateCtx.Errors.Count > 0)
-            {
-                Model.StatusText = string.Join("; ", validateCtx.Errors);
-                return;
-            }
+                    var client = CsprojParserService.Parse(Model.ClientPath);
+                    CsprojInfo? upgrade = null;
+                    if (!string.IsNullOrWhiteSpace(Model.UpgradePath))
+                        upgrade = CsprojParserService.Parse(Model.UpgradePath);
 
-            var output = await SamplePublisherService.PublishAsync(client, upgrade, Model.UpdatePath, manifest: manifest);
-            Model.StatusText = $"{_loc["Config.SampleGenerated"]}: {output}";
+                    if (client == null)
+                    {
+                        progress.Report($"[{DateTime.Now:HH:mm:ss}] Failed: parse client");
+                        return;
+                    }
 
-            await DialogHelper.ShowInfoAsync(_loc["Config.Title"],
-                _loc["Config.SampleGenerated"] + "\n" + output);
+                    var manifest = ManifestGeneratorService.FromCsprojInfo(client, upgrade,
+                        new ManifestModel
+                        {
+                            MainAppName = Model.MainAppName,
+                            ClientVersion = Model.ClientVersion,
+                            AppType = Model.AppType,
+                            UpdateAppName = Model.UpdateAppName,
+                            UpgradeClientVersion = Model.UpgradeClientVersion,
+                            ProductId = Model.ProductId,
+                            UpdatePath = Model.UpdatePath
+                        });
 
-            if (Model.OpenSampleDir)
-                OpenFolder(output);
-        }
-        catch (Exception ex)
-        {
-            Model.StatusText = $"{_loc["Config.Failed"]}: {ex.Message}";
+                    var validateCtx = new PipelineContext();
+                    SemverValidateStep.Validate(manifest.ClientVersion, nameof(manifest.ClientVersion), validateCtx);
+                    SemverValidateStep.Validate(manifest.UpgradeClientVersion, nameof(manifest.UpgradeClientVersion), validateCtx);
+                    if (validateCtx.Errors.Count > 0)
+                    {
+                        progress.Report($"[{DateTime.Now:HH:mm:ss}] Errors: {string.Join("; ", validateCtx.Errors)}");
+                        return;
+                    }
+
+                    var output = await SamplePublisherService.PublishAsync(client, upgrade, Model.UpdatePath, manifest: manifest);
+                    progress.Report($"[{DateTime.Now:HH:mm:ss}] {_loc["Config.SampleGenerated"]}: {output}");
+
+                    if (Model.OpenSampleDir)
+                        OpenFolder(output);
+                },
+                null);
         }
         finally
         {

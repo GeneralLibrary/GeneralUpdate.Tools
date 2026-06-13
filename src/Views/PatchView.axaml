@@ -75,17 +75,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- Upload Section -->
-            <Border Padding="16" CornerRadius="8"
-                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                    IsVisible="{Binding AutoUploadEnabled}">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.Upload]}" FontSize="14" FontWeight="SemiBold"/>
-                    <ProgressBar IsVisible="{Binding IsBuilding}" Value="{Binding UploadProgress}" Height="4"/>
-                    <TextBlock Text="{Binding UploadStatus}" FontSize="12"/>
-                </StackPanel>
-            </Border>
-
             <!-- Auto-upload Toggle -->
             <Border Padding="8,6" CornerRadius="4"
                     Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
@@ -106,15 +95,6 @@
             <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Patch.Build]}"
                     Command="{Binding BuildCommand}" IsEnabled="{Binding !IsBuilding}"
                     Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
-            <ProgressBar IsVisible="{Binding IsBuilding}" Value="{Binding Progress}" Height="6"/>
-            <TextBlock Text="{Binding Status}" FontSize="13"/>
-            <Border Padding="10" CornerRadius="6" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" MaxHeight="180">
-                <ListBox ItemsSource="{Binding Log}" Background="Transparent" BorderThickness="0">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate><TextBlock Text="{Binding}" FontSize="11" FontFamily="Consolas,monospace" TextWrapping="Wrap"/></DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

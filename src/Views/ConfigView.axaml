@@ -120,16 +120,6 @@
                         IsEnabled="{Binding IsBusy, Converter={x:Static BoolConverters.Not}}"/>
             </StackPanel>
 
-            <!-- Progress (visible during analysis / publishing) -->
-            <Border Padding="16,12" CornerRadius="8" IsVisible="{Binding IsBusy}"
-                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-                <StackPanel Spacing="10">
-                    <ProgressBar IsIndeterminate="True" Height="8"/>
-                    <TextBlock Text="{Binding Model.StatusText}" FontSize="14" FontWeight="SemiBold"
-                               HorizontalAlignment="Center" TextWrapping="Wrap"/>
-                </StackPanel>
-            </Border>
-
             <!-- Preview -->
             <Border Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
                 <StackPanel Spacing="6">
@@ -140,8 +130,6 @@
                 </StackPanel>
             </Border>
 
-            <!-- Status / hint -->
-            <TextBlock Text="{Binding Model.StatusText}" TextWrapping="Wrap" FontSize="12" Opacity="0.8"/>
             <Border Padding="14" CornerRadius="6" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
                 <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Config.CodeHint]}"
                            FontFamily="Courier New" FontSize="12" TextWrapping="Wrap"/>

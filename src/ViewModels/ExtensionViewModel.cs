@@ -19,20 +19,17 @@ public partial class ExtensionViewModel : ViewModelBase
 
     public ExtensionConfigModel Config { get; } = new();
     [ObservableProperty] private bool _isBuilding;
-    [ObservableProperty] private string _status;
     [ObservableProperty] private string _newPropKey = "";
     [ObservableProperty] private string _newPropValue = "";
     public ObservableCollection<CustomPropModel> CustomProps { get; } = new();
 
+    private IProgress<string>? _opProgress;
+
     public ExtensionViewModel(AppConfig config)
     {
         _config = config;
-
-        // Restore path memory
         Config.ExtensionDirectory = config.LastExtensionDir;
         Config.ExportPath = config.LastExtensionOutputDir;
-
-        _status = _loc["Patch.Ready"];
     }
 
     string GetFolderPickerTitle()
@@ -102,51 +99,58 @@ public partial class ExtensionViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Config.Name) || string.IsNullOrWhiteSpace(Config.Version))
         {
-            Status = _loc["Ext.ValidateNameVer"];
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Ext.ValidateNameVer"]);
             return;
         }
 
         if (!SemverValidator.IsValid(Config.Version))
         {
-            Status = _loc.T("Ext.InvalidVersion", Config.Version);
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc.T("Ext.InvalidVersion", Config.Version));
             return;
         }
 
         if (string.IsNullOrWhiteSpace(Config.ExtensionDirectory) || !Directory.Exists(Config.ExtensionDirectory))
         {
-            Status = _loc["Ext.ValidateDir"];
+            await DialogHelper.ShowInfoAsync(_loc["Result.ValidationTitle"], _loc["Ext.ValidateDir"]);
             return;
         }
 
+        var dir = string.IsNullOrWhiteSpace(Config.ExportPath)
+            ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+            : Config.ExportPath;
+
         IsBuilding = true;
-        Status = _loc["Ext.Building"];
         try
         {
-            var dir = string.IsNullOrWhiteSpace(Config.ExportPath)
-                ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-                : Config.ExportPath;
-            var zip = Path.Combine(dir, $"{Sanitize(Config.Name)}_{Config.Version}.zip");
-            await _pkg.CompressDirectoryAsync(Config.ExtensionDirectory, zip);
-            await _pkg.CreateManifestAsync(zip, new
-            {
-                name = Config.Name, version = Config.Version, description = Config.Description,
-                publisher = Config.Publisher, license = Config.License, dependencies = Config.Dependencies,
-                minHostVersion = Config.MinHostVersion, maxHostVersion = Config.MaxHostVersion,
-                isPreRelease = Config.IsPreRelease,
-                customProperties = CustomProps.ToDictionary(p => p.Key, p => p.Value)
-            });
-            Config.OutputPath = zip;
-            Status = _loc.T("Ext.Success", Path.GetFileName(zip));
-        }
-        catch (Exception ex)
-        {
-            Status = _loc.T("Ext.Failed", ex.Message);
+            await DialogHelper.ShowResultWindowAsync(
+                _loc["Ext.Title"],
+                async progress =>
+                {
+                    _opProgress = progress;
+                    var zip = Path.Combine(dir, $"{Sanitize(Config.Name)}_{Config.Version}.zip");
+                    L($"Compressing {Config.ExtensionDirectory} → {Path.GetFileName(zip)}");
+                    await _pkg.CompressDirectoryAsync(Config.ExtensionDirectory, zip);
+                    await _pkg.CreateManifestAsync(zip, new
+                    {
+                        name = Config.Name, version = Config.Version, description = Config.Description,
+                        publisher = Config.Publisher, license = Config.License, dependencies = Config.Dependencies,
+                        minHostVersion = Config.MinHostVersion, maxHostVersion = Config.MaxHostVersion,
+                        isPreRelease = Config.IsPreRelease,
+                        customProperties = CustomProps.ToDictionary(p => p.Key, p => p.Value)
+                    });
+                    Config.OutputPath = zip;
+                    L(_loc.T("Ext.Success", Path.GetFileName(zip)));
+                },
+                dir);
         }
         finally
         {
+            _opProgress = null;
             IsBuilding = false;
         }
     }
+
+    void L(string m) => _opProgress?.Report($"[{DateTime.Now:HH:mm:ss}] {m}");
 
     static string Sanitize(string n) => string.Join("_", n.Split(Path.GetInvalidFileNameChars()));
 }

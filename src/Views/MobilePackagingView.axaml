@@ -1,0 +1,176 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GeneralUpdate.Tools.ViewModels"
+             xmlns:svc="using:GeneralUpdate.Tools.Services"
+             x:Class="GeneralUpdate.Tools.Views.MobilePackagingView"
+             x:DataType="vm:MobilePackagingViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="28,24" Spacing="14">
+            <!-- Title -->
+            <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Title]}"
+                       FontSize="20" FontWeight="Bold"/>
+
+            <!-- Mode Switch (File / Project) -->
+            <Border Padding="8,6" CornerRadius="4"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Mode]}"
+                               VerticalAlignment="Center" Margin="8,0"/>
+                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding Model.UseProjectMode}"
+                                  IsEnabled="{Binding !IsProcessing}"
+                                  OnContent="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProjectMode]}"
+                                  OffContent="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.FileMode]}"/>
+                </Grid>
+            </Border>
+
+            <!-- File Mode Section -->
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    IsVisible="{Binding !Model.UseProjectMode}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.PackageFile]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.FilePath]}"
+                                   VerticalAlignment="Center" Width="85"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.FilePath}"
+                                 PlaceholderText="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.FilePlaceholder]}"
+                                 IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Browse]}"
+                                Command="{Binding SelectFileCommand}" MinWidth="70"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Format]}"
+                                   VerticalAlignment="Center" Width="85"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.FormatDisplay}"
+                                 IsReadOnly="True" Margin="8,0"/>
+                    </Grid>
+                    <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Analyze]}"
+                            Command="{Binding AnalyzeCommand}" IsEnabled="{Binding !IsProcessing}"
+                            HorizontalAlignment="Stretch"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Project Mode Section -->
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                    IsVisible="{Binding Model.UseProjectMode}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProjectFile]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.CsprojPath]}"
+                                   VerticalAlignment="Center" Width="85"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ProjectPath}"
+                                 PlaceholderText="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProjectPlaceholder]}"
+                                 IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Browse]}"
+                                Command="{Binding SelectProjectCommand}" MinWidth="70"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProjectType]}"
+                                   VerticalAlignment="Center" Width="85"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ProjectType}"
+                                 IsReadOnly="True" Margin="8,0"/>
+                    </Grid>
+                    <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.BuildAndLocate]}"
+                            Command="{Binding BuildAndLocateCommand}" IsEnabled="{Binding !IsProcessing}"
+                            HorizontalAlignment="Stretch"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Metadata Section -->
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Metadata]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.PackageName]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.PackageName}" Margin="8,0"
+                                 PlaceholderText="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.EditableHint]}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.VersionName]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.VersionName}" Margin="8,0"
+                                 PlaceholderText="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.EditableHint]}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.VersionCode]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.VersionCode}" Margin="8,0"
+                                 PlaceholderText="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.EditableHint]}"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Sha256]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.Sha256Hash}" IsReadOnly="True"
+                                 FontFamily="Consolas,monospace" FontSize="11" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.FileSize]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.FileSizeDisplay}" IsReadOnly="True" Margin="8,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Upload Configuration -->
+            <Border Padding="16" CornerRadius="8"
+                    Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.UploadConfig]}"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Platform]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="Android" IsReadOnly="True" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProductId]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ProductId}"
+                                 PlaceholderText="e.g. 2d974e2a-31e6-4887-9bb1-b4689e98c77a" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ProductName]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ProductName}" Margin="8,0"/>
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ReleaseNotes]}"
+                                   VerticalAlignment="Top" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.ReleaseNotes}" AcceptsReturn="True"
+                                 MinHeight="60" Margin="8,0"/>
+                    </Grid>
+                    <CheckBox IsChecked="{Binding Model.IsForcibly}"
+                              Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ForcedUpdate]}"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.OutputDir]}"
+                                   VerticalAlignment="Center" Width="100"/>
+                        <TextBox Grid.Column="1" Text="{Binding Model.OutputDirectory}"
+                                 PlaceholderText="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.OutputPlaceholder]}"
+                                 IsReadOnly="True" Margin="8,0"/>
+                        <Button Grid.Column="2" Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.Browse]}"
+                                Command="{Binding SelectOutputCommand}" MinWidth="70"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Action Buttons -->
+            <StackPanel Spacing="8">
+                <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.UploadAndGenerate]}"
+                        Command="{Binding UploadCommand}" IsEnabled="{Binding !IsProcessing}"
+                        Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                    <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.ExportRecord]}"
+                            Command="{Binding ExportRecordOnlyCommand}" IsEnabled="{Binding !IsProcessing}"/>
+                    <Button Content="{Binding Source={x:Static svc:LocalizationService.Instance}, Path=[Mobile.OpenOutput]}"
+                            Command="{Binding OpenOutputDirCommand}"/>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

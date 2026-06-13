@@ -75,17 +75,6 @@
             <Button Content="{Binding StartButtonText}"
                     Command="{Binding StartSimulationCommand}"
                     IsEnabled="{Binding !IsRunning}" Height="40" FontSize="14" HorizontalAlignment="Stretch"/>
-            <ProgressBar IsVisible="{Binding IsRunning}" IsIndeterminate="True" Height="4"/>
-            <TextBlock Text="{Binding Status}" FontSize="13"/>
-
-            <!-- Log -->
-            <Border Padding="10" CornerRadius="6" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" MaxHeight="200">
-                <ListBox ItemsSource="{Binding Log}" Background="Transparent" BorderThickness="0">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate><TextBlock Text="{Binding}" FontSize="11" FontFamily="Consolas,monospace"/></DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
