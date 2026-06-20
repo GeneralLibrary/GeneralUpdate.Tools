@@ -118,5 +118,5 @@ internal class ClientArgs
 {
     public string ServerUrl { get; set; } = "http://127.0.0.1:5000";
     public string AppSecret { get; set; } = "dfeb5833-975e-4afb-88f1-6278ee9aeff6";
-    public string ClientVersion { get; set; } = "1.0.0";
+    public string ClientVersion { get; set; } = "0.0.1";
 }
