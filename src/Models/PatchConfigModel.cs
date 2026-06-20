@@ -7,7 +7,7 @@ public partial class PatchConfigModel : ObservableObject
     [ObservableProperty] private string _oldDirectory = "";
     [ObservableProperty] private string _newDirectory = "";
     [ObservableProperty] private string _packageName = "";
-    [ObservableProperty] private string _version = "1.0.0";
+    [ObservableProperty] private string _version = "0.0.1";
     [ObservableProperty] private string _format = ".zip";
     [ObservableProperty] private string _outputPath = "";
     [ObservableProperty] private bool _enableEncryptionCheck = true;

@@ -34,14 +34,14 @@ public static class ManifestGeneratorService
             MainAppName = !string.IsNullOrWhiteSpace(userInput?.MainAppName)
                 ? userInput.MainAppName
                 : client.AssemblyName,
-            ClientVersion = userInput?.ClientVersion ?? "1.0.0",
+            ClientVersion = userInput?.ClientVersion ?? "0.0.1",
             AppType = !string.IsNullOrWhiteSpace(userInput?.AppType)
                 ? userInput.AppType
                 : "Client",
             UpdateAppName = !string.IsNullOrWhiteSpace(userInput?.UpdateAppName)
                 ? userInput.UpdateAppName
                 : upgrade?.AssemblyName ?? "Update.exe",
-            UpgradeClientVersion = userInput?.UpgradeClientVersion ?? "1.0.0",
+            UpgradeClientVersion = userInput?.UpgradeClientVersion ?? "0.0.1",
             ProductId = userInput?.ProductId ?? "",
             UpdatePath = !string.IsNullOrWhiteSpace(userInput?.UpdatePath)
                 ? userInput.UpdatePath

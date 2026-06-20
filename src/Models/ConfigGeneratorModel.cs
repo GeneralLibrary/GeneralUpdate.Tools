@@ -15,9 +15,9 @@ public partial class ConfigGeneratorModel : ObservableObject
 
     // ── Editable fields (auto-filled + user input) ──
     [ObservableProperty] private string _mainAppName = "";
-    [ObservableProperty] private string _clientVersion = "1.0.0";
+    [ObservableProperty] private string _clientVersion = "0.0.1";
     [ObservableProperty] private string _updateAppName = "Update.exe";
-    [ObservableProperty] private string _upgradeClientVersion = "1.0.0";
+    [ObservableProperty] private string _upgradeClientVersion = "0.0.1";
     [ObservableProperty] private string _appType = "Client";
     [ObservableProperty] private string _productId = "";
     [ObservableProperty] private string _updatePath = "update/";
